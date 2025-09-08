@@ -100,10 +100,14 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
       });
       resetForm();
       onOpenChange(false);
+      
+      // Trigger refresh of employees list
+      window.location.reload();
     } catch (error) {
+      console.error('Error adding employee:', error);
       toast({
         title: "Error",
-        description: "Failed to add employee",
+        description: error?.message || "Failed to add employee",
         variant: "destructive"
       });
     } finally {
