@@ -77,17 +77,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             error: { message: "An account with this email already exists. Please try signing in instead." }
           };
         }
-        if (authError.message.includes('Invalid email')) {
+        if (authError.message.includes('Invalid email') || authError.message.includes('email_address_invalid')) {
           return { 
-            error: { message: "Please enter a valid email address" }
+            error: { message: "This email address appears to be invalid. Please try a different email address." }
           };
         }
         return { error: authError };
       }
 
-      // Check if user needs email confirmation
-      if (authData.user && !authData.session) {
-        // Try to create admin record for pending confirmation
+      // Always create admin record regardless of confirmation status
+      if (authData.user) {
         try {
           await supabase
             .from('tbladmins')
@@ -96,36 +95,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               password, // In production, this should be hashed
               user_name: userName
             });
-        } catch (adminError) {
-          // Ignore duplicate errors for now
-          console.log('Admin record creation error (may be duplicate):', adminError);
+        } catch (adminError: any) {
+          // Ignore duplicate errors but log others
+          if (!adminError.message?.includes('duplicate')) {
+            console.warn('Admin record creation warning:', adminError);
+          }
         }
+      }
 
+      // Check if user needs email confirmation
+      if (authData.user && !authData.session) {
         return { 
           error: null, 
           needsConfirmation: true,
-          message: "Please check your email and click the confirmation link to complete your registration."
+          message: "✅ Signup successful! Please check your email (including spam folder) and click the confirmation link. If you don't receive it within 5 minutes, you can contact support."
         };
       }
 
       // If user is immediately logged in (email confirmation disabled)
       if (authData.user && authData.session) {
-        // Create admin record
-        const { error: adminError } = await supabase
-          .from('tbladmins')
-          .insert({
-            email: email.trim().toLowerCase(),
-            password,
-            user_name: userName
-          });
-
-        if (adminError && !adminError.message.includes('duplicate')) {
-          return { error: adminError };
-        }
-
         return { 
           error: null, 
-          message: "Account created successfully! Welcome to the admin dashboard."
+          message: "🎉 Account created and logged in successfully! Welcome to the admin dashboard."
         };
       }
 
