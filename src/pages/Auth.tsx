@@ -45,16 +45,24 @@ const Auth = () => {
           });
         } else if (result.needsConfirmation) {
           toast({
-            title: "Confirmation Required",
+            title: "🎉 Signup Complete!",
             description: result.message,
             variant: "default"
           });
+          // Clear form after successful signup
+          setEmailOrUsername('');
+          setPassword('');
+          setUserName('');
         } else {
           toast({
-            title: "Success",
+            title: "🎉 Account Created!",
             description: result.message || "Admin account created successfully!",
             variant: "default"
           });
+          // Clear form after successful signup
+          setEmailOrUsername('');
+          setPassword('');
+          setUserName('');
         }
       } else {
         const { error } = await signIn(emailOrUsername, password);
@@ -63,6 +71,12 @@ const Auth = () => {
             title: "Sign In Failed",
             description: error.message,
             variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "🎉 Welcome Back!",
+            description: "Successfully signed in to the admin dashboard.",
+            variant: "default"
           });
         }
       }
