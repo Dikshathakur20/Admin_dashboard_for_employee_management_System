@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,22 +36,28 @@ const Auth = () => {
           setLoading(false);
           return;
         }
-        const { error } = await signUp(email, password, userName);
-        if (error) {
+        const result = await signUp(emailOrUsername, password, userName);
+        if (result.error) {
           toast({
             title: "Sign Up Failed",
-            description: error.message,
+            description: result.error.message,
             variant: "destructive"
+          });
+        } else if (result.needsConfirmation) {
+          toast({
+            title: "Confirmation Required",
+            description: result.message,
+            variant: "default"
           });
         } else {
           toast({
             title: "Success",
-            description: "Admin account created successfully!",
+            description: result.message || "Admin account created successfully!",
             variant: "default"
           });
         }
       } else {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(emailOrUsername, password);
         if (error) {
           toast({
             title: "Sign In Failed",
@@ -102,13 +108,15 @@ const Auth = () => {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="emailOrUsername">
+                {isSignUp ? 'Email' : 'Email or Username'}
+              </Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                id="emailOrUsername"
+                type={isSignUp ? "email" : "text"}
+                value={emailOrUsername}
+                onChange={(e) => setEmailOrUsername(e.target.value)}
+                placeholder={isSignUp ? "Enter your email" : "Enter your email or username"}
                 required
               />
             </div>

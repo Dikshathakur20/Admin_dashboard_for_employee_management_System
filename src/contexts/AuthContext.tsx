@@ -6,8 +6,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, userName: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userName: string) => Promise<{ error: any; needsConfirmation?: boolean; message?: string }>;
+  signIn: (emailOrUsername: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -62,6 +62,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error: authError };
     }
 
+    // Check if user needs email confirmation
+    if (authData.user && !authData.session) {
+      return { 
+        error: null, 
+        needsConfirmation: true,
+        message: "Please check your email and click the confirmation link to complete your registration."
+      };
+    }
+
     // Then create admin record if auth user was created successfully
     if (authData.user && !authError) {
       const { error: adminError } = await supabase
@@ -77,25 +86,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    return { error: null };
+    return { 
+      error: null, 
+      message: "Admin account created successfully!" 
+    };
   };
 
-  const signIn = async (email: string, password: string) => {
-    // Check if admin exists in tbladmins
-    const { data: adminData, error: adminError } = await supabase
+  const signIn = async (emailOrUsername: string, password: string) => {
+    // Check if admin exists in tbladmins by email or username
+    let adminQuery = supabase
       .from('tbladmins')
       .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .single();
+      .eq('password', password);
 
-    if (adminError || !adminData) {
-      return { error: { message: 'Invalid admin credentials' } };
+    // Check if input is email or username
+    if (emailOrUsername.includes('@')) {
+      adminQuery = adminQuery.eq('email', emailOrUsername);
+    } else {
+      adminQuery = adminQuery.eq('user_name', emailOrUsername);
     }
 
-    // If admin exists, sign in with Supabase Auth
+    const { data: adminData, error: adminError } = await adminQuery.single();
+
+    if (adminError || !adminData) {
+      return { error: { message: 'Invalid credentials. Please check your email/username and password.' } };
+    }
+
+    // If admin exists, sign in with Supabase Auth using email
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: adminData.email, // Always use email for Supabase Auth
       password
     });
 
