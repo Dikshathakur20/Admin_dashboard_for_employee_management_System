@@ -100,9 +100,15 @@ export const EditEmployeeDialog = ({
       onOpenChange(false);
     } catch (error) {
       toast({
+<<<<<<< HEAD
         title: "Update Issue",
         description: "Failed to update employee",
         variant: "default"
+=======
+        title: "Error",
+        description: "Failed to update employee",
+        variant: "destructive"
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);
@@ -153,6 +159,7 @@ export const EditEmployeeDialog = ({
           </div>
 
           <div className="space-y-2">
+<<<<<<< HEAD
                     <Label htmlFor="hireDate">Hire Date</Label>
                     <Input
                       id="hireDate"
@@ -164,6 +171,17 @@ export const EditEmployeeDialog = ({
                     />
                   </div>
           
+=======
+            <Label htmlFor="hireDate">Hire Date *</Label>
+            <Input
+              id="hireDate"
+              type="date"
+              value={hireDate}
+              onChange={(e) => setHireDate(e.target.value)}
+              required
+            />
+          </div>
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
           <div className="space-y-2">
             <Label htmlFor="salary">Salary</Label>
@@ -177,25 +195,37 @@ export const EditEmployeeDialog = ({
             />
           </div>
 
+<<<<<<< HEAD
           <div className="grid grid-cols-2 gap-4 relative z-10">
           <div className="space-y-2">
             <Label htmlFor="department">Department (Optional)</Label>
+=======
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
             <Select value={departmentId} onValueChange={setDepartmentId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select department" />
               </SelectTrigger>
+<<<<<<< HEAD
               <SelectContent className="z-50 bg-white shadow-lg">
                 {departments.map((dept) => (
                   <SelectItem
                     key={dept.department_id}
                     value={dept.department_id.toString()}
                   >
+=======
+              <SelectContent>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
                     {dept.department_name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+<<<<<<< HEAD
           </div>
 
           <div className="space-y-2 relative z-10">
@@ -216,6 +246,24 @@ export const EditEmployeeDialog = ({
                 </SelectContent>
               </Select>
             </div>
+=======
+
+          <div className="space-y-2">
+            <Label htmlFor="designation">Designation</Label>
+            <Select value={designationId} onValueChange={setDesignationId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select designation" />
+              </SelectTrigger>
+              <SelectContent>
+                {designations.map((designation) => (
+                  <SelectItem key={designation.designation_id} value={designation.designation_id.toString()}>
+                    {designation.designation_title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

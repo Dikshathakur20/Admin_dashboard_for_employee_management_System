@@ -63,9 +63,15 @@ export const EditDepartmentDialog = ({
       onOpenChange(false);
     } catch (error) {
       toast({
+<<<<<<< HEAD
         title: "Update issue",
         description: "Failed to update department",
         variant: "default"
+=======
+        title: "Error",
+        description: "Failed to update department",
+        variant: "destructive"
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);

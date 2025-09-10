@@ -132,7 +132,11 @@ const Departments = () => {
                 <div className="relative max-w-sm">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+<<<<<<< HEAD
                     placeholder="Search department"
+=======
+                    placeholder="Search departments..."
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -153,8 +157,12 @@ const Departments = () => {
                     {filteredDepartments.map((department) => (
                       <TableRow key={department.department_id}>
                         <TableCell className="font-medium">{department.department_name}</TableCell>
+<<<<<<< HEAD
                         <TableCell>{department.location || '-'}</TableCell>
 
+=======
+                        <TableCell>{department.location || 'Not Specified'}</TableCell>
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button

@@ -2,12 +2,17 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
+<<<<<<< HEAD
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}"
   ],
+=======
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  prefix: "",
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
   theme: {
     container: {
       center: true,
@@ -31,6 +36,21 @@ export default {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+<<<<<<< HEAD
+=======
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -71,12 +91,29 @@ export default {
       },
       keyframes: {
         "accordion-down": {
+<<<<<<< HEAD
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
+=======
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
+        },
+        "accordion-up": {
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
         },
         fadeIn: {
           "0%": { opacity: "0", transform: "translateY(10px)" },
@@ -92,8 +129,13 @@ export default {
         "gradient-card": "var(--gradient-card)",
       },
       boxShadow: {
+<<<<<<< HEAD
         elegant: "var(--shadow-elegant)",
         card: "var(--shadow-card)",
+=======
+        "elegant": "var(--shadow-elegant)",
+        "card": "var(--shadow-card)",
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",

@@ -206,6 +206,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
             )}
           </div>
 
+<<<<<<< HEAD
                   <div className="space-y-2">
           <Label htmlFor="hireDate">Hire Date</Label>
           <Input
@@ -217,6 +218,18 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
             required
           />
         </div>
+=======
+          <div className="space-y-2">
+            <Label htmlFor="hireDate">Hire Date</Label>
+            <Input
+              id="hireDate"
+              type="date"
+              value={hireDate}
+              onChange={(e) => setHireDate(e.target.value)}
+              required
+            />
+          </div>
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
           <div className="space-y-2">
             <Label htmlFor="salary">Salary (₹)</Label>
@@ -230,6 +243,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
             />
           </div>
 
+<<<<<<< HEAD
                   <div className="grid grid-cols-2 gap-4 relative z-10">
           <div className="space-y-2">
             <Label htmlFor="department">Department (Optional)</Label>
@@ -265,12 +279,44 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
                       value={designation.designation_id.toString()}
                     >
                       {designation.designation_title}
+=======
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="department">Department (Optional)</Label>
+              <Select value={departmentId} onValueChange={setDepartmentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
+                      {dept.department_name}
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
+<<<<<<< HEAD
+=======
+            <div className="space-y-2">
+              <Label htmlFor="designation">Designation (Optional)</Label>
+              <Select value={designationId} onValueChange={setDesignationId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select designation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {designations.map((designation) => (
+                    <SelectItem key={designation.designation_id} value={designation.designation_id.toString()}>
+                      {designation.designation_title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

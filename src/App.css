@@ -5,7 +5,22 @@
   text-align: center;
 }
 
+<<<<<<< HEAD
 
+=======
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
 @keyframes logo-spin {
   from {

@@ -59,9 +59,15 @@ export const EditDesignationDialog = ({
       onOpenChange(false);
     } catch (error) {
       toast({
+<<<<<<< HEAD
         title: "Update Issue",
         description: "Failed to update designation",
         variant: "default"
+=======
+        title: "Error",
+        description: "Failed to update designation",
+        variant: "destructive"
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);

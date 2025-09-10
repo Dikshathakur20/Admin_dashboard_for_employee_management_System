@@ -37,9 +37,15 @@ export const DesignationsTable = () => {
       setDesignations(data || []);
     } catch (error) {
       toast({
+<<<<<<< HEAD
         title: "Data Loading Issue",
         description: "Failed to fetch designations",
         variant: "default"
+=======
+        title: "Error",
+        description: "Failed to fetch designations",
+        variant: "destructive"
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);
@@ -64,9 +70,15 @@ export const DesignationsTable = () => {
       fetchDesignations();
     } catch (error) {
       toast({
+<<<<<<< HEAD
         title: "Removing Issue",
         description: "Failed to delete designation",
         variant: "default"
+=======
+        title: "Error",
+        description: "Failed to delete designation",
+        variant: "destructive"
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     }
   };
@@ -85,7 +97,11 @@ export const DesignationsTable = () => {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+<<<<<<< HEAD
             placeholder="Search designation..."
+=======
+            placeholder="Search designations..."
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

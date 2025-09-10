@@ -60,9 +60,15 @@ export const EmployeesTable = () => {
       setDesignations(designationsResult.data || []);
     } catch (error) {
       toast({
+<<<<<<< HEAD
         title: "Data Loading  Issue",
         description: "Failed to fetch employees data",
         variant: "default"
+=======
+        title: "Error",
+        description: "Failed to fetch employees data",
+        variant: "destructive"
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);
@@ -87,9 +93,15 @@ export const EmployeesTable = () => {
       fetchData();
     } catch (error) {
       toast({
+<<<<<<< HEAD
         title: "Removal Issue",
         description: "Failed to delete employee",
         variant: "default"
+=======
+        title: "Error",
+        description: "Failed to delete employee",
+        variant: "destructive"
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     }
   };
@@ -122,7 +134,11 @@ export const EmployeesTable = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+<<<<<<< HEAD
             placeholder="Search employee..."
+=======
+            placeholder="Search employees..."
+>>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
