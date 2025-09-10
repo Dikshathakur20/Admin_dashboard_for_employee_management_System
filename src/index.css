@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --border: 210 20% 80%;       /* soft grey border */
+    --background: 210 20% 95%;   /* faded off-white background */
+    --foreground: 222 47% 11%;   /* dark text */
+    --primary: 195 80% 60%;      /* soft teal primary */
+    --secondary: 210 10% 80%;    /* changed from blue to grey */
+    --accent: 210 15% 75%;       /* changed from pink to grey */
+    --card: 0 0% 100%;           /* slightly faded card */
+    --card-foreground: 222 47% 11%;
+  }
+
+  .dark {
+    --background: 222 14% 8%;    
+    --foreground: 210 40% 98%;   
+    --card: 222 14% 12%;         
+    --card-foreground: 210 40% 98%;
+    --primary: 195 80% 60%;      
+    --secondary: 210 10% 80%;    /* changed from blue to grey */
+    --accent: 210 15% 75%;       /* changed from pink to grey */
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Hover styles for buttons and cards to be grey */
+  button:hover,
+  .card:hover {
+    background-color: hsl(210, 15%, 85%) !important; /* soft grey hover */
+    color: hsl(222, 47%, 11%) !important;           /* dark text */
+  }
+}
