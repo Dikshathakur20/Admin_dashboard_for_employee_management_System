@@ -1,37 +1,55 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Plus, Users, Building, Briefcase } from 'lucide-react';
-import { EmployeesTable } from '@/components/dashboard/EmployeesTable';
-import { DepartmentsTable } from '@/components/dashboard/DepartmentsTable';
-import { DesignationsTable } from '@/components/dashboard/DesignationsTable';
-import { NewEmployeeDialog } from '@/components/dashboard/NewEmployeeDialog';
+import { LogOut, Users, Building, Briefcase, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
-  const [showNewEmployeeDialog, setShowNewEmployeeDialog] = useState(false);
+  const [employeeCount, setEmployeeCount] = useState(0);
+  const [departmentCount, setDepartmentCount] = useState(0);
+  const [designationCount, setDesignationCount] = useState(0);
   const { toast } = useToast();
 
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
+  useEffect(() => {
+    fetchCounts();
+  }, []);
+
+  const fetchCounts = async () => {
+    try {
+      const [employeesResult, departmentsResult, designationsResult] = await Promise.all([
+        supabase.from('tblemployees').select('*', { count: 'exact', head: true }),
+        supabase.from('tbldepartments').select('*', { count: 'exact', head: true }),
+        supabase.from('tbldesignations').select('*', { count: 'exact', head: true })
+      ]);
+
+      setEmployeeCount(employeesResult.count || 0);
+      setDepartmentCount(departmentsResult.count || 0);
+      setDesignationCount(designationsResult.count || 0);
+    } catch (error) {
+      console.warn('Count fetch issue:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
       toast({
-        title: "Signed out",
+        title: "Success",
         description: "You have been successfully signed out",
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive"
+        title: "Sign Out Issue",
+        description: "Unable to sign out properly",
+        variant: "default"
       });
     }
   };
@@ -52,13 +70,6 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button 
-                onClick={() => setShowNewEmployeeDialog(true)}
-                className="bg-gradient-primary shadow-elegant"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                NewUserAdd
-              </Button>
               <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -73,87 +84,86 @@ const Dashboard = () => {
         <div className="space-y-8">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-gradient-card shadow-card animate-fade-in">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">-</div>
-                <p className="text-xs text-muted-foreground">Active employees</p>
-              </CardContent>
-            </Card>
+            <Link to="/employees">
+              <Card className="bg-gradient-card shadow-card animate-fade-in hover:shadow-elegant transition-all cursor-pointer">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{employeeCount}</div>
+                  <p className="text-xs text-muted-foreground flex items-center">
+                    Active employees <ArrowRight className="h-3 w-3 ml-1" />
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
             
-            <Card className="bg-gradient-card shadow-card animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Departments</CardTitle>
-                <Building className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">-</div>
-                <p className="text-xs text-muted-foreground">Total departments</p>
-              </CardContent>
-            </Card>
+            <Link to="/departments">
+              <Card className="bg-gradient-card shadow-card animate-fade-in hover:shadow-elegant transition-all cursor-pointer" style={{ animationDelay: '0.1s' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Departments</CardTitle>
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{departmentCount}</div>
+                  <p className="text-xs text-muted-foreground flex items-center">
+                    Total departments <ArrowRight className="h-3 w-3 ml-1" />
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
             
-            <Card className="bg-gradient-card shadow-card animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Designations</CardTitle>
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">-</div>
-                <p className="text-xs text-muted-foreground">Available positions</p>
-              </CardContent>
-            </Card>
+            <Link to="/designations">
+              <Card className="bg-gradient-card shadow-card animate-fade-in hover:shadow-elegant transition-all cursor-pointer" style={{ animationDelay: '0.2s' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Designations</CardTitle>
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{designationCount}</div>
+                  <p className="text-xs text-muted-foreground flex items-center">
+                    Available positions <ArrowRight className="h-3 w-3 ml-1" />
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
 
-          {/* Data Tables */}
+          {/* Management Actions */}
           <Card className="shadow-elegant animate-slide-up">
             <CardHeader>
-              <CardTitle>Data Management</CardTitle>
+              <CardTitle>Management Actions</CardTitle>
               <CardDescription>
-                Manage employees, departments, and designations
+                Click on the cards above to manage specific data tables
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="employees" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="employees" className="flex items-center space-x-2">
-                    <Users className="h-4 w-4" />
-                    <span>Employees</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="departments" className="flex items-center space-x-2">
-                    <Building className="h-4 w-4" />
-                    <span>Departments</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="designations" className="flex items-center space-x-2">
-                    <Briefcase className="h-4 w-4" />
-                    <span>Designations</span>
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="employees">
-                  <EmployeesTable />
-                </TabsContent>
-                
-                <TabsContent value="departments">
-                  <DepartmentsTable />
-                </TabsContent>
-                
-                <TabsContent value="designations">
-                  <DesignationsTable />
-                </TabsContent>
-              </Tabs>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button variant="outline" asChild className="h-20 flex-col">
+                  <Link to="/employees">
+                    <Users className="h-6 w-6 mb-2" />
+                    Manage Employees
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="h-20 flex-col">
+                  <Link to="/departments">
+                    <Building className="h-6 w-6 mb-2" />
+                    Manage Departments
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="h-20 flex-col">
+                  <Link to="/designations">
+                    <Briefcase className="h-6 w-6 mb-2" />
+                    Manage Designations
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
       </main>
 
-      {/* New Employee Dialog */}
-      <NewEmployeeDialog 
-        open={showNewEmployeeDialog}
-        onOpenChange={setShowNewEmployeeDialog}
-      />
     </div>
   );
 };
