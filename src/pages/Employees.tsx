@@ -153,11 +153,7 @@ const Employees = () => {
   );
 
   if (loading) {
-<<<<<<< HEAD
     return <div className="flex justify-center p-8">Loading employees</div>;
-=======
-    return <div className="flex justify-center p-8">Loading employees...</div>;
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
   }
 
   return (
@@ -202,11 +198,7 @@ const Employees = () => {
                 <div className="relative max-w-sm">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-<<<<<<< HEAD
                     placeholder="Search employee"
-=======
-                    placeholder="Search employees..."
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"

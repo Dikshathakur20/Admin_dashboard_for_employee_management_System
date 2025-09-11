@@ -33,10 +33,7 @@ export const NewDepartmentDialog = ({
     setLoading(true);
 
     try {
-<<<<<<< HEAD
       // Insert department into Supabase; store null if location is empty
-=======
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       const { error } = await supabase
         .from('tbldepartments')
         .insert({
@@ -55,15 +52,9 @@ export const NewDepartmentDialog = ({
       onOpenChange(false);
     } catch (error) {
       toast({
-<<<<<<< HEAD
         title: "Adding Issue",
         description: "Failed to add department",
         variant: "default"
-=======
-        title: "Error",
-        description: "Failed to add department",
-        variant: "destructive"
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);
@@ -91,7 +82,6 @@ export const NewDepartmentDialog = ({
             />
           </div>
 
-<<<<<<< HEAD
                 <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
           <Input
@@ -102,17 +92,6 @@ export const NewDepartmentDialog = ({
           />
         </div>
 
-=======
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Enter department location"
-            />
-          </div>
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -127,8 +106,4 @@ export const NewDepartmentDialog = ({
       </DialogContent>
     </Dialog>
   );
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd

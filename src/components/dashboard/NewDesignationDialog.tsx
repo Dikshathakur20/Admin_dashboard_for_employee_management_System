@@ -48,15 +48,9 @@ export const NewDesignationDialog = ({
       onOpenChange(false);
     } catch (error) {
       toast({
-<<<<<<< HEAD
-        title: "Issue",
+        title: "Adding Issue",
         description: "Failed to add designation",
         variant: "default"
-=======
-        title: "Error",
-        description: "Failed to add designation",
-        variant: "destructive"
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);

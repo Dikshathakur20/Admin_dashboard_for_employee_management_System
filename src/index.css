@@ -2,156 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-<<<<<<< HEAD
+/* -----------------------------
+   Base Styles & Color Variables
+------------------------------*/
 @layer base {
   :root {
-    --border: 210 20% 80%;       /* soft grey border */
-    --background: 210 20% 95%;   /* faded off-white background */
-    --foreground: 222 47% 11%;   /* dark text */
-    --primary: 195 80% 60%;      /* soft teal primary */
-    --secondary: 210 10% 80%;    /* changed from blue to grey */
-    --accent: 210 15% 75%;       /* changed from pink to grey */
-    --card: 0 0% 100%;           /* slightly faded card */
-    --card-foreground: 222 47% 11%;
+    /* Neutral + Blue Theme */
+    --primary: 217 91% 60%;            /* #3b82f6 (Tailwind blue-500) */
+    --primary-foreground: 0 0% 100%;   /* White text on primary */
+    --secondary: 220 14% 96%;          /* Very light gray */
+    --secondary-foreground: 0 0% 10%;  
+    --accent: 217 91% 80%;             /* Lighter blue accent */
+    --accent-foreground: 0 0% 10%;    
+    --background: linear-gradient(to bottom right, #3b82f6, #ffffff);
+    --foreground: 0 0% 10%;            /* Dark text */
+    --border: 210 20% 80%;             /* Soft gray border */
+    --card: #ffffff;                   /* White card background */
+    --card-foreground: 0 0% 10%;       /* Card text */
   }
 
+  /* Dark mode overrides */
   .dark {
-    --background: 222 14% 8%;    
-    --foreground: 210 40% 98%;   
-    --card: 222 14% 12%;         
-    --card-foreground: 210 40% 98%;
-    --primary: 195 80% 60%;      
-    --secondary: 210 10% 80%;    /* changed from blue to grey */
-    --accent: 210 15% 75%;       /* changed from pink to grey */
+    --primary: 217 91% 50%;            
+    --primary-foreground: 0 0% 95%;
+    --secondary: 220 10% 20%;
+    --secondary-foreground: 0 0% 95%;
+    --accent: 217 91% 30%;
+    --accent-foreground: 0 0% 95%;
+    --background: hsl(222 10% 12%);    /* Solid dark background */
+    --foreground: 0 0% 95%;          
+    --border: 210 10% 40%;
+    --card: hsl(222 10% 15%);          
+    --card-foreground: 0 0% 95%;
   }
 
-=======
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
-@layer base {
-  :root {
-    --background: 220 13% 97%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 214 32% 91%;
-    --muted-foreground: 215 25% 27%;
-
-    --accent: 214 32% 91%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 60%;
-
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --admin-bg: 217 33% 17%;
-    --admin-card: 218 33% 20%;
-    --admin-primary: 217 91% 60%;
-    --admin-accent: 220 13% 97%;
-
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(221 83% 53%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(214 32% 96%));
-    --shadow-elegant: 0 8px 30px hsl(217 91% 60% / 0.12);
-    --shadow-card: 0 4px 20px hsl(217 91% 60% / 0.08);
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-@layer base {
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
-  * {
-    @apply border-border;
-  }
-
+  /* Global body styles */
   body {
-    @apply bg-background text-foreground;
-<<<<<<< HEAD
-    transition: background-color 0.3s ease, color 0.3s ease;
+    @apply text-foreground font-sans;
+    line-height: 1.7;
+    letter-spacing: 0.5px;
+    background: var(--background);
+    transition: background 0.6s ease, color 0.3s ease;
   }
 
-  /* Hover styles for buttons and cards to be grey */
-  button:hover,
+  /* Headings */
+  h1, h2, h3, h4 {
+    color: hsl(var(--foreground));
+    font-weight: 700;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+  }
+  h1 { font-size: 2.5rem; }
+  h2 { font-size: 2rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+
+  /* Paragraphs & lists */
+  p, li {
+    color: hsl(var(--foreground));
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  ul, ol {
+    margin-left: 1.5rem;
+    list-style-position: inside;
+  }
+
+  /* Cards */
+  .card {
+    @apply rounded-2xl p-6 transition-all duration-300;
+    background-color: var(--card);
+    color: hsl(var(--card-foreground));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
   .card:hover {
-    background-color: hsl(210, 15%, 85%) !important; /* soft grey hover */
-    color: hsl(222, 47%, 11%) !important;           /* dark text */
-=======
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground)) !important;
+  }
+
+  .dark .card:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground)) !important;
+  }
+
+  /* Buttons */
+  button {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  button:hover {
+    background-color: hsl(217 91% 50%);
+    color: hsl(var(--primary-foreground));
+    font-weight: 700;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Links */
+  a {
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+  a:hover {
+    color: hsl(var(--primary) / 85);
+  }
+
+  /* Small text / tooltips */
+  .read-the-docs, small {
+    color: hsl(var(--secondary-foreground));
+    font-size: 0.875rem;
+  }
+
+  /* Utility enhancements */
+  .text-black {
+    color: #000;
+  }
+  .shadow-elegant {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  }
+  .transition-colors {
+    transition-property: background-color, border-color, color, fill, stroke;
   }
 }

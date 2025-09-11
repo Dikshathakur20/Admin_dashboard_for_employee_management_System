@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import { Navigate, Link, useNavigate } from 'react-router-dom'; // ✅ added useNavigate
-=======
-import { Navigate, Link } from 'react-router-dom';
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,10 +13,7 @@ const Dashboard = () => {
   const [departmentCount, setDepartmentCount] = useState(0);
   const [designationCount, setDesignationCount] = useState(0);
   const { toast } = useToast();
-<<<<<<< HEAD
   const navigate = useNavigate(); // ✅ added for redirect
-=======
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -53,10 +46,7 @@ const Dashboard = () => {
         title: "Success",
         description: "You have been successfully signed out",
       });
-<<<<<<< HEAD
       navigate('/auth'); // ✅ redirect to sign-in page
-=======
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
     } catch (error) {
       toast({
         title: "Sign Out Issue",
@@ -146,12 +136,6 @@ const Dashboard = () => {
           <Card className="shadow-elegant animate-slide-up">
             <CardHeader>
               <CardTitle>Management Actions</CardTitle>
-<<<<<<< HEAD
-=======
-              <CardDescription>
-                Click on the cards above to manage specific data tables
-              </CardDescription>
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -173,21 +157,20 @@ const Dashboard = () => {
                     Manage Designations
                   </Link>
                 </Button>
+                <Button variant="outline" asChild className="h-20 flex-col">
+                  <Link to="/view-employees">
+                    <Building className="h-6 w-6 mb-2" />
+                    View Employees
+                  </Link>
+                </Button>
+
               </div>
             </CardContent>
           </Card>
         </div>
       </main>
-<<<<<<< HEAD
-=======
-
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
     </div>
   );
 };
 
-<<<<<<< HEAD
 export default Dashboard;
-=======
-export default Dashboard;
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd

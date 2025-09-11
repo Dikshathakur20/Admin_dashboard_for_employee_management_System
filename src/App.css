@@ -5,23 +5,19 @@
   text-align: center;
 }
 
-<<<<<<< HEAD
-
-=======
+/* Logo */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
 
+.logo:hover {
+  filter: drop-shadow(0 0 2em #999);
+}
+
+/* Spin effect */
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -37,10 +33,72 @@
   }
 }
 
+/* Cards */
 .card {
+  background-color: #222; /* dark grey card */
+  color: #f5f5f5; /* white text */
   padding: 2em;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
-.read-the-docs {
-  color: #888;
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  background-color: #333; /* slightly lighter on hover */
+}
+
+/* Headings */
+h1, h2, h3 {
+  color: #fff; /* white headings */
+  font-weight: 700;
+  margin-bottom: 0.5em;
+}
+
+/* Paragraphs and lists */
+p, li {
+  color: #ccc; /* light grey text for readability */
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+ul, ol {
+  margin-left: 1.5rem;
+  list-style-position: inside;
+}
+
+/* Buttons */
+button {
+  background-color: #444; /* dark grey */
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+button:hover {
+  background-color: #fff; /* invert colors on hover */
+  color: #000;
+  transform: translateY(-2px);
+}
+
+/* Links */
+a {
+  color: #ccc;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #fff;
+}
+
+/* Small text / tooltip */
+.read-the-docs, small {
+  color: #999;
+  font-size: 0.875rem;
 }
