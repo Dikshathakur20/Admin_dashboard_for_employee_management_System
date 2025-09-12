@@ -70,7 +70,7 @@ export const EditDesignationDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200">
         <DialogHeader>
           <DialogTitle>Edit Designation</DialogTitle>
           <DialogDescription>
@@ -78,7 +78,7 @@ export const EditDesignationDialog = ({
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="space-y-2">
             <Label htmlFor="designationTitle">Designation Title *</Label>
             <Input
