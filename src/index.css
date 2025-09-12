@@ -9,7 +9,7 @@
     line-height: 1.7;
     letter-spacing: 0.5px;
 
-    background: linear-gradient(-45deg, #ffffff, #ffffff);
+    background: linear-gradient(-45deg, #ffffff,#3b82f6, #ffffff);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
     transition: color 0.3s ease;
@@ -66,14 +66,14 @@
   /* Buttons */
   button {
     @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300;
-    background-color: #3b82f6;
+    background-color: #ffffff;
     color: #000000;
     border: none;
     cursor: pointer;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   }
   button:hover {
-    background-color: #2563eb; 
+    background-color: #ffffff; 
     color: #000000;
     font-weight: 700;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
