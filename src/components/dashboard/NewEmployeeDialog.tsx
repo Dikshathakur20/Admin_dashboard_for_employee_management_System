@@ -237,7 +237,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
 
                   <div className="grid grid-cols-2 gap-4 relative z-10">
           <div className="space-y-2">
-            <Label htmlFor="department">Department (Optional)</Label>
+            <Label htmlFor="department">Department </Label>
             <Select value={departmentId} onValueChange={setDepartmentId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select department" />
@@ -258,7 +258,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
 
 
                       <div className="space-y-2 relative z-10">
-              <Label htmlFor="designation">Designation (Optional)</Label>
+              <Label htmlFor="designation">Designation </Label>
               <Select value={designationId} onValueChange={setDesignationId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select designation" />
