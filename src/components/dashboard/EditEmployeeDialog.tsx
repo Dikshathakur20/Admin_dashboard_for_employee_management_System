@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -17,6 +17,7 @@ interface Employee {
   salary: number | null;
   department_id: number | null;
   designation_id: number | null;
+  profile_picture_url?: string | null; // store as Base64 string
 }
 
 interface Department {
@@ -27,6 +28,7 @@ interface Department {
 interface Designation {
   designation_id: number;
   designation_title: string;
+  department_id: number; 
 }
 
 interface EditEmployeeDialogProps {
@@ -53,6 +55,7 @@ export const EditEmployeeDialog = ({
   const [salary, setSalary] = useState('');
   const [departmentId, setDepartmentId] = useState<string>('');
   const [designationId, setDesignationId] = useState<string>('');
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -68,22 +71,61 @@ export const EditEmployeeDialog = ({
     }
   }, [employee]);
 
+  // Convert file → Base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!employee) return;
-    
+
+    if (!departmentId || !designationId) {
+      toast({
+        title: "Missing Selection",
+        description: "Please select both Department and Designation",
+        duration: 2000
+      });
+      return;
+    }
+
+    const salaryValue = salary ? parseFloat(salary) : 0;
+    if (salaryValue > 10000000) {
+      toast({
+        title: "Salary Limit Exceeded",
+        description: "Salary cannot exceed ₹10,000,000",
+        duration: 2000
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const employeeData = {
+      let profileBase64: string | null = null;
+
+      if (profilePicture) {
+        profileBase64 = await fileToBase64(profilePicture);
+      }
+
+      const employeeData: any = {
         first_name: firstName,
         last_name: lastName,
         email,
         hire_date: hireDate,
         salary: salary ? parseFloat(salary) : null,
         department_id: departmentId ? parseInt(departmentId) : null,
-        designation_id: designationId ? parseInt(designationId) : null
+        designation_id: designationId ? parseInt(designationId) : null,
       };
+
+      if (profileBase64) {
+        employeeData.profile_picture_url = profileBase64; // Save Base64 string
+      }
 
       const { error } = await supabase
         .from('tblemployees')
@@ -95,6 +137,7 @@ export const EditEmployeeDialog = ({
       toast({
         title: "Success",
         description: "Employee updated successfully",
+        duration: 2000
       });
       onSuccess();
       onOpenChange(false);
@@ -102,40 +145,45 @@ export const EditEmployeeDialog = ({
       toast({
         title: "Update Issue",
         description: "Failed to update employee",
-        variant: "default"
+        duration: 2000
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const filteredDesignations = designations.filter(
+    (d) =>
+      d.department_id === Number(departmentId) ||
+      d.designation_id === Number(designationId)
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200">
         <DialogHeader>
           <DialogTitle>Edit Employee</DialogTitle>
-          <DialogDescription>
-            Update the employee details below.
-          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                maxLength={25}
+                onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setFirstName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="lastName">Last Name</Label>
               <Input
                 id="lastName"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                maxLength={25}
+                onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setLastName(e.target.value)}
                 required
               />
             </div>
@@ -147,12 +195,22 @@ export const EditEmployeeDialog = ({
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value.toLowerCase())} // 👈 force lowercase
+              onChange={(e) => setEmail(e.target.value.toLowerCase())}
               required
             />
           </div>
 
-          
+          <div className="space-y-2">
+            <Label htmlFor="hireDate">Hire Date</Label>
+            <Input
+              id="hireDate"
+              type="date"
+              value={hireDate}
+              onChange={(e) => setHireDate(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+              required
+            />
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="salary">Salary</Label>
@@ -161,56 +219,106 @@ export const EditEmployeeDialog = ({
               type="number"
               step="0.01"
               value={salary}
-              onChange={(e) => setSalary(e.target.value)}
-              placeholder="Enter salary amount"
+              placeholder="Enter salary (max 10,000,000)"
+              required
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value) && value <= 10000000) {
+                  setSalary(e.target.value);
+                } else if (e.target.value === '') {
+                  setSalary('');
+                }
+              }}
             />
+            {parseFloat(salary) > 10000000 && (
+              <p className="text-xs text-red-500">Salary cannot exceed ₹10,000,000</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 relative z-10">
-          <div className="space-y-2">
-            <Label htmlFor="department">Department (Optional)</Label>
-            <Select value={departmentId} onValueChange={setDepartmentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-white shadow-lg">
-                {departments.map((dept) => (
-                  <SelectItem
-                    key={dept.department_id}
-                    value={dept.department_id.toString()}
-                  >
-                    {dept.department_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="department">Department</Label>
+              <Select
+                value={departmentId}
+                onValueChange={(val) => {
+                  setDepartmentId(val);
 
-          <div className="space-y-2 relative z-10">
-              <Label htmlFor="designation">Designation (Optional)</Label>
-              <Select value={designationId} onValueChange={setDesignationId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select designation" />
+                  const deptDesignations = designations.filter(
+                    (d) => d.department_id === Number(val ?? 0)
+                  );
+
+                  if (!deptDesignations.find(d => d.designation_id === parseInt(designationId || '0'))) {
+                    setDesignationId('');
+                  }
+
+                  if (deptDesignations.length === 0) {
+                    toast({
+                      title: "No Designation",
+                      description: "No designation exists for this department. Please add a designation first.",
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent className="z-50 bg-white shadow-lg">
-                  {designations.map((designation) => (
-                    <SelectItem
-                      key={designation.designation_id}
-                      value={designation.designation_id.toString()}
-                    >
-                      {designation.designation_title}
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
+                      {dept.department_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="designation">Designation</Label>
+              <Select
+                value={designationId || ''}
+                onValueChange={setDesignationId}
+                disabled={!departmentId || filteredDesignations.length === 0}
+              >
+                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select designation" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-white shadow-lg">
+                  {filteredDesignations.map((des) => (
+                    <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
+                      {des.designation_title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Profile Picture Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="profilePicture">Profile Picture</Label>
+            <Input
+              id="profilePicture"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
+            />
+          </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-900 text-white hover:bg-blue-700"
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Update Employee
             </Button>
@@ -220,3 +328,5 @@ export const EditEmployeeDialog = ({
     </Dialog>
   );
 };
+
+export default EditEmployeeDialog;

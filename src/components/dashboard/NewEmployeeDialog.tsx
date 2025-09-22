@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 interface NewEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEmployeeAdded?: (employee: any) => void;
 }
 
 interface Department {
@@ -21,9 +22,10 @@ interface Department {
 interface Designation {
   designation_id: number;
   designation_title: string;
+  department_id: number | null;
 }
 
-export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps) => {
+export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEmployeeDialogProps) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,36 +37,12 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [loading, setLoading] = useState(false);
   const [emailExists, setEmailExists] = useState<string>('');
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open) {
-      fetchData();
-    }
+    if (open) fetchData();
   }, [open]);
-
-  const checkEmailExists = async (email: string) => {
-    if (!email || email.length < 3) {
-      setEmailExists('');
-      return;
-    }
-
-    try {
-      const { data } = await supabase
-        .from('tblemployees')
-        .select('employee_id, first_name, last_name')
-        .eq('email', email.toLowerCase())
-        .maybeSingle();
-      
-      if (data) {
-        setEmailExists(`This email is already registered to ${data.first_name} ${data.last_name}`);
-      } else {
-        setEmailExists('');
-      }
-    } catch (error) {
-      console.warn('Email check issue:', error);
-    }
-  };
 
   const fetchData = async () => {
     try {
@@ -79,11 +57,21 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
       setDepartments(departmentsResult.data || []);
       setDesignations(designationsResult.data || []);
     } catch (error) {
-      toast({
-        title: "Data Loading Issue",
-        description: "Unable to fetch departments and designations",
-        variant: "default"
-      });
+      toast({ title: "Data Loading Issue", description: "Unable to fetch departments and designations", duration: 1500 });
+    }
+  };
+
+  const checkEmailExists = async (email: string) => {
+    if (!email || email.length < 3) return setEmailExists('');
+    try {
+      const { data } = await supabase
+        .from('tblemployees')
+        .select('employee_id, first_name, last_name')
+        .eq('email', email.toLowerCase())
+        .maybeSingle();
+      setEmailExists(data ? `This email is already registered to ${data.first_name} ${data.last_name}` : '');
+    } catch (error) {
+      console.warn('Email check issue:', error);
     }
   };
 
@@ -96,88 +84,101 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
     setDepartmentId('');
     setDesignationId('');
     setEmailExists('');
+    setProfilePicture(null);
+  };
+
+  // Convert file → Base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (emailExists) {
-      toast({
-        title: "Email Already Exists",
-        description: emailExists,
-        variant: "default",
-      });
+      toast({ title: "Email Already Exists", description: emailExists });
       return;
     }
 
-    // Validate salary limit
+    if (!departmentId || !designationId) {
+      toast({ title: "Missing Selection", description: "Please select both Department and Designation" });
+      return;
+    }
+
     const salaryValue = salary ? parseFloat(salary) : 0;
     if (salaryValue > 10000000) {
-      toast({
-        title: "Salary Limit Exceeded",
-        description: "Salary cannot exceed ₹1,00,00,000",
-        variant: "default",
-      });
+      toast({ title: "Salary Limit Exceeded", description: "Salary cannot exceed ₹10,000,000" });
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      let profileBase64: string | null = null;
+
+      if (profilePicture) {
+        profileBase64 = await fileToBase64(profilePicture);
+      }
+
+      const employeeData: any = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email.toLowerCase(),
+        hire_date: hireDate,
+        salary: salary ? parseFloat(salary) : null,
+        department_id: departmentId ? parseInt(departmentId) : null,
+        designation_id: designationId ? parseInt(designationId) : null,
+      };
+
+      if (profileBase64) {
+        employeeData.profile_picture_url = profileBase64;
+      }
+
+      const { data, error } = await supabase
         .from('tblemployees')
-        .insert({
-          first_name: firstName,
-          last_name: lastName,
-          email: email.toLowerCase(),
-          hire_date: hireDate,
-          salary: salary ? parseFloat(salary) : null,
-          department_id: departmentId ? parseInt(departmentId) : null,
-          designation_id: designationId ? parseInt(designationId) : null,
-        });
+        .insert(employeeData)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Employee added successfully",
-      });
+      toast({ title: "Success", description: `Employee added successfully.` });
+      if (onEmployeeAdded && data) onEmployeeAdded(data);
 
       resetForm();
       onOpenChange(false);
-      window.location.reload(); // Refresh to show new data
     } catch (error) {
-      toast({
-        title: "Addition Issue",
-        description: "Unable to add employee",
-        variant: "default",
-      });
+      toast({ title: "Addition Issue", description: "Unable to add employee" });
     } finally {
       setLoading(false);
     }
   };
+
+  const filteredDesignations = departmentId
+    ? designations.filter(d => d.department_id === parseInt(departmentId))
+    : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200">
         <DialogHeader>
           <DialogTitle>Add New Employee</DialogTitle>
-          <DialogDescription>
-            Enter the employee details below to add them to the system.
-          </DialogDescription>
         </DialogHeader>
-        
-        <form 
-  onSubmit={handleSubmit} 
-  className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200"
->
+
+        <form onSubmit={handleSubmit} className="space-y-4 p-6">
+          {/* Name */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                maxLength={25}
+                onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setFirstName(e.target.value)}
                 required
               />
             </div>
@@ -186,104 +187,122 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
               <Input
                 id="lastName"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                maxLength={25}
+                onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setLastName(e.target.value)}
                 required
               />
             </div>
           </div>
 
-                    <div className="space-y-2">
+          {/* Email */}
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
-              onChange={(e) => {
-                const lower = e.target.value.toLowerCase(); // 👈 convert instantly
-                setEmail(lower);
-                checkEmailExists(lower);
-              }}
+              onChange={(e) => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
               required
             />
-            {emailExists && (
-              <p className="text-sm text-orange-600">{emailExists}</p>
-            )}
+            {emailExists && <p className="text-sm text-orange-600">{emailExists}</p>}
           </div>
 
-
-                  <div className="space-y-2">
-          <Label htmlFor="hireDate">Hire Date</Label>
-          <Input
-            id="hireDate"
-            type="date"
-            value={hireDate}
-            onChange={(e) => setHireDate(e.target.value)}
-            max={new Date().toISOString().split("T")[0]} // today's date
-            required
-          />
-        </div>
-
+          {/* Hire Date */}
           <div className="space-y-2">
-            <Label htmlFor="salary">Salary (₹)</Label>
+            <Label htmlFor="hireDate">Hire Date</Label>
+            <Input
+              id="hireDate"
+              type="date"
+              value={hireDate}
+              onChange={(e) => setHireDate(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+              required
+            />
+          </div>
+
+          {/* Salary */}
+          <div className="space-y-2">
+            <Label htmlFor="salary">Salary</Label>
             <Input
               id="salary"
               type="number"
+              step="0.01"
               value={salary}
-              onChange={(e) => setSalary(e.target.value)}
-              max="10000000"
-              placeholder="Maximum ₹1,00,00,000"
+              placeholder="Enter salary (max 10,000,000)"
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
+                else if (e.target.value === '') setSalary('');
+              }}
+              required
             />
+            {parseFloat(salary) > 10000000 && (
+              <p className="text-xs text-red-500">Salary cannot exceed ₹10,000,000</p>
+            )}
           </div>
 
-                  <div className="grid grid-cols-2 gap-4 relative z-10">
-          <div className="space-y-2">
-            <Label htmlFor="department">Department </Label>
-            <Select value={departmentId} onValueChange={setDepartmentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-white shadow-lg">
-                {departments.map((dept) => (
-                  <SelectItem
-                    key={dept.department_id}
-                    value={dept.department_id.toString()}
-                  >
-                    {dept.department_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          </div>
-
-
-                      <div className="space-y-2 relative z-10">
-              <Label htmlFor="designation">Designation </Label>
-              <Select value={designationId} onValueChange={setDesignationId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select designation" />
+          {/* Department & Designation */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="department">Department *</Label>
+              <Select
+                value={departmentId}
+                onValueChange={(val) => { setDepartmentId(val); setDesignationId(''); }}
+                required
+              >
+                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select department" />
                 </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {designations.map((designation) => (
-                    <SelectItem
-                      key={designation.designation_id}
-                      value={designation.designation_id.toString()}
-                    >
-                      {designation.designation_title}
+                <SelectContent>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
+                      {dept.department_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="designation">Designation *</Label>
+              <Select
+                value={designationId}
+                onValueChange={setDesignationId}
+                required
+                disabled={!departmentId || filteredDesignations.length === 0}
+              >
+                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select designation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDesignations.map((des) => (
+                    <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
+                      {des.designation_title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          {/* Profile Picture Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="profilePicture">Profile Picture</Label>
+            <Input
+              id="profilePicture"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
+            />
+          </div>
+
+          <DialogFooter className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => { onOpenChange(false); resetForm(); }} className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !!emailExists}>
+            <Button type="submit" disabled={loading} className="bg-blue-900 text-white hover:bg-blue-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Add Employee
+              Add
             </Button>
           </DialogFooter>
         </form>
@@ -291,3 +310,5 @@ export const NewEmployeeDialog = ({ open, onOpenChange }: NewEmployeeDialogProps
     </Dialog>
   );
 };
+
+export default NewEmployeeDialog;

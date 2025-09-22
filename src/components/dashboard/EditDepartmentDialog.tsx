@@ -58,6 +58,7 @@ export const EditDepartmentDialog = ({
       toast({
         title: "Success",
         description: "Department updated successfully",
+        duration:2000
       });
       onSuccess();
       onOpenChange(false);
@@ -65,7 +66,8 @@ export const EditDepartmentDialog = ({
       toast({
         title: "Update issue",
         description: "Failed to update department",
-        variant: "default"
+        variant: "default",
+        duration:2000
       });
     } finally {
       setLoading(false);
@@ -77,41 +79,52 @@ export const EditDepartmentDialog = ({
       <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200">
         <DialogHeader>
           <DialogTitle>Edit Department</DialogTitle>
-          <DialogDescription>
-            Update the department details below.
-          </DialogDescription>
+          
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <div className="space-y-2">
-            <Label htmlFor="departmentName">Department Name *</Label>
-            <Input
-              id="departmentName"
-              value={departmentName}
-              onChange={(e) => setDepartmentName(e.target.value)}
-              required
-            />
-          </div>
+         <div className="space-y-2">
+  <Label htmlFor="departmentName">Department Name *</Label>
+  <Input
+    id="departmentName"
+    value={departmentName}
+    maxLength={50} // ⬅️ hard limit: max 50 chars
+    onChange={(e) => {
+      const value = e.target.value;
+      // ✅ only allow alphabets & spaces, block numbers/symbols
+      if (/^[A-Za-z\s]*$/.test(value)) {
+        setDepartmentName(value);
+      }
+    }}
+    required
+  />
+  {departmentName.length === 50 && (
+    <p className="text-xs text-red-500">Maximum 50 characters allowed</p>
+  )}
+</div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Enter department location"
-            />
-          </div>
+        
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Update Department
-            </Button>
-          </DialogFooter>
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => onOpenChange(false)}
+    className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50"
+  >
+    Cancel
+  </Button>
+
+  <Button
+    type="submit"
+    disabled={loading}
+    className="bg-blue-900 text-white hover:bg-blue-700"
+  >
+    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+    Update Department
+  </Button>
+</DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>

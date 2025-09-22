@@ -38,15 +38,9 @@ export const DepartmentsTable = () => {
       setDepartments(data || []);
     } catch (error) {
       toast({
-<<<<<<< HEAD
         title: "Data loading Issue",
         description: "Failed to fetch departments",
         variant: "default"
-=======
-        title: "Error",
-        description: "Failed to fetch departments",
-        variant: "destructive"
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     } finally {
       setLoading(false);
@@ -71,15 +65,9 @@ export const DepartmentsTable = () => {
       fetchDepartments();
     } catch (error) {
       toast({
-<<<<<<< HEAD
         title: "Removal Issue",
         description: "Failed to delete department",
         variant: "default"
-=======
-        title: "Error",
-        description: "Failed to delete department",
-        variant: "destructive"
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
       });
     }
   };
@@ -90,11 +78,7 @@ export const DepartmentsTable = () => {
   );
 
   if (loading) {
-<<<<<<< HEAD
     return <div className="flex justify-center p-8">Loading department...</div>;
-=======
-    return <div className="flex justify-center p-8">Loading departments...</div>;
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
   }
 
   return (
@@ -103,11 +87,7 @@ export const DepartmentsTable = () => {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-<<<<<<< HEAD
             placeholder="Search department"
-=======
-            placeholder="Search departments..."
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -161,11 +141,9 @@ export const DepartmentsTable = () => {
 
       {filteredDepartments.length === 0 && (
         <div className="text-center p-8 text-muted-foreground">
-<<<<<<< HEAD
           {searchTerm ? 'No department found matching your search.' : 'No department found.'}
-=======
           {searchTerm ? 'No departments found matching your search.' : 'No departments found.'}
->>>>>>> 5f3b3dd5f1cbc64020a543712e1f0472d19548fd
+
         </div>
       )}
 
