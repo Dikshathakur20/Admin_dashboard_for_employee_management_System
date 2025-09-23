@@ -141,14 +141,15 @@ const Designations = () => {
                   <Button
                     onClick={() => setShowNewDialog(true)}
                     className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition"
-                  >
+                    title="clcik on the button for adding designations"   
+                       >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Designation 
                   </Button>
                 {/* ⭐ Sort Button */}
                           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition">
+              <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition" title="click on the button for sorting the designation">
                 Sort 
               </Button>
             </DropdownMenuTrigger>
@@ -181,6 +182,7 @@ const Designations = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              title="click on the button  for editing"
                               className="bg-blue-900 text-white hover:bg-blue-700"
                               onClick={() => setEditingDesignation(designation)}
                             >
@@ -189,6 +191,7 @@ const Designations = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              title="clcik on the button for deleting the designation"
                               className="bg-blue-900 text-white hover:bg-blue-700"
                               onClick={() => handleDelete(designation.designation_id)}
                             >
@@ -212,6 +215,7 @@ const Designations = () => {
               <div className="flex justify-center items-center mt-4 space-x-4">
                 <Button
                  size="sm"
+                 title="click on the button for previous button "
                  disabled={currentPage === 1}
                  onClick={() => setCurrentPage((p) => p - 1)}
                  className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
@@ -221,6 +225,7 @@ const Designations = () => {
                 <span>Page {currentPage} of {totalPages}</span>
                 <Button
                  size="sm"
+                 title="clcik on the button for next button "
                  disabled={currentPage === totalPages}
                  onClick={() => setCurrentPage((p) => p + 1)}
                  className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"

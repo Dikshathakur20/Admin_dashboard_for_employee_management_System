@@ -28,7 +28,7 @@ interface Employee {
   salary: number | null;
   department_id: number | null;
   designation_id: number | null;
-  profile_picture_url?: string | null; // ✅ changed: store URL instead of BYTEA
+  file_data?: string | null;
 }
 
 interface Department {
@@ -53,30 +53,26 @@ const Employees = () => {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const { toast } = useToast();
 
-  // ⭐ NEW: Sorting + Pagination state
-  const [sortOption, setSortOption] = useState<
-    "name-asc" | "name-desc" | "date-asc" | "date-desc"
-  >("name-asc");
+  const [sortOption, setSortOption] = useState<"name-asc" | "name-desc" | "date-asc" | "date-desc">("name-asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
+  if (!user) return <Navigate to="/auth" replace />;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [employeesResult, departmentsResult, designationsResult] =
-        await Promise.all([
-          supabase.from("tblemployees").select("*").order("employee_id", { ascending: false }),
-          supabase.from("tbldepartments").select("*").order("department_name"),
-          supabase.from("tbldesignations").select("*").order("designation_title"),
-        ]);
+      const [employeesResult, departmentsResult, designationsResult] = await Promise.all([
+        supabase.from("tblemployees").select("*").order("employee_id", { ascending: false }),
+        supabase.from("tbldepartments").select("*").order("department_name"),
+        supabase.from("tbldesignations").select("*").order("designation_title"),
+      ]);
+
+      console.log("Employees fetched:", employeesResult.data);
+      console.log("Departments fetched:", departmentsResult.data);
+      console.log("Designations fetched:", designationsResult.data);
 
       if (employeesResult.error) throw employeesResult.error;
       if (departmentsResult.error) throw departmentsResult.error;
@@ -86,113 +82,70 @@ const Employees = () => {
       setDepartments(departmentsResult.data || []);
       setDesignations(designationsResult.data || []);
     } catch (error) {
-      toast({
-        title: "Data Loading Issue",
-        description: "Unable to fetch employee information",
-        variant: "default",
-      });
-    } finally {
-      setLoading(false);
-    }
+      console.error(error);
+      toast({ title: "Data Loading Issue", description: "Unable to fetch employee information", variant: "default" });
+    } finally { setLoading(false); }
   };
 
   const handleDelete = async (employeeId: number) => {
     if (!confirm("Are you sure you want to remove this employee?")) return;
     try {
-      const { error } = await supabase
-        .from("tblemployees")
-        .delete()
-        .eq("employee_id", employeeId);
-
+      const { error } = await supabase.from("tblemployees").delete().eq("employee_id", employeeId);
       if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Employee removed successfully",
-      });
+      toast({ title: "Success", description: "Employee removed successfully" });
       fetchData();
     } catch (error) {
-      toast({
-        title: "Removal Issue",
-        description: "Unable to remove employee",
-        variant: "default",
-      });
+      console.error(error);
+      toast({ title: "Removal Issue", description: "Unable to remove employee", variant: "default" });
     }
   };
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return "Not Assigned";
-    const dept = departments.find((d) => d.department_id === departmentId);
-    return dept?.department_name || "Unknown";
+    return departments.find((d) => d.department_id === departmentId)?.department_name || "Unknown";
   };
 
   const getDesignationTitle = (designationId: number | null) => {
     if (!designationId) return "Not Assigned";
-    const designation = designations.find((d) => d.designation_id === designationId);
-    return designation?.designation_title || "Unknown";
+    return designations.find((d) => d.designation_id === designationId)?.designation_title || "Unknown";
   };
 
-  const filteredEmployees = employees.filter(
-    (employee) =>
-      employee.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter(emp =>
+    emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ⭐ NEW: Sorting logic
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
-    if (sortOption === "name-asc") {
-      return (a.first_name + " " + a.last_name).localeCompare(
-        b.first_name + " " + b.last_name
-      );
-    } else if (sortOption === "name-desc") {
-      return (b.first_name + " " + b.last_name).localeCompare(
-        a.first_name + " " + a.last_name
-      );
-    } else if (sortOption === "date-asc") {
-      return (
-        new Date(a.hire_date).getTime() - new Date(b.hire_date).getTime()
-      );
-    } else if (sortOption === "date-desc") {
-      return (
-        new Date(b.hire_date).getTime() - new Date(a.hire_date).getTime()
-      );
-    }
-    return 0;
+    if (sortOption === "name-asc") return (a.first_name + " " + a.last_name).localeCompare(b.first_name + " " + b.last_name);
+    if (sortOption === "name-desc") return (b.first_name + " " + b.last_name).localeCompare(a.first_name + " " + a.last_name);
+    if (sortOption === "id-asc") return a.employee_id - b.employee_id;       // Oldest first
+    if (sortOption === "id-desc") return b.employee_id - a.employee_id;
   });
 
-  // ⭐ NEW: Pagination logic
   const totalPages = Math.ceil(sortedEmployees.length / itemsPerPage);
-  const paginatedEmployees = sortedEmployees.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedEmployees = sortedEmployees.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleNewEmployee = (newEmp: Employee) => {
-    setEmployees((prev) => [newEmp, ...prev]);
-  };
+  const handleNewEmployee = (newEmp: Employee) => setEmployees(prev => [newEmp, ...prev]);
 
-  if (loading) {
-    return <div className="flex justify-center p-8">Loading employees</div>;
-  }
+  if (loading) return <div className="flex justify-center p-8">Loading employees...</div>;
 
-  // ✅ Helper to render profile picture (using Supabase Storage URL)
-  const renderProfilePicture = (emp: Employee, size = 32) => {
-    if (emp.profile_picture_url) {
-      return (
+  // ✅ Fixed profile picture render
+  const renderProfilePicture = (emp: Employee, size = 40) => {
+    const responsiveSize = size;
+    return emp.file_data ? (
+      <div className="rounded-full overflow-hidden border-2 border-blue-900"
+        style={{ width: responsiveSize, height: responsiveSize, minWidth: responsiveSize, minHeight: responsiveSize }}>
         <img
-          src={emp.profile_picture_url}
+          src={emp.file_data}
           alt={`${emp.first_name} ${emp.last_name}`}
-          className={`h-${size} w-${size} rounded-full object-cover border-2 border-blue-900`}
+          className="w-full h-full object-cover"
         />
-      );
-    }
-
-    return (
-      <div
-        className={`h-${size} w-${size} rounded-full bg-gray-300 flex items-center justify-center text-lg text-white border-2 border-blue-900`}
-      >
-        {emp.first_name[0]}
-        {emp.last_name[0]}
+      </div>
+    ) : (
+      <div className="rounded-full bg-gray-400 flex items-center justify-center text-white border-2 border-blue-900"
+        style={{ width: responsiveSize, height: responsiveSize, fontSize: responsiveSize * 0.4 }}>
+        {emp.first_name[0]}{emp.last_name[0]}
       </div>
     );
   };
@@ -209,49 +162,28 @@ const Employees = () => {
 
           <CardContent className="px-0">
             <div className="space-y-4">
-              {/* Search + Sort controls */}
+              {/* Search + Sort */}
               <div className="flex items-center justify-between">
-                {/* Search Bar */}
                 <div className="relative max-w-sm">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                   <Input
                     placeholder="Search employee"
                     value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
+                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                     className="pl-10 text-black placeholder-black bg-white border border-gray-400 shadow-sm"
                   />
                 </div>
                 <div className="flex items-center justify-end gap-2">
-                  <Button
-                    onClick={() => setShowNewDialog(true)}
-                    className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Employee
+                  <Button onClick={() => setShowNewDialog(true)} className="bg-[#001F7A] text-white hover:bg-[#0029b0] transition" title="click the button to add new user">
+                    <Plus className="h-4 w-4 mr-2" />Add New Employee
                   </Button>
-                  {/* Sort Button */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition">
-                        Sort
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger asChild><Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="click to sort the employee">Sort</Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-white">
-                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
-                        Name (A–Z)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
-                        Name (Z–A)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("date-asc")}>
-                        Hire Date (Old → New)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("date-desc")}>
-                        Hire Date (New → Old)
-                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>Name (A–Z)</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>Name (Z–A)</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}> Old → New</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}> New → Old</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -262,106 +194,51 @@ const Employees = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="font-bold">Profile</TableHead>
-                      <TableHead className="font-bold">Full Name</TableHead>
-                      <TableHead className="font-bold">Email</TableHead>
-                      <TableHead className="font-bold">Department</TableHead>
-                      <TableHead className="font-bold">Designation</TableHead>
-                      <TableHead className="font-bold">Hire Date</TableHead>
-                      <TableHead className="font-bold">Salary</TableHead>
-                      <TableHead className="font-bold text-center">Actions</TableHead>
+                      <TableHead>Profile</TableHead>
+                      <TableHead>Full Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Designation</TableHead>
+                      <TableHead>Hire Date</TableHead>
+                      <TableHead>Salary</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedEmployees.map((employee) => (
-                      <TableRow key={employee.employee_id}>
-                        <TableCell>{renderProfilePicture(employee, 10)}</TableCell>
-                        <TableCell className="font-medium">
-                          {employee.first_name} {employee.last_name}
-                        </TableCell>
-                        <TableCell>{employee.email}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {getDepartmentName(employee.department_id)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {getDesignationTitle(employee.designation_id)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(employee.hire_date).toLocaleDateString("en-GB")}
-                        </TableCell>
-                        <TableCell>
-                          {employee.salary
-                            ? `₹${employee.salary.toLocaleString("en-IN")}`
-                            : "Not Set"}
-                        </TableCell>
+                    {paginatedEmployees.length > 0 ? paginatedEmployees.map(emp => (
+                      <TableRow key={emp.employee_id}>
+                        <TableCell>{renderProfilePicture(emp, 40)}</TableCell>
+                        <TableCell className="font-medium">{emp.first_name} {emp.last_name}</TableCell>
+                        <TableCell>{emp.email}</TableCell>
+                        <TableCell><Badge variant="secondary">{getDepartmentName(emp.department_id)}</Badge></TableCell>
+                        <TableCell><Badge variant="secondary">{getDesignationTitle(emp.designation_id)}</Badge></TableCell>
+                        <TableCell>{new Date(emp.hire_date).toLocaleDateString("en-GB")}</TableCell>
+                        <TableCell>{emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "Not Set"}</TableCell>
                         <TableCell>
                           <div className="flex justify-center space-x-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-blue-900 text-white hover:bg-blue-700"
-                              onClick={() => setViewingEmployee(employee)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-blue-900 text-white hover:bg-blue-700"
-                              onClick={() => setEditingEmployee(employee)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-blue-900 text-white hover:bg-blue-700"
-                              onClick={() => handleDelete(employee.employee_id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-
+                            <Button size="sm" variant="outline" className="bg-blue-900 text-white hover:bg-blue-700"  title="click on button to view employee details" onClick={() => setViewingEmployee(emp)}><Eye className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className="bg-blue-900 text-white hover:bg-blue-700" title="clcik on button to edit employee's information" onClick={() => setEditingEmployee(emp)}><Edit className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className="bg-blue-900 text-white hover:bg-blue-700"  title="clcik on button to delete the employee's data "onClick={() => handleDelete(emp.employee_id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
+                          {searchTerm ? "No employees found matching your search." : "No employees found."}
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
 
-                        {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-4">
-                <Button
-                  size="sm"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                  className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Prev
-                </Button>
-                <span className="text-sm font-medium text-gray-800">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  size="sm"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                  className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Next
-                </Button>
-              </div>
-            )}    
-
-              {filteredEmployees.length === 0 && (
-                <div className="text-center p-8 text-muted-foreground">
-                  {searchTerm
-                    ? "No employees found matching your search."
-                    : "No employees found."}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-4">
+                  <Button size="sm"  title="click on button for previous page"disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50">Prev</Button>
+                  <span className="text-sm font-medium text-gray-800">Page {currentPage} of {totalPages}</span>
+                  <Button size="sm" title="click on button for next page "disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50">Next</Button>
                 </div>
               )}
             </div>
@@ -384,51 +261,37 @@ const Employees = () => {
         onSuccess={fetchData}
         onEmployeeAdded={handleNewEmployee}
       />
-      <Dialog
-        open={!!viewingEmployee}
-        onOpenChange={(open) => !open && setViewingEmployee(null)}
-      >
-        <DialogContent className="max-w-lg bg-blue-50 p-6 rounded-xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-blue-900">
-              Employee Details
-            </DialogTitle>
-          </DialogHeader>
-          {viewingEmployee && (
-            <div className="flex items-start justify-between gap-6">
-              {/* Left: Employee details */}
-              <div className="space-y-3 flex-1">
-                <p>
-                  <span className="font-semibold">Name:</span>{" "}
-                  {viewingEmployee.first_name} {viewingEmployee.last_name}
-                </p>
-                <p>
-                  <span className="font-semibold">Email:</span>{" "}
-                  {viewingEmployee.email}
-                </p>
-                <p>
-                  <span className="font-semibold">Department:</span>{" "}
-                  {getDepartmentName(viewingEmployee.department_id)}
-                </p>
-                <p>
-                  <span className="font-semibold">Designation:</span>{" "}
-                  {getDesignationTitle(viewingEmployee.designation_id)}
-                </p>
-                <p>
-                  <span className="font-semibold">Hire Date:</span>{" "}
-                  {new Date(viewingEmployee.hire_date).toLocaleDateString()}
-                </p>
-                <p>
-                  <span className="font-semibold">Salary:</span>{" "}
-                  {viewingEmployee.salary
-                    ? `₹${viewingEmployee.salary}`
-                    : "Not set"}
-                </p>
-              </div>
 
-              {/* Right: Profile picture */}
+      <Dialog open={!!viewingEmployee} onOpenChange={(open) => !open && setViewingEmployee(null)}>
+        <DialogContent className="w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-blue-50 p-6 rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-blue-900">Employee Details</DialogTitle>
+          </DialogHeader>
+
+          {viewingEmployee && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="space-y-3 flex-1">
+                <p><span className="font-semibold">Name:</span> {viewingEmployee.first_name} {viewingEmployee.last_name}</p>
+                <p><span className="font-semibold">Email:</span> {viewingEmployee.email}</p>
+                <p><span className="font-semibold">Department:</span> {getDepartmentName(viewingEmployee.department_id)}</p>
+                <p><span className="font-semibold">Designation:</span> {getDesignationTitle(viewingEmployee.designation_id)}</p>
+                <p><span className="font-semibold">Hire Date:</span> {new Date(viewingEmployee.hire_date).toLocaleDateString()}</p>
+                <p><span className="font-semibold">Salary:</span> {viewingEmployee.salary ? `₹${viewingEmployee.salary}` : "Not set"}</p>
+              </div>
               <div className="shrink-0">
-                {renderProfilePicture(viewingEmployee, 32)}
+                <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-2 border-blue-900">
+                  {viewingEmployee.file_data ? (
+                    <img
+                      src={viewingEmployee.file_data}
+                      alt={`${viewingEmployee.first_name} ${viewingEmployee.last_name}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white text-2xl sm:text-3xl md:text-4xl bg-gray-400">
+                      {viewingEmployee.first_name[0]}{viewingEmployee.last_name[0]}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

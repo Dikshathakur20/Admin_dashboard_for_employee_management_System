@@ -74,6 +74,7 @@ const Navbar: React.FC = () => {
             <div className="flex items-center space-x-3">
               <Button
                 className="bg-[#001F7A] text-white px-4 py-2 rounded-lg flex items-center hover:bg-[#0029b0] transition"
+                 title="click on the button for signing out"
                 onClick={handleSignOut}
               >
                 <LogOut className="h-4 w-4 mr-2" />

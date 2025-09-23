@@ -40,6 +40,15 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const { toast } = useToast();
 
+  // Convert file to data URI (base64)
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file); // Converts file to 'data:image/...;base64,...'
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+
   useEffect(() => {
     if (open) fetchData();
   }, [open]);
@@ -87,16 +96,6 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
     setProfilePicture(null);
   };
 
-  // Convert file → Base64
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (emailExists) {
@@ -118,10 +117,10 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
     setLoading(true);
 
     try {
-      let profileBase64: string | null = null;
+      let fileData: string | null = null;
 
       if (profilePicture) {
-        profileBase64 = await fileToBase64(profilePicture);
+        fileData = await toBase64(profilePicture); // Convert to 'data:image/...;base64,...'
       }
 
       const employeeData: any = {
@@ -134,8 +133,8 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
         designation_id: designationId ? parseInt(designationId) : null,
       };
 
-      if (profileBase64) {
-        employeeData.profile_picture_url = profileBase64;
+      if (fileData) {
+        employeeData.file_data = fileData; // store as data URI
       }
 
       const { data, error } = await supabase
@@ -152,6 +151,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
       resetForm();
       onOpenChange(false);
     } catch (error) {
+      console.error(error);
       toast({ title: "Addition Issue", description: "Unable to add employee" });
     } finally {
       setLoading(false);
@@ -170,7 +170,6 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          {/* Name */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
@@ -194,7 +193,6 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             </div>
           </div>
 
-          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -207,7 +205,6 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             {emailExists && <p className="text-sm text-orange-600">{emailExists}</p>}
           </div>
 
-          {/* Hire Date */}
           <div className="space-y-2">
             <Label htmlFor="hireDate">Hire Date</Label>
             <Input
@@ -220,7 +217,6 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             />
           </div>
 
-          {/* Salary */}
           <div className="space-y-2">
             <Label htmlFor="salary">Salary</Label>
             <Input
@@ -236,12 +232,8 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
               }}
               required
             />
-            {parseFloat(salary) > 10000000 && (
-              <p className="text-xs text-red-500">Salary cannot exceed ₹10,000,000</p>
-            )}
           </div>
 
-          {/* Department & Designation */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="department">Department *</Label>
@@ -253,7 +245,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
                 <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50 bg-white shadow-lg">
                   {departments.map((dept) => (
                     <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
                       {dept.department_name}
@@ -274,7 +266,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
                 <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
                   <SelectValue placeholder="Select designation" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent  className="z-50 bg-white shadow-lg">
                   {filteredDesignations.map((des) => (
                     <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
                       {des.designation_title}
@@ -285,7 +277,6 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             </div>
           </div>
 
-          {/* Profile Picture Upload */}
           <div className="space-y-2">
             <Label htmlFor="profilePicture">Profile Picture</Label>
             <Input

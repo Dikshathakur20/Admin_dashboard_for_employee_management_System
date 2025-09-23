@@ -3,16 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <div class="flex items-center p-4">
-  <img
-    src="/logo.png"
-    alt="EMS Logo"
-    class="h-12 w-auto object-contain"
-  />
-  <span class="ml-2 text-xl font-bold text-blue-900">Employee Management System</span>
-</div>
     <meta name="description" content="Employee Management System" />
     <meta name="author" content="" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
 
     <!-- Open Graph / social sharing -->
     <meta property="og:title" content="Employee Management System" />
@@ -23,11 +18,16 @@
     <!-- Twitter card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="" />
+
+    <title>Employee Management System</title>
   </head>
 
   <body>
-    
-
+    <!-- Visible header/logo -->
+    <div class="flex items-center p-4">
+      <img src="/logo.png" alt="EMS Logo" class="h-12 w-auto object-contain" />
+      <span class="ml-2 text-xl font-bold text-blue-900">Employee Management System</span>
+    </div>
 
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

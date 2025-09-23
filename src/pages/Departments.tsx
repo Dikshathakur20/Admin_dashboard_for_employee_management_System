@@ -163,7 +163,7 @@ const Departments = () => {
                                 />
                               </div>
                 <div className="flex items-center justify-end gap-2">
-                <Button onClick={() => setShowNewDialog(true)} className="bg-[#001F7A] text-white">
+                <Button onClick={() => setShowNewDialog(true)} className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition" title="click on the button for add department">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Department
                 </Button>
@@ -171,7 +171,8 @@ const Departments = () => {
                 {/* ⭐ Sort Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button className="bg-[#001F7A] text-white">
+                    <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition"
+                    title="click on the button for sorting the departments">
                       Sort
                     </Button>
                   </DropdownMenuTrigger>
@@ -202,6 +203,7 @@ const Departments = () => {
                         <div className="flex justify-end space-x-3">
                           <Button
                             variant="outline"
+                            title="click on the button for viewing information"
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
                             onClick={async () => {
@@ -213,6 +215,7 @@ const Departments = () => {
                           </Button>
                           <Button
                             variant="outline"
+                            title="clcik on the button for  editing the information"
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
                             onClick={() => setEditingDepartment(department)}
@@ -222,6 +225,7 @@ const Departments = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            title="clcik on the button for delete the data"
                             className="bg-blue-900 text-white hover:bg-blue-700"
                             onClick={() => handleDelete(department.department_id)}
                           >
@@ -245,6 +249,7 @@ const Departments = () => {
            <div className="flex justify-center items-center gap-x-4 mt-4">
   <Button
     size="sm"
+    title="click on the button for previous page"
     disabled={currentPage === 1}
     onClick={() => setCurrentPage((p) => p - 1)}
     className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
@@ -258,6 +263,7 @@ const Departments = () => {
 
   <Button
     size="sm"
+    title="click on the button for next page"
     disabled={currentPage === totalPages}
     onClick={() => setCurrentPage((p) => p + 1)}
     className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"

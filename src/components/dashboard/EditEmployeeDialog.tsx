@@ -17,7 +17,7 @@ interface Employee {
   salary: number | null;
   department_id: number | null;
   designation_id: number | null;
-  profile_picture_url?: string | null; // store as Base64 string
+  file_data?: string | null;
 }
 
 interface Department {
@@ -28,7 +28,7 @@ interface Department {
 interface Designation {
   designation_id: number;
   designation_title: string;
-  department_id: number; 
+  department_id: number;
 }
 
 interface EditEmployeeDialogProps {
@@ -40,13 +40,13 @@ interface EditEmployeeDialogProps {
   onSuccess: () => void;
 }
 
-export const EditEmployeeDialog = ({ 
-  employee, 
-  departments, 
-  designations, 
-  open, 
-  onOpenChange, 
-  onSuccess 
+export const EditEmployeeDialog = ({
+  employee,
+  departments,
+  designations,
+  open,
+  onOpenChange,
+  onSuccess
 }: EditEmployeeDialogProps) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -71,7 +71,11 @@ export const EditEmployeeDialog = ({
     }
   }, [employee]);
 
-  // Convert file → Base64
+  useEffect(() => {
+    if (!open) setProfilePicture(null);
+  }, [open]);
+
+  // Convert file to base64 data URL
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -107,12 +111,6 @@ export const EditEmployeeDialog = ({
     setLoading(true);
 
     try {
-      let profileBase64: string | null = null;
-
-      if (profilePicture) {
-        profileBase64 = await fileToBase64(profilePicture);
-      }
-
       const employeeData: any = {
         first_name: firstName,
         last_name: lastName,
@@ -123,8 +121,10 @@ export const EditEmployeeDialog = ({
         designation_id: designationId ? parseInt(designationId) : null,
       };
 
-      if (profileBase64) {
-        employeeData.profile_picture_url = profileBase64; // Save Base64 string
+      // ✅ Convert image to base64 and store directly in file_data
+      if (profilePicture) {
+        const base64String = await fileToBase64(profilePicture);
+        employeeData.file_data = base64String;
       }
 
       const { error } = await supabase
@@ -142,6 +142,7 @@ export const EditEmployeeDialog = ({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
+      console.error(error);
       toast({
         title: "Update Issue",
         description: "Failed to update employee",
@@ -153,9 +154,7 @@ export const EditEmployeeDialog = ({
   };
 
   const filteredDesignations = designations.filter(
-    (d) =>
-      d.department_id === Number(departmentId) ||
-      d.designation_id === Number(designationId)
+    (d) => d.department_id === Number(departmentId)
   );
 
   return (
@@ -164,8 +163,8 @@ export const EditEmployeeDialog = ({
         <DialogHeader>
           <DialogTitle>Edit Employee</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+
+        <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
@@ -223,16 +222,10 @@ export const EditEmployeeDialog = ({
               required
               onChange={(e) => {
                 const value = parseFloat(e.target.value);
-                if (!isNaN(value) && value <= 10000000) {
-                  setSalary(e.target.value);
-                } else if (e.target.value === '') {
-                  setSalary('');
-                }
+                if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
+                else if (e.target.value === '') setSalary('');
               }}
             />
-            {parseFloat(salary) > 10000000 && (
-              <p className="text-xs text-red-500">Salary cannot exceed ₹10,000,000</p>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 relative z-10">
@@ -242,20 +235,8 @@ export const EditEmployeeDialog = ({
                 value={departmentId}
                 onValueChange={(val) => {
                   setDepartmentId(val);
-
-                  const deptDesignations = designations.filter(
-                    (d) => d.department_id === Number(val ?? 0)
-                  );
-
-                  if (!deptDesignations.find(d => d.designation_id === parseInt(designationId || '0'))) {
+                  if (!filteredDesignations.find(d => d.designation_id === parseInt(designationId || '0'))) {
                     setDesignationId('');
-                  }
-
-                  if (deptDesignations.length === 0) {
-                    toast({
-                      title: "No Designation",
-                      description: "No designation exists for this department. Please add a designation first.",
-                    });
                   }
                 }}
               >
@@ -293,7 +274,6 @@ export const EditEmployeeDialog = ({
             </div>
           </div>
 
-          {/* Profile Picture Upload */}
           <div className="space-y-2">
             <Label htmlFor="profilePicture">Profile Picture</Label>
             <Input
@@ -304,7 +284,7 @@ export const EditEmployeeDialog = ({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
