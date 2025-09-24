@@ -28,6 +28,8 @@ interface Department {
   department_name: string;
 }
 
+type SortOption = 'name-asc' | 'name-desc' | 'id-asc' | 'id-desc';
+
 const Designations = () => {
   const { user } = useAuth();
   const [designations, setDesignations] = useState<Designation[]>([]);
@@ -38,10 +40,9 @@ const Designations = () => {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const { toast } = useToast();
 
-  // ⭐ Sorting and pagination state
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOption, setSortOption] = useState<SortOption>('id-desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const pageSize = 10;
 
   if (!user) return <Navigate to="/auth" replace />;
 
@@ -62,7 +63,7 @@ const Designations = () => {
 
       setDesignations(designationsResult.data || []);
       setDepartments(departmentsResult.data || []);
-    } catch (error) {
+    } catch {
       toast({
         title: "Data Loading Issue",
         description: "Unable to fetch designation information",
@@ -85,7 +86,7 @@ const Designations = () => {
 
       toast({ title: "Success", description: "Designation removed successfully" });
       fetchDesignations();
-    } catch (error) {
+    } catch {
       toast({ title: "Removal Issue", description: "Unable to remove designation", variant: "default" });
     }
   };
@@ -96,19 +97,25 @@ const Designations = () => {
     return dept?.department_name || 'Unknown';
   };
 
-  // ⭐ Filtering
   const filteredDesignations = designations.filter(designation =>
     designation.designation_title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ⭐ Sorting by designation title
   const sortedDesignations = [...filteredDesignations].sort((a, b) => {
-    if (a.designation_title.toLowerCase() < b.designation_title.toLowerCase()) return sortOrder === 'asc' ? -1 : 1;
-    if (a.designation_title.toLowerCase() > b.designation_title.toLowerCase()) return sortOrder === 'asc' ? 1 : -1;
-    return 0;
+    switch (sortOption) {
+      case 'name-asc':
+        return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
+      case 'name-desc':
+        return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
+      case 'id-asc':
+        return a.designation_id - b.designation_id;
+      case 'id-desc':
+        return b.designation_id - a.designation_id;
+      default:
+        return 0;
+    }
   });
 
-  // ⭐ Pagination
   const totalPages = Math.ceil(sortedDesignations.length / pageSize);
   const paginatedDesignations = sortedDesignations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -116,123 +123,136 @@ const Designations = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        <Card className="w-full border-0 shadow-none bg-transparent">
-          <CardHeader className="px-0">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl font-bold">Designations</CardTitle>
-              
-            </div>
-          </CardHeader>
+      <main className="container mx-auto px-4 py-2">
+  <Card className="w-full border-0 shadow-none bg-transparent">
+    {/* Header with Title + Search + Actions */}
+    <CardHeader className="px-0 py-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <CardTitle className="text-2xl font-bold">Designations</CardTitle>
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+          {/* Search bar */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+            <Input
+              placeholder="Search designation"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowNewDialog(true)}
+              className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
+                  Sort
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white">
+                <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
+                  Name A - Z
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
+                  Name Z - A
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
+                  Old → New
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
+                  New → Old
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+    </CardHeader>
+
 
           <CardContent className="px-0">
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                <div className="relative max-w-sm">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
-                  <Input
-                    placeholder="Search designation"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 text-black placeholder-black bg-white border border-gray-400 shadow-sm"
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    onClick={() => setShowNewDialog(true)}
-                    className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition"
-                    title="clcik on the button for adding designations"   
-                       >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Designation 
-                  </Button>
-                {/* ⭐ Sort Button */}
-                          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white transition" title="click on the button for sorting the designation">
-                Sort 
-              </Button>
-            </DropdownMenuTrigger>
+            {/* Table */}
+            <div className="border rounded-lg overflow-hidden">
+              <Table className="table-auto">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Designation</TableHead>
+                    <TableHead className="font-bold">Department</TableHead>
+                    <TableHead className="font-bold text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
 
-            <DropdownMenuContent align="end" className="bg-white">
-              <DropdownMenuItem onClick={() => setSortOrder('asc')}>A - Z</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortOrder('desc')}>Z - A</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-              </div>
-              </div>
-
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold">Designation </TableHead>
-                      <TableHead className="font-bold">Department </TableHead>
-                      <TableHead className="font-bold text-center">Actions</TableHead>
+                <TableBody>
+                  {paginatedDesignations.map((designation) => (
+                    <TableRow key={designation.designation_id}>
+                      <TableCell className="font-medium">{designation.designation_title}</TableCell>
+                      <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
+                      <TableCell>
+                        <div className="flex justify-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            title="Click to edit"
+                            className="bg-blue-900 text-white hover:bg-blue-700"
+                            onClick={() => setEditingDesignation(designation)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            title="Click to delete"
+                            className="bg-blue-900 text-white hover:bg-blue-700"
+                            onClick={() => handleDelete(designation.designation_id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
-                  <TableBody>
-                    {paginatedDesignations.map((designation) => (
-                      <TableRow key={designation.designation_id}>
-                        <TableCell className="font-medium">{designation.designation_title}</TableCell>
-                        <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
-                        <TableCell>
-                          <div className="flex justify-center space-x-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              title="click on the button  for editing"
-                              className="bg-blue-900 text-white hover:bg-blue-700"
-                              onClick={() => setEditingDesignation(designation)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              title="clcik on the button for deleting the designation"
-                              className="bg-blue-900 text-white hover:bg-blue-700"
-                              onClick={() => handleDelete(designation.designation_id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            {paginatedDesignations.length === 0 && (
+              <div className="text-center p-8 text-muted-foreground">
+                {searchTerm ? 'No designations found matching your search.' : 'No designations found.'}
               </div>
+            )}
 
-              {paginatedDesignations.length === 0 && (
-                <div className="text-center p-8 text-muted-foreground">
-                  {searchTerm ? 'No designations found matching your search.' : 'No designations found.'}
-                </div>
-              )}
-
-              {/* ⭐ Pagination */}
-              <div className="flex justify-center items-center mt-4 space-x-4">
-                <Button
-                 size="sm"
-                 title="click on the button for previous button "
-                 disabled={currentPage === 1}
-                 onClick={() => setCurrentPage((p) => p - 1)}
-                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Previous
-                </Button>
-                <span>Page {currentPage} of {totalPages}</span>
-                <Button
-                 size="sm"
-                 title="clcik on the button for next button "
-                 disabled={currentPage === totalPages}
-                 onClick={() => setCurrentPage((p) => p + 1)}
-                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Next
-                </Button>
-              </div>
+            {/* Pagination */}
+            <div className="flex justify-center items-center mt-4 space-x-4">
+              <Button
+                size="sm"
+                title="Previous page"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                Previous
+              </Button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <Button
+                size="sm"
+                title="Next page"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                Next
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -1,21 +1,27 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User, Lock } from 'lucide-react';
+import { Loader2, User, Lock, Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user, signIn } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const { user, signIn, signOut } = useAuth();
   const { toast } = useToast();
+  const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
+  const navigate = useNavigate();
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  // ✅ If user is logged in, redirect to dashboard
+  useEffect(() => {
+    if (user) navigate('/dashboard', { replace: true });
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,9 +29,11 @@ const Auth = () => {
     try {
       const { error } = await signIn(emailOrUsername, password);
       if (error) {
-        toast({ title: "Sign In Issue", description: error.message, variant: "destructive",duration:2000 });
+        toast({ title: "Sign In Issue", description: error.message, variant: "destructive", duration: 2000 });
       } else {
-        toast({ title: "Welcome", description: "Successfully signed in to Admin Dashboard!" ,duration:1500 });
+        toast({ title: "Welcome", description: "Successfully signed in!", duration: 1500 });
+        resetInactivityTimer();
+        navigate('/dashboard', { replace: true });
       }
     } catch {
       toast({ title: "Connection Issue", description: "An unexpected issue occurred", variant: "destructive" });
@@ -34,71 +42,108 @@ const Auth = () => {
     }
   };
 
+  // Auto logout after 5 minutes of inactivity
+  const resetInactivityTimer = () => {
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    inactivityTimer.current = setTimeout(() => {
+      toast({ title: "Session Expired", description: "Due to inactivity, please log in again.", variant: "destructive" });
+      signOut();
+      navigate('/auth', { replace: true });
+    }, 5 * 60 * 1000);
+  };
+
+  useEffect(() => {
+    const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, resetInactivityTimer));
+
+    return () => {
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      events.forEach(e => window.removeEventListener(e, resetInactivityTimer));
+    };
+  }, []);
+
+  // Logout and redirect to signin on tab close
+  useEffect(() => {
+    const handleUnload = () => {
+      signOut();
+      navigate('/auth', { replace: true });
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [navigate, signOut]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white/90 dark:bg-gray-900/80 shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-700 to-blue-500 p-4">
+      <h1 className="text-white text-3xl font-bold mb-8">Admin Portal</h1>
+
+      <Card className="w-full max-w-md bg-white/95 dark:bg-gray-900/80 shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md">
         <form onSubmit={handleSubmit} className="p-6">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white">Admin Sign In</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white">Login</CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300 mt-1">
               Enter your credentials to access the admin dashboard
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-5 mt-4">
-  <div className="space-y-1">
-    <Label htmlFor="email" className="font-medium text-gray-700 dark:text-gray-200">
-      Email or Username
-    </Label>
-    <div className="relative">
-      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-      <Input
-        id="email"
-        type="text"
-        placeholder="Enter email or username"
-        value={emailOrUsername}
-        onChange={(e) => setEmailOrUsername(e.target.value)}
-        required
-        autoCapitalize='off'
-        className="pl-10 bg-white border border-gray-400 shadow-sm text-black placeholder-gray-500 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-      />
-    </div>
-  </div>
+            <div className="space-y-1">
+              <Label htmlFor="email" className="font-medium text-gray-700 dark:text-gray-200">
+                Email or Username
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                  id="email"
+                  type="text"
+                  placeholder="Enter email or username"
+                  value={emailOrUsername}
+                  onChange={(e) => setEmailOrUsername(e.target.value)}
+                  required
+                  autoCapitalize="off"
+                  className="pl-10 bg-white border border-gray-400 shadow-sm text-black placeholder-gray-500 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                />
+              </div>
+            </div>
 
-  <div className="space-y-1">
-    <Label htmlFor="password" className="font-medium text-gray-700 dark:text-gray-200">
-      Password
-    </Label>
-    <div className="relative">
-      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-      <Input
-        id="password"
-        type="password"
-        placeholder="Enter password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        autoComplete='newpassword'
-        className="pl-10 bg-white border border-gray-400 shadow-sm text-black placeholder-gray-500 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-      />
-    </div>
-  </div>
+            <div className="space-y-1">
+              <Label htmlFor="password" className="font-medium text-gray-700 dark:text-gray-200">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="newpassword"
+                  className="pl-10 pr-10 bg-white border border-gray-400 shadow-sm text-black placeholder-gray-500 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                />
+                {showPassword ? (
+                  <EyeOff
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
+                    size={18}
+                    onClick={() => setShowPassword(false)}
+                  />
+                ) : (
+                  <Eye
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
+                    size={18}
+                    onClick={() => setShowPassword(true)}
+                  />
+                )}
+              </div>
+            </div>
 
-
-<Button
-  type="submit"
-  className="w-full bg-[#001F7A] text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-[#0029b0] transition disabled:opacity-70 disabled:cursor-not-allowed"
-  disabled={loading}
->
-  {loading ? (
-    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-  ) : (
-    "Sign In"
-  )}
-</Button>
-
-
-            
+            <Button
+              type="submit"
+              className="w-full bg-[#001F7A] text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-[#0029b0] transition disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Sign In"}
+            </Button>
           </CardContent>
         </form>
       </Card>

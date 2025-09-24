@@ -47,42 +47,44 @@ const Navbar: React.FC = () => {
     <>
       {isOpen ? (
         // 🔹 Full Navbar
-        <nav className="bg-card shadow-md border-b">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            {/* Links */}
-            <div className="flex space-x-6">
-              <Link to="/dashboard" className="flex items-center space-x-1 hover:text-primary">
-                <Home className="h-4 w-4" />
-                <span>Home</span>
-              </Link>
-              <Link to="/employees" className="flex items-center space-x-1 hover:text-primary">
-                <Users className="h-4 w-4" />
-                <span>Manage Employees</span>
-              </Link>
-              <Link to="/departments" className="flex items-center space-x-1 hover:text-primary">
-                <Building className="h-4 w-4" />
-                <span>Manage Departments</span>
-              </Link>
-              <Link to="/designations" className="flex items-center space-x-1 hover:text-primary">
-                <Briefcase className="h-4 w-4" />
-                <span>Manage Designations</span>
-              </Link>
-             
-            </div>
+       <nav className="bg-card border-b">
+  <div className="container mx-auto px-4 py-1 flex items-center justify-between">
+    {/* Links */}
+    <div className="flex items-center space-x-3">
+      <Link to="/dashboard" className="flex items-center gap-1 hover:text-primary text-sm font-medium">
+        <Home className="h-4 w-4" />
+        <span>Home</span>
+      </Link>
+      <Link to="/employees" className="flex items-center gap-1 hover:text-primary text-sm font-medium">
+        <Users className="h-4 w-4" />
+        <span>Manage Employees</span>
+      </Link>
+      <Link to="/departments" className="flex items-center gap-1 hover:text-primary text-sm font-medium">
+        <Building className="h-4 w-4" />
+        <span>Manage Departments</span>
+      </Link>
+      <Link to="/designations" className="flex items-center gap-1 hover:text-primary text-sm font-medium">
+        <Briefcase className="h-4 w-4" />
+        <span>Manage Designations</span>
+      </Link>
+    </div>
 
-            {/* Right side: Sign Out */}
-            <div className="flex items-center space-x-3">
-              <Button
-                className="bg-[#001F7A] text-white px-4 py-2 rounded-lg flex items-center hover:bg-[#0029b0] transition"
-                 title="click on the button for signing out"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        </nav>
+    {/* Right side: Sign Out */}
+    <div className="flex items-center">
+      <Button
+  className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
+  title="Click to sign out"
+  onClick={handleSignOut}
+>
+  <LogOut className="h-5 w-5" />
+  Sign Out
+</Button>
+
+    </div>
+  </div>
+</nav>
+
+
       ) : null}
     </>
   );

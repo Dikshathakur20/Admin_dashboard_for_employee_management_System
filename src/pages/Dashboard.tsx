@@ -50,27 +50,28 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {cards.map((card) => (
-          <Card
-            key={card.title}
-            onClick={() => navigate(card.route)}
-            className="cursor-pointer hover:shadow-lg transition"
-          >
-            <CardHeader className="flex justify-between pb-2">
-              <CardTitle className="text-2xl font-bold">{card.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold uppercase">{card.count}</span>
-                <span className="text-x text-muted-foreground">{card.subtitle}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+    <div className="min-h-screen bg-background text-foreground p-4">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+    {cards.map((card) => (
+      <Card
+        key={card.title}
+        onClick={() => navigate(card.route)}
+        className="cursor-pointer hover:shadow-lg transition flex flex-col justify-between"
+      >
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xl font-semibold">{card.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-1">
+          <div className="flex flex-col items-start">
+            <span className="text-xl font-bold">{card.count}</span>
+            <span className="text-sm text-muted-foreground">{card.subtitle}</span>
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+</div>
+
   );
 };
 
