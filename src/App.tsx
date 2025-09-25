@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/ui/Navbar";
-import Footer from "@/components/layout/Footer";  // ✅ import Footer
+import Footer from "@/components/ui/Footer";  // ✅ import Footer
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
