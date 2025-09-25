@@ -1,9 +1,5 @@
 {
-  "redirects": [
-    {
-      "source": "/((?!auth).*)",
-      "destination": "/auth",
-      "permanent": false
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
