@@ -57,6 +57,7 @@ const Dashboard = () => {
         key={card.title}
         onClick={() => navigate(card.route)}
         className="cursor-pointer hover:shadow-lg transition flex flex-col justify-between"
+        style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}
       >
         <CardHeader className="pb-1">
           <CardTitle className="text-xl font-semibold">{card.title}</CardTitle>
