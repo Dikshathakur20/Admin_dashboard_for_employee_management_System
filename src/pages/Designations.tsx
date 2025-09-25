@@ -146,7 +146,8 @@ const Designations = () => {
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2"
+          title="click on the button for adding new data">
             <Button
               onClick={() => setShowNewDialog(true)}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
@@ -156,7 +157,7 @@ const Designations = () => {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="click on the button for sort data">
                   Sort
                 </Button>
               </DropdownMenuTrigger>

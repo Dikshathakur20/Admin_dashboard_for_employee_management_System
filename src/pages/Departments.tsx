@@ -197,13 +197,14 @@ const Departments = () => {
             <Button
               onClick={() => setShowNewDialog(true)}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+              title="click on the button for add data"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="click on th ebutton for sort data">
                   Sort
                 </Button>
               </DropdownMenuTrigger>
@@ -251,6 +252,7 @@ const Departments = () => {
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
+                            title="click on the button for view data"
                             onClick={async () => {
                               await fetchDepartmentDesignations(d.department_id);
                               setViewingDepartment(d);
@@ -261,6 +263,7 @@ const Departments = () => {
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
+                            title="click on the button for editing data"
                             onClick={() => setEditingDepartment(d)}
                           >
                             <Edit className="h-4 w-4" />
@@ -268,6 +271,7 @@ const Departments = () => {
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
+                            title="clcik on the button for deleting data"
                             onClick={() => handleDelete(d.department_id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -295,6 +299,7 @@ const Departments = () => {
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
+                title="click on the button for selecting previous one"
               >
                 Previous
               </Button>
@@ -306,6 +311,7 @@ const Departments = () => {
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
+                title="clcik on the button for nextpage"
               >
                 Next
               </Button>
