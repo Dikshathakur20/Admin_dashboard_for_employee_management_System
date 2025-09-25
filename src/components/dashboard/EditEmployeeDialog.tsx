@@ -174,6 +174,7 @@ export const EditEmployeeDialog = ({
                 id="firstName"
                 value={firstName}
                 maxLength={25}
+                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
                 onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setFirstName(e.target.value)}
                 required
               />
@@ -184,6 +185,7 @@ export const EditEmployeeDialog = ({
                 id="lastName"
                 value={lastName}
                 maxLength={25}
+                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
                 onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setLastName(e.target.value)}
                 required
               />
@@ -196,6 +198,7 @@ export const EditEmployeeDialog = ({
               id="email"
               type="email"
               value={email}
+              className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={(e) => setEmail(e.target.value.toLowerCase())}
               required
             />
@@ -207,6 +210,7 @@ export const EditEmployeeDialog = ({
               id="hireDate"
               type="date"
               value={hireDate}
+              className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={(e) => setHireDate(e.target.value)}
               max={new Date().toISOString().split("T")[0]}
               required
@@ -222,6 +226,7 @@ export const EditEmployeeDialog = ({
               value={salary}
               placeholder="Enter salary (max 10,000,000)"
               required
+              className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={(e) => {
                 const value = parseFloat(e.target.value);
                 if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
