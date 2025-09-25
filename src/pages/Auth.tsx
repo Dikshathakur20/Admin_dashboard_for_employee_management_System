@@ -73,10 +73,12 @@ const Auth = () => {
   }, [navigate, signOut]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-700 to-blue-500 p-4">
-      <h1 className="text-white text-3xl font-bold mb-8">Admin Portal</h1>
-
-      <Card className="w-full max-w-md bg-white/95 dark:bg-gray-900/80 shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+      <h1 className="text-blue-700 text-3xl font-bold mb-8">Admin Portal</h1>
+    </div>
+      <Card className="w-full max-w-md bg-white/95 dark:bg-gray-900/80 shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"  
+    style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}
+        >
         <form onSubmit={handleSubmit} className="p-6">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white">Login</CardTitle>
@@ -137,11 +139,12 @@ const Auth = () => {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-[#001F7A] text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-[#0029b0] transition disabled:opacity-70 disabled:cursor-not-allowed"
-              disabled={loading}
-            >
+           <Button
+  type="submit"
+  className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
+  title="Click to sign in"
+  disabled={loading}
+>
               {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Sign In"}
             </Button>
           </CardContent>
