@@ -139,14 +139,16 @@ const Auth = () => {
               </div>
             </div>
 
-           <Button
+          <Button
   type="submit"
   className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
   title="Click to sign in"
   disabled={loading}
 >
-              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Sign In"}
-            </Button>
+  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <></>}
+  Sign In
+</Button>
+
           </CardContent>
         </form>
       </Card>
