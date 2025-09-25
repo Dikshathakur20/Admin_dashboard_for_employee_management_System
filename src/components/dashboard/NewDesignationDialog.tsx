@@ -103,7 +103,9 @@ export const NewDesignationDialog = ({ open, onOpenChange, onSuccess }: NewDesig
           
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200"style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
           {/* Department Dropdown */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
