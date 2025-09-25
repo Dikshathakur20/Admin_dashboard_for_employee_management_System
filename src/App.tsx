@@ -28,23 +28,15 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // ----------------------
 // Force fresh-tab login on initial load
 // ----------------------
-const ForceFreshAuth = () => {
-  const { setUser } = useAuth() as any; // cast to access setUser
-  useEffect(() => {
-    // Clear user on fresh page load
-    setUser(null);
-  }, [setUser]);
-  return null;
-};
+
 
 // ----------------------
 // App Routes
 // ----------------------
 const AppRoutes = () => {
   return (
-    <>
-      <ForceFreshAuth /> {/* Clears user on fresh load */}
-      <Routes>
+    
+      
         {/* Public routes */}
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
