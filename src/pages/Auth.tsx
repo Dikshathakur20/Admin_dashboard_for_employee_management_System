@@ -137,7 +137,7 @@ const Auth = () => {
             </div>
 
             {/* Sign In Button */}
-            <div className="flex justify-center">
+            <div className="flex items-center justify-center mt-6">
             <Button
               type="submit"
               className=" bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
