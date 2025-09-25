@@ -12,70 +12,60 @@ import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
 import Designations from "./pages/Designations";
 import ViewEmployees from "./pages/ViewEmployees";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-// ProtectedRoute wrapper
-const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
+// ----------------------
+// Protected Route
+// ----------------------
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null; // optional: spinner
   return user ? children : <Navigate to="/auth" replace />;
 };
 
+// ----------------------
+// Force fresh-tab login on initial load
+// ----------------------
+const ForceFreshAuth = () => {
+  const { setUser } = useAuth() as any; // cast to access setUser
+  useEffect(() => {
+    // Clear user on fresh page load
+    setUser(null);
+  }, [setUser]);
+  return null;
+};
+
+// ----------------------
+// App Routes
+// ----------------------
 const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Public route */}
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/" element={<Index />} />
+    <>
+      <ForceFreshAuth /> {/* Clears user on fresh load */}
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
 
-      {/* Protected routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/employees"
-        element={
-          <ProtectedRoute>
-            <Employees />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/departments"
-        element={
-          <ProtectedRoute>
-            <Departments />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/designations"
-        element={
-          <ProtectedRoute>
-            <Designations />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/view-employees"
-        element={
-          <ProtectedRoute>
-            <ViewEmployees />
-          </ProtectedRoute>
-        }
-      />
+        {/* Protected routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+        <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
+        <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
+        <Route path="/view-employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
 
-      {/* Catch-all → redirect to auth */}
-      <Route path="*" element={<Navigate to="/auth" replace />} />
-    </Routes>
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
+    </>
   );
 };
 
+// ----------------------
+// Main App
+// ----------------------
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
