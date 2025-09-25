@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // Force fresh-tab login
 // ----------------------
 const ForceFreshTab = () => {
-  const { setUser } = useAuth() as any;
+  const { signOut } = useAuth() as any;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
