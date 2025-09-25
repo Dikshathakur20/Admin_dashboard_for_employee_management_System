@@ -15,18 +15,26 @@ import ViewEmployees from "./pages/ViewEmployees";
 
 const queryClient = new QueryClient();
 
-// ProtectedRoute wrapper
-const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
+// ----------------------
+// Protected Route Wrapper
+// ----------------------
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return null; // optionally, a loading spinner
+
   return user ? children : <Navigate to="/auth" replace />;
 };
 
+// ----------------------
+// App Routes
+// ----------------------
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public route */}
-      <Route path="/auth" element={<Auth />} />
+      {/* Public routes */}
       <Route path="/" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
 
       {/* Protected routes */}
       <Route
@@ -70,12 +78,15 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Catch-all → redirect to auth */}
+      {/* Catch-all → always redirect to /auth */}
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
 };
 
+// ----------------------
+// Main App
+// ----------------------
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -83,7 +94,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Navbar />
+          <Navbar /> {/* Navbar now only shows on management routes */}
           <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
