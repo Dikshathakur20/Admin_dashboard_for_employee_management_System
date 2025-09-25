@@ -194,6 +194,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
                 maxLength={25}
                 onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setLastName(e.target.value)}
                 required
+                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               />
             </div>
           </div>
