@@ -245,7 +245,9 @@ const Employees = () => {
                   Sort
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white">
+              <DropdownMenuContent align="end" className="bg-white" style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
                 <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
                   Name A - Z
                 </DropdownMenuItem>
@@ -266,7 +268,9 @@ const Employees = () => {
     </CardHeader>
 
           {/* Table */}
-          <CardContent className="px-0">
+          <CardContent className="px-0" style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
             <div className="border rounded-2g overflow-hidden">
               <Table>
                 <TableHeader>
@@ -408,7 +412,9 @@ const Employees = () => {
         open={!!viewingEmployee}
         onOpenChange={(open) => !open && setViewingEmployee(null)}
       >
-        <DialogContent className="w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-blue-50 p-6 rounded-xl">
+        <DialogContent className="w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-blue-50 p-6 rounded-xl" style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-blue-900">
               Employee Details
