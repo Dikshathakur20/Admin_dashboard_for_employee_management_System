@@ -234,13 +234,14 @@ const Employees = () => {
             <Button
               onClick={() => setShowNewDialog(true)}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+              title="click on the button for Adding new employees"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="click on the button for sort the data">
                   Sort
                 </Button>
               </DropdownMenuTrigger>
@@ -313,6 +314,7 @@ const Employees = () => {
                               size="sm"
                               variant="outline"
                               className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
+                              title="click on the button for view Data"
                               onClick={() => setViewingEmployee(emp)}
                             >
                               <Eye className="h-4 w-4" />
@@ -321,6 +323,7 @@ const Employees = () => {
                               size="sm"
                               variant="outline"
                               className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
+                              title="click on the button for edit Data"
                               onClick={() => setEditingEmployee(emp)}
                             >
                               <Edit className="h-4 w-4" />
@@ -329,6 +332,7 @@ const Employees = () => {
                               size="sm"
                               variant="outline"
                               className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
+                              title="Click on the button for delete Data"
                               onClick={() => handleDelete(emp.employee_id)}
                             >
                               <Trash2 className="h-4 w-4" />
