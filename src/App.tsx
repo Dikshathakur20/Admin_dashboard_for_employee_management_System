@@ -35,7 +35,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // ----------------------
 const AppRoutes = () => {
   return (
-    
+    <Routes>
       
         {/* Public routes */}
         <Route path="/" element={<Index />} />
