@@ -97,7 +97,9 @@ export const NewDesignationDialog = ({ open, onOpenChange, onSuccess }: NewDesig
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200">
+      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200"style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
         <DialogHeader>
           <DialogTitle>Add New Designation</DialogTitle>
           
@@ -133,6 +135,7 @@ export const NewDesignationDialog = ({ open, onOpenChange, onSuccess }: NewDesig
                             id="designationTitle"
                             value={designationTitle}
                             maxLength={50}
+                            className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
                             onChange={(e) => {
                               const value = e.target.value;
                               if (/^[A-Za-z\s]*$/.test(value)) {
