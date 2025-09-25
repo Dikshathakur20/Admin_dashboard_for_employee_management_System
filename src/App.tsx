@@ -11,7 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
 import Designations from "./pages/Designations";
-import ViewEmployees from "./pages/ViewEmployees";
+
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();
@@ -46,7 +46,6 @@ const AppRoutes = () => {
         <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
         <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
         <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
-        <Route path="/view-employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/auth" replace />} />
