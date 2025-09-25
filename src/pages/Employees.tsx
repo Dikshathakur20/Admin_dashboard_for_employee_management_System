@@ -365,6 +365,7 @@ const Employees = () => {
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
                   className="bg-blue-900 text-white hover:bg-blue-700 h-8"
+                  title="click on the button for previous page"
                 >
                   Prev
                 </Button>
@@ -376,6 +377,7 @@ const Employees = () => {
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => p + 1)}
                   className="bg-blue-900 text-white hover:bg-blue-700 h-8"
+                  title="Click on the button for next page "
                 >
                   Next
                 </Button>
