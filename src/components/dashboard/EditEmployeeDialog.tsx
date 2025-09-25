@@ -166,9 +166,7 @@ export const EditEmployeeDialog = ({
           <DialogTitle>Edit Employee</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 p-6"style={{
-            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
-          }}>
+        <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
