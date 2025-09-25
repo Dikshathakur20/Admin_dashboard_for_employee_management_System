@@ -50,7 +50,9 @@ const Navbar: React.FC = () => {
   return (
     <>
       {isOpen && (
-        <nav className="bg-card border-b">
+        <nav className="bg-card border-b"  style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
           <div className="container mx-auto px-4 py-1 flex items-center justify-between">
             {/* Links */}
             <div className="flex items-center space-x-3">
