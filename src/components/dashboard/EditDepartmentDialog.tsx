@@ -82,7 +82,9 @@ export const EditDepartmentDialog = ({
           
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200"style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
          <div className="space-y-2">
   <Label htmlFor="departmentName">Department Name *</Label>
   <Input
