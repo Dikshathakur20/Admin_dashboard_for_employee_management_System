@@ -18,7 +18,7 @@ const Index = () => {
           <p className="text-xl md:text-2xl text-foreground/80 mb-10 max-w-3xl mx-auto leading-relaxed">
             Comprehensive admin dashboard for managing employees, departments, and designations with powerful CRUD operations.
           </p>
-          <div className="flex items-center justify-center h-screen mt-6">
+          <div className="flex items-center justify-center mt-6">
           <Link to="/auth">
           <Button
             className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
@@ -118,7 +118,7 @@ const Index = () => {
           <p className="text-foreground/90 mb-6 text-lg md:text-xl drop-shadow-md">
             Ready to manage your workforce effectively?
           </p>
-           <div className="flex items-center justify-center h-screen mt-6">
+           <div className="flex items-center justify-center  mt-6">
           <Link to="/auth">
                   <Button
         className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm font-semibold"
