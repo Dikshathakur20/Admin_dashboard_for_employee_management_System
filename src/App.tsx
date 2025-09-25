@@ -5,13 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/layout/Footer";  // ✅ import Footer
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
 import Designations from "./pages/Designations";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -27,23 +28,18 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // ----------------------
 // Force fresh-tab login
 // ----------------------
-// ----------------------
-// Force fresh-tab login
-// ----------------------
 const ForceFreshTab = () => {
   const { signOut } = useAuth();
 
   useEffect(() => {
     if (!sessionStorage.getItem("tabInitialized")) {
-      // Use signOut method instead of setUser
       signOut().catch(console.error);
       sessionStorage.setItem("tabInitialized", "true");
     }
   }, [signOut]);
 
-  return null; // no UI needed
+  return null;
 };
-
 
 // ----------------------
 // App Routes
@@ -51,7 +47,7 @@ const ForceFreshTab = () => {
 const AppRoutes = () => {
   return (
     <>
-      <ForceFreshTab /> {/* runs once per tab */}
+      <ForceFreshTab />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Index />} />
@@ -82,6 +78,7 @@ const App = () => (
         <BrowserRouter>
           <Navbar />
           <AppRoutes />
+          <Footer /> {/* ✅ Added Footer here */}
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
