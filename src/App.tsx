@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
+import Layout from "@/components/dashboard/Layout"; // ✅ Import Layout
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -22,7 +23,7 @@ const queryClient = new QueryClient();
 // ----------------------
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
-  if (loading) return null; // optional: show spinner
+  if (loading) return null;
   return user ? children : <Navigate to="/auth" replace />;
 };
 
@@ -63,19 +64,14 @@ const InactivityHandler = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        resetTimer(); // start countdown when user switches tab
-      } else {
-        resetTimer(); // reset when user comes back
-      }
+      if (document.hidden) resetTimer();
+      else resetTimer();
     };
 
-    // Listen to activity events
     activityEvents.forEach((e) => window.addEventListener(e, resetTimer));
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Start initial timer
-    resetTimer();
+    resetTimer(); // start initially
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -94,17 +90,12 @@ const AppRoutes = () => (
   <>
     <ForceFreshTab />
     <Routes>
-      {/* Public routes */}
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
-
-      {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
       <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
-
-      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   </>
@@ -120,11 +111,12 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {/* Wrap everything with inactivity handler */}
           <InactivityHandler>
-            <Navbar />
-            <AppRoutes />
-            <Footer />
+            <Layout>
+              <Navbar />
+              <AppRoutes />
+              <Footer />
+            </Layout>
           </InactivityHandler>
         </BrowserRouter>
       </TooltipProvider>
