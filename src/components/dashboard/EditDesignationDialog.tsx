@@ -119,7 +119,9 @@ export const EditDesignationDialog = ({
           
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-xl shadow-md p-6 border border-gray-200" style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
           
 
           {/* Department Dropdown */}
