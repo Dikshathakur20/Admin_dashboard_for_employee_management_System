@@ -25,9 +25,6 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   return user ? children : <Navigate to="/auth" replace />;
 };
 
-// ----------------------
-// Force fresh-tab login on initial load
-// ----------------------
 
 
 // ----------------------
@@ -36,23 +33,22 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      
-        {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
+      {/* Public routes */}
+      <Route path="/" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
 
-        {/* Protected routes */}
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
-        <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
-        <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
+      {/* Protected routes */}
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+      <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
+      <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
 
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes>
-    </>
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/auth" replace />} />
+    </Routes>
   );
 };
+
 
 // ----------------------
 // Main App
