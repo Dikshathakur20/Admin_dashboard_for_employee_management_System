@@ -15,44 +15,67 @@ import ViewEmployees from "./pages/ViewEmployees";
 
 const queryClient = new QueryClient();
 
-// ----------------------
-// Force Auth Route Wrapper
-// ----------------------
-const ForceAuthRoute = ({ children }: { children: JSX.Element }) => {
-  const { loading } = useAuth();
-
-  if (loading) return null; // Wait for Supabase session check
-
-  // Always redirect to /auth on fresh load
-  return <Navigate to="/auth" replace />;
+// ProtectedRoute wrapper
+const ProtectedRoute = ({ children }) => {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/auth" replace />;
 };
 
-// ----------------------
-// App Routes
-// ----------------------
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<Index />} />
+      {/* Public route */}
       <Route path="/auth" element={<Auth />} />
+      <Route path="/" element={<Index />} />
 
-      {/* Protected routes: always redirect to /auth initially */}
-      <Route path="/dashboard" element={<ForceAuthRoute><Dashboard /></ForceAuthRoute>} />
-      <Route path="/employees" element={<ForceAuthRoute><Employees /></ForceAuthRoute>} />
-      <Route path="/departments" element={<ForceAuthRoute><Departments /></ForceAuthRoute>} />
-      <Route path="/designations" element={<ForceAuthRoute><Designations /></ForceAuthRoute>} />
-      <Route path="/view-employees" element={<ForceAuthRoute><ViewEmployees /></ForceAuthRoute>} />
+      {/* Protected routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employees"
+        element={
+          <ProtectedRoute>
+            <Employees />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/departments"
+        element={
+          <ProtectedRoute>
+            <Departments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/designations"
+        element={
+          <ProtectedRoute>
+            <Designations />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/view-employees"
+        element={
+          <ProtectedRoute>
+            <ViewEmployees />
+          </ProtectedRoute>
+        }
+      />
 
-      {/* Catch-all → redirect to /auth */}
+      {/* Catch-all → redirect to auth */}
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
 };
 
-// ----------------------
-// Main App
-// ----------------------
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -60,7 +83,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Navbar /> {/* Navbar only shows on management routes */}
+          <Navbar />
           <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
