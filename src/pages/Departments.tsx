@@ -338,7 +338,9 @@ const Departments = () => {
         open={!!viewingDepartment}
         onOpenChange={(open) => !open && setViewingDepartment(null)}
       >
-        <DialogContent className="max-w-lg bg-blue-50 p-6 rounded-xl">
+        <DialogContent className="max-w-lg bg-blue-50 p-6 rounded-xl" style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-blue-900">
               Department Details
