@@ -113,7 +113,9 @@ export const EditDesignationDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200">
+      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200"style={{
+            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+          }}>
         <DialogHeader>
           <DialogTitle>Edit Designation</DialogTitle>
           
