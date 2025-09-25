@@ -268,9 +268,7 @@ const Employees = () => {
     </CardHeader>
 
           {/* Table */}
-          <CardContent className="px-0" style={{
-            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
-          }}>
+          <CardContent className="px-0" >
             <div className="border rounded-2g overflow-hidden">
               <Table>
                 <TableHeader>
