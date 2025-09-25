@@ -11,8 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
 import Designations from "./pages/Designations";
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
@@ -21,34 +20,53 @@ const queryClient = new QueryClient();
 // ----------------------
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
-  if (loading) return null; // optional: spinner
+  if (loading) return null; // optional: show spinner here
   return user ? children : <Navigate to="/auth" replace />;
 };
 
+// ----------------------
+// Force fresh-tab login
+// ----------------------
+const ForceFreshTab = () => {
+  const { setUser } = useAuth() as any;
+  const [ready, setReady] = useState(false);
 
+  useEffect(() => {
+    if (!sessionStorage.getItem("tabInitialized")) {
+      setUser(null); // force logout on fresh tab
+      sessionStorage.setItem("tabInitialized", "true");
+    }
+    setReady(true);
+  }, [setUser]);
+
+  if (!ready) return <div>Loading...</div>; // fallback UI
+  return null;
+};
 
 // ----------------------
 // App Routes
 // ----------------------
 const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
+    <>
+      <ForceFreshTab /> {/* runs once per tab */}
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
 
-      {/* Protected routes */}
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
-      <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
-      <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
+        {/* Protected routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+        <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
+        <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
 
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/auth" replace />} />
-    </Routes>
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
+    </>
   );
 };
-
 
 // ----------------------
 // Main App
