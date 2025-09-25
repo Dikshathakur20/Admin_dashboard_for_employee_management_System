@@ -27,21 +27,23 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // ----------------------
 // Force fresh-tab login
 // ----------------------
+// ----------------------
+// Force fresh-tab login
+// ----------------------
 const ForceFreshTab = () => {
-  const { signOut } = useAuth() as any;
-  const [ready, setReady] = useState(false);
+  const { signOut } = useAuth();
 
   useEffect(() => {
     if (!sessionStorage.getItem("tabInitialized")) {
-      setUser(null); // force logout on fresh tab
+      // Use signOut method instead of setUser
+      signOut().catch(console.error);
       sessionStorage.setItem("tabInitialized", "true");
     }
-    setReady(true);
-  }, [setUser]);
+  }, [signOut]);
 
-  if (!ready) return <div>Loading...</div>; // fallback UI
-  return null;
+  return null; // no UI needed
 };
+
 
 // ----------------------
 // App Routes
