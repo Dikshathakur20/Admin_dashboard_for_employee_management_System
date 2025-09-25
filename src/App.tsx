@@ -16,14 +16,15 @@ import ViewEmployees from "./pages/ViewEmployees";
 const queryClient = new QueryClient();
 
 // ----------------------
-// Protected Route Wrapper
+// Force Auth Route Wrapper
 // ----------------------
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { user, loading } = useAuth();
+const ForceAuthRoute = ({ children }: { children: JSX.Element }) => {
+  const { loading } = useAuth();
 
-  if (loading) return null; // optionally, a loading spinner
+  if (loading) return null; // Wait for Supabase session check
 
-  return user ? children : <Navigate to="/auth" replace />;
+  // Always redirect to /auth on fresh load
+  return <Navigate to="/auth" replace />;
 };
 
 // ----------------------
@@ -36,49 +37,14 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
 
-      {/* Protected routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/employees"
-        element={
-          <ProtectedRoute>
-            <Employees />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/departments"
-        element={
-          <ProtectedRoute>
-            <Departments />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/designations"
-        element={
-          <ProtectedRoute>
-            <Designations />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/view-employees"
-        element={
-          <ProtectedRoute>
-            <ViewEmployees />
-          </ProtectedRoute>
-        }
-      />
+      {/* Protected routes: always redirect to /auth initially */}
+      <Route path="/dashboard" element={<ForceAuthRoute><Dashboard /></ForceAuthRoute>} />
+      <Route path="/employees" element={<ForceAuthRoute><Employees /></ForceAuthRoute>} />
+      <Route path="/departments" element={<ForceAuthRoute><Departments /></ForceAuthRoute>} />
+      <Route path="/designations" element={<ForceAuthRoute><Designations /></ForceAuthRoute>} />
+      <Route path="/view-employees" element={<ForceAuthRoute><ViewEmployees /></ForceAuthRoute>} />
 
-      {/* Catch-all → always redirect to /auth */}
+      {/* Catch-all → redirect to /auth */}
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
@@ -94,7 +60,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Navbar /> {/* Navbar now only shows on management routes */}
+          <Navbar /> {/* Navbar only shows on management routes */}
           <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
