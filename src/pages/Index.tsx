@@ -18,17 +18,18 @@ const Index = () => {
           <p className="text-xl md:text-2xl text-foreground/80 mb-10 max-w-3xl mx-auto leading-relaxed">
             Comprehensive admin dashboard for managing employees, departments, and designations with powerful CRUD operations.
           </p>
+          <div className="flex items-center justify-center h-screen">
           <Link to="/auth">
-  <Button
-    className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
-    title="Click to login as admin"
-  >
-    <Shield className="h-5 w-5" />
-    Admin Login
-    <ArrowRight className="h-5 w-5" />
-  </Button>
-</Link>
-
+          <Button
+            className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
+            title="Click to login as admin"
+          >
+            <Shield className="h-5 w-5" />
+            Admin Login
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        </Link>
+         </div>
         </div>
 
         {/* Features Grid */}
@@ -110,12 +111,14 @@ const Index = () => {
             Ready to manage your workforce effectively?
           </p>
           <Link to="/auth">
-            <Button
-  className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm font-semibold"
-  title="Get Started Now"
->
-  Get Started Now
-</Button>
+            <div className="flex items-center justify-center h-screen">
+                  <Button
+        className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm font-semibold"
+        title="Get Started Now"
+      >
+        Get Started Now
+                  </Button>
+              </div>
 
           </Link>
         </div>
