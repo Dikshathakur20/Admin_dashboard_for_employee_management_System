@@ -28,20 +28,25 @@ const Navbar: React.FC = () => {
   }
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Success",
-        description: "Signed out successfully",
-      });
-      navigate("/auth");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Could not sign out properly",
-      });
-    }
-  };
+  try {
+    await signOut(); // clears user in context
+    toast({
+      title: "Success",
+      description: "Signed out successfully",
+    });
+
+    // Give React a moment to update context before navigating
+    setTimeout(() => {
+      navigate("/auth", { replace: true });
+    }, 50);
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: "Could not sign out properly",
+    });
+  }
+};
+
 
   return (
     <>
