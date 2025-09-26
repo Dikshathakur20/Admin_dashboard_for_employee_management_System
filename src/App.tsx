@@ -16,6 +16,9 @@ import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
 import Designations from "./pages/Designations";
 
+// ✅ Import the hook
+import { useFormNavigation } from "@/hooks/useFormNavigation";
+
 const queryClient = new QueryClient();
 
 // ----------------------
@@ -104,24 +107,29 @@ const AppRoutes = () => (
 // ----------------------
 // Main App
 // ----------------------
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <InactivityHandler>
-            <Layout>
-              <Navbar />
-              <AppRoutes />
-              <Footer />
-            </Layout>
-          </InactivityHandler>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // ✅ Enable global form navigation
+  useFormNavigation();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <InactivityHandler>
+              <Layout>
+                <Navbar />
+                <AppRoutes />
+                <Footer />
+              </Layout>
+            </InactivityHandler>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
