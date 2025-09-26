@@ -204,12 +204,12 @@ const Departments = () => {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort"  style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }} >
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort" >
                   Sort
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white">
+              <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
                 <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
                   Name A - Z
                 </DropdownMenuItem>
