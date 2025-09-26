@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2,ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
@@ -147,7 +147,7 @@ const Designations = () => {
 
           {/* Buttons */}
           <div className="flex items-center gap-2"
-          title="click on the button for adding new data">
+          title="Add designation">
             <Button
               onClick={() => setShowNewDialog(true)}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
@@ -157,8 +157,9 @@ const Designations = () => {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="click on the button for sort data">
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }} >
                   Sort
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white">
@@ -204,7 +205,7 @@ const Designations = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            title="Click to edit"
+                            title="Edit"
                             className="bg-blue-900 text-white hover:bg-blue-700"
                             onClick={() => setEditingDesignation(designation)}
                           >
@@ -213,7 +214,7 @@ const Designations = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            title="Click to delete"
+                            title="Delete"
                             className="bg-blue-900 text-white hover:bg-blue-700"
                             onClick={() => handleDelete(designation.designation_id)}
                           >
@@ -237,7 +238,7 @@ const Designations = () => {
             <div className="flex justify-center items-center mt-4 space-x-4">
               <Button
                 size="sm"
-                title="Previous page"
+                title="Previous Page"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
@@ -247,7 +248,7 @@ const Designations = () => {
               <span>Page {currentPage} of {totalPages}</span>
               <Button
                 size="sm"
-                title="Next page"
+                title="Next Page"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
