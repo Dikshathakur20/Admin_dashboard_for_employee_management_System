@@ -43,7 +43,7 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
   const { toast } = useToast();
   const buttonPressCount = useRef(0);
 
-  // ------------------ Utility ------------------
+  // ------------------ Utilities ------------------
   const capitalizeWords = (val: string) => val.replace(/\b\w/g, c => c.toUpperCase());
 
   const toBase64 = (file: File): Promise<string> =>
@@ -95,13 +95,18 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
         .select('employee_id, first_name, last_name')
         .eq('email', email.toLowerCase())
         .maybeSingle();
-      setEmailExists(data ? `This email is already registered to ${data.first_name} ${data.last_name}` : '');
+
+      if (data && typeof data === 'object' && 'first_name' in data && 'last_name' in data) {
+        setEmailExists(`This email is already registered to ${data.first_name} ${data.last_name}`);
+      } else {
+        setEmailExists('');
+      }
     } catch (error) {
       console.warn('Email check issue:', error);
     }
   };
 
-  // ------------------ Filter Designations by Department ------------------
+  // ------------------ Filter Designations ------------------
   const filteredDesignations = departmentId
     ? designations.filter(d => d.department_id === parseInt(departmentId))
     : [];
@@ -156,8 +161,10 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
     }
   };
 
-  // ------------------ Keyboard Navigation ------------------
+  // ------------------ Keyboard Navigation (SSR-safe) ------------------
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const form = target.closest("form");
