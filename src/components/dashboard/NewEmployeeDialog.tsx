@@ -198,6 +198,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
               id="email"
               type="email"
               value={email}
+               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={e => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
               onPaste={e => e.preventDefault()}
               required
@@ -244,7 +245,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             <div className="space-y-2">
               <Label htmlFor="department">Department *</Label>
               <Select value={departmentId} onValueChange={(val) => { setDepartmentId(val); setDesignationId(''); }} required>
-                <SelectTrigger>
+                <SelectTrigger className= "w-full bg-blue-900 text-white hover:bg-blue-700">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
@@ -260,7 +261,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             <div className="space-y-2">
               <Label htmlFor="designation">Designation *</Label>
               <Select value={designationId} onValueChange={setDesignationId} required disabled={!departmentId || filteredDesignations.length === 0}>
-                <SelectTrigger>
+                <SelectTrigger className= "w-full bg-blue-900 text-white hover:bg-blue-700">
                   <SelectValue placeholder="Select designation" />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,7 +286,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading && <Loader2 className="bg-blue-900 text-white hover:bg-blue-700" />}
               Add
             </Button>
           </DialogFooter>
