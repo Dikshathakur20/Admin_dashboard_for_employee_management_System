@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye,ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -234,15 +234,16 @@ const Employees = () => {
             <Button
               onClick={() => setShowNewDialog(true)}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
-              title="click on the button for Adding new employees"
+              title="Add Employee"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="click on the button for sort the data">
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
                   Sort
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white" style={{
@@ -316,7 +317,7 @@ const Employees = () => {
                               size="sm"
                               variant="outline"
                               className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
-                              title="click on the button for view Data"
+                              title="View"
                               onClick={() => setViewingEmployee(emp)}
                             >
                               <Eye className="h-4 w-4" />
@@ -325,7 +326,7 @@ const Employees = () => {
                               size="sm"
                               variant="outline"
                               className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
-                              title="click on the button for edit Data"
+                              title="Edit"
                               onClick={() => setEditingEmployee(emp)}
                             >
                               <Edit className="h-4 w-4" />
@@ -334,7 +335,7 @@ const Employees = () => {
                               size="sm"
                               variant="outline"
                               className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
-                              title="Click on the button for delete Data"
+                              title="Delete"
                               onClick={() => handleDelete(emp.employee_id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -367,7 +368,7 @@ const Employees = () => {
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
                   className="bg-blue-900 text-white hover:bg-blue-700 h-8"
-                  title="click on the button for previous page"
+                  title="Previous"
                 >
                   Prev
                 </Button>
@@ -379,7 +380,7 @@ const Employees = () => {
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => p + 1)}
                   className="bg-blue-900 text-white hover:bg-blue-700 h-8"
-                  title="Click on the button for next page "
+                  title=" Next "
                 >
                   Next
                 </Button>
