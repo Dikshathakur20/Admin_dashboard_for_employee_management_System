@@ -300,7 +300,7 @@ const Departments = () => {
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                title="Previous Page"
+                title="Previous page"
               >
                 Previous
               </Button>
@@ -312,7 +312,7 @@ const Departments = () => {
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                title="Next Page"
+                title="Next page"
               >
                 Next
               </Button>
