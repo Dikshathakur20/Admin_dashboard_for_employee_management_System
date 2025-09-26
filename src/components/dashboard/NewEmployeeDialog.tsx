@@ -43,7 +43,7 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
   const { toast } = useToast();
   const buttonPressCount = useRef(0);
 
-  // ------------------ Utility Functions ------------------
+  // ------------------ Utility ------------------
   const capitalizeWords = (val: string) => val.replace(/\b\w/g, c => c.toUpperCase());
 
   const toBase64 = (file: File): Promise<string> =>
@@ -66,6 +66,7 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
     setProfilePicture(null);
   };
 
+  // ------------------ Fetch Departments & Designations ------------------
   const fetchData = async () => {
     try {
       const [departmentsResult, designationsResult] = await Promise.all([
@@ -79,10 +80,13 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
       setDepartments(departmentsResult.data || []);
       setDesignations(designationsResult.data || []);
     } catch (error) {
-      toast({ title: "Data Loading Issue", description: "Unable to fetch departments and designations", duration: 1500 });
+      toast({ title: "Data Loading Issue", description: "Unable to fetch departments and designations" });
     }
   };
 
+  useEffect(() => { if (open) fetchData(); }, [open]);
+
+  // ------------------ Email Check ------------------
   const checkEmailExists = async (email: string) => {
     if (!email || email.length < 3) return setEmailExists('');
     try {
@@ -97,10 +101,7 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
     }
   };
 
-  useEffect(() => {
-    if (open) fetchData();
-  }, [open]);
-
+  // ------------------ Filter Designations by Department ------------------
   const filteredDesignations = departmentId
     ? designations.filter(d => d.department_id === parseInt(departmentId))
     : [];
@@ -112,7 +113,6 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
       toast({ title: "Email Already Exists", description: emailExists });
       return;
     }
-
     if (!departmentId || !designationId) {
       toast({ title: "Missing Selection", description: "Please select both Department and Designation" });
       return;
@@ -125,7 +125,6 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
     }
 
     setLoading(true);
-
     try {
       let fileData: string | null = null;
       if (profilePicture) fileData = await toBase64(profilePicture);
@@ -135,21 +134,16 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
         last_name: lastName,
         email: email.toLowerCase(),
         hire_date: hireDate,
-        salary: salary ? parseFloat(salary) : null,
-        department_id: departmentId ? parseInt(departmentId) : null,
-        designation_id: designationId ? parseInt(designationId) : null,
+        salary: salaryValue || null,
+        department_id: parseInt(departmentId),
+        designation_id: parseInt(designationId),
         ...(fileData ? { file_data: fileData } : {}),
       };
 
-      const { data, error } = await supabase
-        .from('tblemployees')
-        .insert(employeeData)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.from('tblemployees').insert(employeeData).select().single();
       if (error) throw error;
 
-      toast({ title: "Success", description: `Employee added successfully.` });
+      toast({ title: "Success", description: "Employee added successfully." });
       if (onEmployeeAdded && data) onEmployeeAdded(data);
 
       resetForm();
@@ -162,7 +156,7 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
     }
   };
 
-  // ---------------- Keyboard Navigation ----------------
+  // ------------------ Keyboard Navigation ------------------
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -170,9 +164,7 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
       if (!form) return;
 
       const focusable = Array.from(
-        form.querySelectorAll<HTMLElement>(
-          "input, select, textarea, button, [tabindex]:not([tabindex='-1'])"
-        )
+        form.querySelectorAll<HTMLElement>("input, select, textarea, button, [tabindex]:not([tabindex='-1'])")
       ).filter(el => !el.hasAttribute("disabled") && el.offsetParent !== null);
 
       const index = focusable.indexOf(target);
@@ -187,13 +179,11 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
           }
           return;
         }
-
         if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "file") {
           e.preventDefault();
           (target as HTMLInputElement).click();
           return;
         }
-
         e.preventDefault();
         buttonPressCount.current = 0;
         const next = focusable[index + 1];
@@ -205,7 +195,6 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
         const next = focusable[index + 1];
         if (next) next.focus();
       }
-
       if (["ArrowUp", "ArrowLeft"].includes(e.key)) {
         e.preventDefault();
         const prev = focusable[index - 1];
@@ -217,7 +206,7 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // ---------------- JSX ----------------
+  // ------------------ JSX ------------------
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] rounded-xl shadow-lg border border-gray-200"
@@ -286,11 +275,13 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
             <div className="space-y-2">
               <Label htmlFor="department">Department *</Label>
               <Select value={departmentId} onValueChange={val => { setDepartmentId(val); setDesignationId(''); }} required>
-                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+                <SelectTrigger>
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {departments.map(dept => <SelectItem key={dept.department_id} value={dept.department_id.toString()}>{dept.department_name}</SelectItem>)}
+                <SelectContent>
+                  {departments.map(dept => (
+                    <SelectItem key={dept.department_id} value={dept.department_id.toString()}>{dept.department_name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -298,11 +289,13 @@ const NewEmployeeDialog: React.FC<NewEmployeeDialogProps> = ({ open, onOpenChang
             <div className="space-y-2">
               <Label htmlFor="designation">Designation *</Label>
               <Select value={designationId} onValueChange={setDesignationId} required disabled={!departmentId || filteredDesignations.length === 0}>
-                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+                <SelectTrigger>
                   <SelectValue placeholder="Select designation" />
                 </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {filteredDesignations.map(des => <SelectItem key={des.designation_id} value={des.designation_id.toString()}>{des.designation_title}</SelectItem>)}
+                <SelectContent>
+                  {filteredDesignations.map(des => (
+                    <SelectItem key={des.designation_id} value={des.designation_id.toString()}>{des.designation_title}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
