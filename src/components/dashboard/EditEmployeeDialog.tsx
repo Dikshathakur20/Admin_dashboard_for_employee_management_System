@@ -174,12 +174,8 @@ export const EditEmployeeDialog = ({
                 value={firstName}
                 maxLength={25}
                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={(e) =>
-                  /^[A-Za-z ]*$/.test(e.target.value) &&
-                  setFirstName(
-                    e.target.value.replace(/\b\w/g, (char) => char.toUpperCase())
-                  )
-                }
+                onChange={e => /^[A-Za-z\s]*$/.test(e.target.value) && setFirstName(capitalizeWords(e.target.value))}
+                
                 onPaste={(e) => e.preventDefault()}
                 required
               />
@@ -191,11 +187,7 @@ export const EditEmployeeDialog = ({
                 value={lastName}
                 maxLength={25}
                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={(e) =>
-                  /^[A-Za-z ]*$/.test(e.target.value) &&
-                  setLastName(
-                    e.target.value.replace(/\b\w/g, (char) => char.toUpperCase())
-                  )
+                onChange={e => /^[A-Za-z\s]*$/.test(e.target.value) && setFirstName(capitalizeWords(e.target.value))
                 }
                 onPaste={(e) => e.preventDefault()}
                 required
