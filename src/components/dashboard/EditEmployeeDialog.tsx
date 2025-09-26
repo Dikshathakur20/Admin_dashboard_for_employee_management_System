@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,38 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { setupKeyboardNavigation } from './KeyboardNavigation'; // <-- navigation utility
 
-interface Employee {
-  employee_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  hire_date: string;
-  salary: number | null;
-  department_id: number | null;
-  designation_id: number | null;
-  file_data?: string | null;
-}
-
-interface Department {
-  department_id: number;
-  department_name: string;
-}
-
-interface Designation {
-  designation_id: number;
-  designation_title: string;
-  department_id: number;
-}
-
-interface EditEmployeeDialogProps {
-  employee: Employee | null;
-  departments: Department[];
-  designations: Designation[];
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-}
+interface Employee { /* ... keep your interface ... */ }
+interface Department { /* ... */ }
+interface Designation { /* ... */ }
+interface EditEmployeeDialogProps { /* ... */ }
 
 export const EditEmployeeDialog = ({
   employee,
@@ -59,6 +33,18 @@ export const EditEmployeeDialog = ({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // -------------------- NAVIGATION REFS --------------------
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const hireDateRef = useRef<HTMLInputElement>(null);
+  const salaryRef = useRef<HTMLInputElement>(null);
+  const departmentRef = useRef<HTMLSelectElement>(null);
+  const designationRef = useRef<HTMLSelectElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const updateButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (employee) {
       setFirstName(employee.first_name);
@@ -75,7 +61,24 @@ export const EditEmployeeDialog = ({
     if (!open) setProfilePicture(null);
   }, [open]);
 
-  // Convert file to base64 data URL
+  // -------------------- INITIALIZE NAVIGATION --------------------
+  useEffect(() => {
+    setupKeyboardNavigation(
+      [
+        firstNameRef,
+        lastNameRef,
+        emailRef,
+        hireDateRef,
+        salaryRef,
+        departmentRef,
+        designationRef,
+        fileRef
+      ],
+      { addButton: updateButtonRef, cancelButton: cancelButtonRef }
+    );
+  }, []);
+
+  // -------------------- FILE TO BASE64 --------------------
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -85,73 +88,7 @@ export const EditEmployeeDialog = ({
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!employee) return;
-
-    if (!departmentId || !designationId) {
-      toast({
-        title: "Missing Selection",
-        description: "Please select both Department and Designation",
-        duration: 2000
-      });
-      return;
-    }
-
-    const salaryValue = salary ? parseFloat(salary) : 0;
-    if (salaryValue > 10000000) {
-      toast({
-        title: "Salary Limit Exceeded",
-        description: "Salary cannot exceed ₹10,000,000",
-        duration: 2000
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const employeeData: any = {
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        hire_date: hireDate,
-        salary: salary ? parseFloat(salary) : null,
-        department_id: departmentId ? parseInt(departmentId) : null,
-        designation_id: designationId ? parseInt(designationId) : null,
-      };
-
-      // ✅ Convert image to base64 and store directly in file_data
-      if (profilePicture) {
-        const base64String = await fileToBase64(profilePicture);
-        employeeData.file_data = base64String;
-      }
-
-      const { error } = await supabase
-        .from('tblemployees')
-        .update(employeeData)
-        .eq('employee_id', employee.employee_id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Employee updated successfully",
-        duration: 2000
-      });
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Update Issue",
-        description: "Failed to update employee",
-        duration: 2000
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => { /* ... keep your handleSubmit code ... */ }
 
   const filteredDesignations = designations.filter(
     (d) => d.department_id === Number(departmentId)
@@ -159,10 +96,7 @@ export const EditEmployeeDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200"
-        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-      >
+      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200" style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
         <DialogHeader>
           <DialogTitle>Edit Employee</DialogTitle>
         </DialogHeader>
@@ -174,6 +108,7 @@ export const EditEmployeeDialog = ({
               <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
+                ref={firstNameRef} // <-- ref added
                 value={firstName}
                 maxLength={25}
                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
@@ -183,7 +118,7 @@ export const EditEmployeeDialog = ({
                     e.target.value.replace(/\b\w/g, (char) => char.toUpperCase())
                   )
                 }
-                onPaste={(e) => e.preventDefault()} // 🚫 no paste
+                onPaste={(e) => e.preventDefault()}
                 required
               />
             </div>
@@ -191,6 +126,7 @@ export const EditEmployeeDialog = ({
               <Label htmlFor="lastName">Last Name</Label>
               <Input
                 id="lastName"
+                ref={lastNameRef} // <-- ref added
                 value={lastName}
                 maxLength={25}
                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
@@ -200,7 +136,7 @@ export const EditEmployeeDialog = ({
                     e.target.value.replace(/\b\w/g, (char) => char.toUpperCase())
                   )
                 }
-                onPaste={(e) => e.preventDefault()} // 🚫 no paste
+                onPaste={(e) => e.preventDefault()}
                 required
               />
             </div>
@@ -211,11 +147,12 @@ export const EditEmployeeDialog = ({
             <Label htmlFor="email">Email *</Label>
             <Input
               id="email"
+              ref={emailRef} // <-- ref added
               type="email"
               value={email}
               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={(e) => setEmail(e.target.value.toLowerCase())}
-              onPaste={(e) => e.preventDefault()} // 🚫 no paste
+              onPaste={(e) => e.preventDefault()}
               required
             />
           </div>
@@ -225,12 +162,13 @@ export const EditEmployeeDialog = ({
             <Label htmlFor="hireDate">Hire Date</Label>
             <Input
               id="hireDate"
+              ref={hireDateRef} // <-- ref added
               type="date"
               value={hireDate}
               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={(e) => setHireDate(e.target.value)}
               max={new Date().toISOString().split("T")[0]}
-              min="2000-01-01"  // 🚫 not before 2000
+              min="2000-01-01"
               required
             />
           </div>
@@ -240,6 +178,7 @@ export const EditEmployeeDialog = ({
             <Label htmlFor="salary">Salary</Label>
             <Input
               id="salary"
+              ref={salaryRef} // <-- ref added
               type="number"
               step="0.01"
               value={salary}
@@ -259,6 +198,7 @@ export const EditEmployeeDialog = ({
             <div className="space-y-2">
               <Label htmlFor="department">Department</Label>
               <Select
+                ref={departmentRef} // <-- ref added
                 value={departmentId}
                 onValueChange={(val) => {
                   setDepartmentId(val);
@@ -272,11 +212,7 @@ export const EditEmployeeDialog = ({
                 </SelectTrigger>
                 <SelectContent className="z-50 bg-white shadow-lg">
                   {departments.map((dept) => (
-                    <SelectItem
-                      key={dept.department_id}
-                      value={dept.department_id.toString()}
-                      className="hover:bg-blue-100 focus:bg-blue-200 cursor-pointer"
-                    >
+                    <SelectItem key={dept.department_id} value={dept.department_id.toString()} className="hover:bg-blue-100 focus:bg-blue-200 cursor-pointer">
                       {dept.department_name}
                     </SelectItem>
                   ))}
@@ -287,6 +223,7 @@ export const EditEmployeeDialog = ({
             <div className="space-y-2">
               <Label htmlFor="designation">Designation</Label>
               <Select
+                ref={designationRef} // <-- ref added
                 value={designationId || ''}
                 onValueChange={setDesignationId}
                 disabled={!departmentId || filteredDesignations.length === 0}
@@ -296,11 +233,7 @@ export const EditEmployeeDialog = ({
                 </SelectTrigger>
                 <SelectContent className="z-50 bg-white shadow-lg">
                   {filteredDesignations.map((des) => (
-                    <SelectItem
-                      key={des.designation_id}
-                      value={des.designation_id.toString()}
-                      className="hover:bg-blue-100 focus:bg-blue-200 cursor-pointer"
-                    >
+                    <SelectItem key={des.designation_id} value={des.designation_id.toString()} className="hover:bg-blue-100 focus:bg-blue-200 cursor-pointer">
                       {des.designation_title}
                     </SelectItem>
                   ))}
@@ -314,6 +247,7 @@ export const EditEmployeeDialog = ({
             <Label htmlFor="profilePicture">Profile Picture</Label>
             <Input
               id="profilePicture"
+              ref={fileRef} // <-- ref added
               type="file"
               accept="image/*"
               onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
@@ -323,6 +257,7 @@ export const EditEmployeeDialog = ({
           {/* Footer */}
           <DialogFooter className="flex justify-end gap-2">
             <Button
+              ref={cancelButtonRef} // <-- ref added
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
@@ -332,6 +267,7 @@ export const EditEmployeeDialog = ({
             </Button>
 
             <Button
+              ref={updateButtonRef} // <-- ref added
               type="submit"
               disabled={loading}
               className="bg-blue-900 text-white hover:bg-blue-700"
