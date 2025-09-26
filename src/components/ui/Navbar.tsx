@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
             <div className="flex items-center space-x-6">
               {/* Logo (not clickable) */}
               <img
-                src="/logo.png" // Replace with your logo path
+                src="/logo.png"
                 alt="Company Logo"
                 className="h-10 w-auto"
               />
@@ -55,28 +55,40 @@ const Navbar: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <Link
                   to="/dashboard"
-                  className="flex items-center gap-1 hover:text-primary text-sm font-medium"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                  ${location.pathname === "/dashboard" 
+                    ? "bg-[#001F7A] text-white" 
+                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
                 >
                   <Home className="h-4 w-4" />
                   <span>Home</span>
                 </Link>
                 <Link
                   to="/employees"
-                  className="flex items-center gap-1 hover:text-primary text-sm font-medium"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                  ${location.pathname === "/employees" 
+                    ? "bg-[#001F7A] text-white" 
+                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
                 >
                   <Users className="h-4 w-4" />
                   <span>Manage Employees</span>
                 </Link>
                 <Link
                   to="/departments"
-                  className="flex items-center gap-1 hover:text-primary text-sm font-medium"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                  ${location.pathname === "/departments" 
+                    ? "bg-[#001F7A] text-white" 
+                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
                 >
                   <Building className="h-4 w-4" />
                   <span>Manage Departments</span>
                 </Link>
                 <Link
                   to="/designations"
-                  className="flex items-center gap-1 hover:text-primary text-sm font-medium"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                  ${location.pathname === "/designations" 
+                    ? "bg-[#001F7A] text-white" 
+                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
                 >
                   <Briefcase className="h-4 w-4" />
                   <span>Manage Designations</span>
