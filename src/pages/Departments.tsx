@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2,ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -197,15 +197,16 @@ const Departments = () => {
             <Button
               onClick={() => setShowNewDialog(true)}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
-              title="click on the button for add data"
+              title="Add Department"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="click on th ebutton for sort data">
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort"  style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }} >
                   Sort
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white">
@@ -252,7 +253,7 @@ const Departments = () => {
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
-                            title="click on the button for view data"
+                            title="View"
                             onClick={async () => {
                               await fetchDepartmentDesignations(d.department_id);
                               setViewingDepartment(d);
@@ -263,7 +264,7 @@ const Departments = () => {
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
-                            title="click on the button for editing data"
+                            title="Edit"
                             onClick={() => setEditingDepartment(d)}
                           >
                             <Edit className="h-4 w-4" />
@@ -271,7 +272,7 @@ const Departments = () => {
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
-                            title="clcik on the button for deleting data"
+                            title="Delete"
                             onClick={() => handleDelete(d.department_id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -299,7 +300,7 @@ const Departments = () => {
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                title="click on the button for selecting previous one"
+                title="Previous Page"
               >
                 Previous
               </Button>
@@ -311,7 +312,7 @@ const Departments = () => {
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                title="clcik on the button for nextpage"
+                title="Next Page"
               >
                 Next
               </Button>
