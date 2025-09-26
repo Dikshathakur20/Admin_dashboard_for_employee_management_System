@@ -198,6 +198,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
               value={email}
                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={e => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
+              onPaste={e => e.preventDefault()}
               required
             />
             {emailExists && <p className="text-sm text-orange-600">{emailExists}</p>}
