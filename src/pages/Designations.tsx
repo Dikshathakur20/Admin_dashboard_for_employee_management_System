@@ -238,7 +238,7 @@ const Designations = () => {
             <div className="flex justify-center items-center mt-4 space-x-4">
               <Button
                 size="sm"
-                title="Previous Page"
+                title="Previous page"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
@@ -248,7 +248,7 @@ const Designations = () => {
               <span>Page {currentPage} of {totalPages}</span>
               <Button
                 size="sm"
-                title="Next Page"
+                title="Next page"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
