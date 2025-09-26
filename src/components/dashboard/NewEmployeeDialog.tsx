@@ -40,11 +40,13 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const { toast } = useToast();
 
-  // Convert file to data URI (base64)
+  // Capitalize first letter of each word
+  const capitalizeWords = (val: string) => val.replace(/\b\w/g, c => c.toUpperCase());
+
   const toBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file); // Converts file to 'data:image/...;base64,...'
+      reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
     });
@@ -59,10 +61,8 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
         supabase.from('tbldepartments').select('*').order('department_name'),
         supabase.from('tbldesignations').select('*').order('designation_title')
       ]);
-
       if (departmentsResult.error) throw departmentsResult.error;
       if (designationsResult.error) throw designationsResult.error;
-
       setDepartments(departmentsResult.data || []);
       setDesignations(designationsResult.data || []);
     } catch (error) {
@@ -102,7 +102,6 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
       toast({ title: "Email Already Exists", description: emailExists });
       return;
     }
-
     if (!departmentId || !designationId) {
       toast({ title: "Missing Selection", description: "Please select both Department and Designation" });
       return;
@@ -118,10 +117,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
 
     try {
       let fileData: string | null = null;
-
-      if (profilePicture) {
-        fileData = await toBase64(profilePicture); // Convert to 'data:image/...;base64,...'
-      }
+      if (profilePicture) fileData = await toBase64(profilePicture);
 
       const employeeData: any = {
         first_name: firstName,
@@ -132,17 +128,13 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
         department_id: departmentId ? parseInt(departmentId) : null,
         designation_id: designationId ? parseInt(designationId) : null,
       };
-
-      if (fileData) {
-        employeeData.file_data = fileData; // store as data URI
-      }
+      if (fileData) employeeData.file_data = fileData;
 
       const { data, error } = await supabase
         .from('tblemployees')
         .insert(employeeData)
         .select()
         .single();
-
       if (error) throw error;
 
       toast({ title: "Success", description: `Employee added successfully.` });
@@ -164,12 +156,14 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200">
+      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200"
+        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
         <DialogHeader>
           <DialogTitle>Add New Employee</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
+          {/* First & Last Name */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
@@ -177,7 +171,9 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
                 id="firstName"
                 value={firstName}
                 maxLength={25}
-                onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setFirstName(e.target.value)}
+                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => /^[A-Za-z ]*$/.test(e.target.value) && setFirstName(capitalizeWords(e.target.value))}
+                onPaste={e => e.preventDefault()}
                 required
               />
             </div>
@@ -187,36 +183,44 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
                 id="lastName"
                 value={lastName}
                 maxLength={25}
-                onChange={(e) => /^[A-Za-z]*$/.test(e.target.value) && setLastName(e.target.value)}
+                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => /^[A-Za-z ]*$/.test(e.target.value) && setLastName(capitalizeWords(e.target.value))}
+                onPaste={e => e.preventDefault()}
                 required
               />
             </div>
           </div>
 
+          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
-              onChange={(e) => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
+              onChange={e => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
+              onPaste={e => e.preventDefault()}
               required
             />
             {emailExists && <p className="text-sm text-orange-600">{emailExists}</p>}
           </div>
 
+          {/* Hire Date */}
           <div className="space-y-2">
             <Label htmlFor="hireDate">Hire Date</Label>
             <Input
               id="hireDate"
               type="date"
               value={hireDate}
-              onChange={(e) => setHireDate(e.target.value)}
+               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+              onChange={e => setHireDate(e.target.value)}
               max={new Date().toISOString().split("T")[0]}
+              min="2000-01-01"
               required
             />
           </div>
 
+          {/* Salary */}
           <div className="space-y-2">
             <Label htmlFor="salary">Salary</Label>
             <Input
@@ -224,6 +228,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
               type="number"
               step="0.01"
               value={salary}
+               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               placeholder="Enter salary (max 10,000,000)"
               onChange={(e) => {
                 const value = parseFloat(e.target.value);
@@ -234,19 +239,16 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             />
           </div>
 
+          {/* Department & Designation */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="department">Department *</Label>
-              <Select
-                value={departmentId}
-                onValueChange={(val) => { setDepartmentId(val); setDesignationId(''); }}
-                required
-              >
-                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+              <Select value={departmentId} onValueChange={(val) => { setDepartmentId(val); setDesignationId(''); }} required>
+                <SelectTrigger>
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {departments.map((dept) => (
+                <SelectContent>
+                  {departments.map(dept => (
                     <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
                       {dept.department_name}
                     </SelectItem>
@@ -257,17 +259,12 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
 
             <div className="space-y-2">
               <Label htmlFor="designation">Designation *</Label>
-              <Select
-                value={designationId}
-                onValueChange={setDesignationId}
-                required
-                disabled={!departmentId || filteredDesignations.length === 0}
-              >
-                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+              <Select value={designationId} onValueChange={setDesignationId} required disabled={!departmentId || filteredDesignations.length === 0}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select designation" />
                 </SelectTrigger>
-                <SelectContent  className="z-50 bg-white shadow-lg">
-                  {filteredDesignations.map((des) => (
+                <SelectContent>
+                  {filteredDesignations.map(des => (
                     <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
                       {des.designation_title}
                     </SelectItem>
@@ -277,21 +274,17 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
             </div>
           </div>
 
+          {/* Profile Picture */}
           <div className="space-y-2">
             <Label htmlFor="profilePicture">Profile Picture</Label>
-            <Input
-              id="profilePicture"
-              type="file"
-              accept="image/*"
-              onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
-            />
+            <Input id="profilePicture" type="file" accept="image/*" onChange={e => setProfilePicture(e.target.files?.[0] || null)} />
           </div>
 
           <DialogFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => { onOpenChange(false); resetForm(); }} className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50">
+            <Button type="button" variant="outline" onClick={() => { onOpenChange(false); resetForm(); }}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="bg-blue-900 text-white hover:bg-blue-700">
+            <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add
             </Button>
