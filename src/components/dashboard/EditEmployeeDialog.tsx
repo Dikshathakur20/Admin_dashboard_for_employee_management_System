@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { setupKeyboardNavigation } from './components/ui/KeyboardNavigation'; // <-- navigation utility
+import { setupKeyboardNavigation } from '@/components/ui/KeyboardNavigation'; // <-- navigation utility
 
 interface Employee { /* ... keep your interface ... */ }
 interface Department { /* ... */ }
