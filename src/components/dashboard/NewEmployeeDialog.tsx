@@ -248,7 +248,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
                 <SelectTrigger className= "w-full bg-blue-900 text-white hover:bg-blue-700">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50 bg-white shadow-lg">
                   {departments.map(dept => (
                     <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
                       {dept.department_name}
@@ -264,7 +264,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
                 <SelectTrigger className= "w-full bg-blue-900 text-white hover:bg-blue-700">
                   <SelectValue placeholder="Select designation" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50 bg-white shadow-lg">
                   {filteredDesignations.map(des => (
                     <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
                       {des.designation_title}
@@ -282,7 +282,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
           </div>
 
           <DialogFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => { onOpenChange(false); resetForm(); }}>
+            <Button type="button" variant="outline" className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50"   onClick={() => { onOpenChange(false); resetForm(); }} >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}  className="bg-blue-900 text-white hover:bg-blue-700">
