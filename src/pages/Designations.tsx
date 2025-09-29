@@ -87,7 +87,9 @@ const Designations = () => {
       toast({ title: "Success", description: "Designation removed successfully" });
       fetchDesignations();
     } catch {
-      toast({ title: "Removal Issue", description: "Unable to remove designation", variant: "default" });
+      toast({ title: "Cannot delete",
+        description: "This designation has active employees. Reassign them first.",
+        variant: "destructive" });
     }
   };
 
