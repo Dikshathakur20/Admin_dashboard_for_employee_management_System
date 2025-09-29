@@ -9,7 +9,7 @@ import { useLogin } from '@/contexts/LoginContext';
 import { useToast } from "@/hooks/use-toast";
 
 const Navbar: React.FC = () => {
-  const { LogOut } =useLogin();
+  const { logOut } =useLogin();
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
@@ -28,7 +28,7 @@ const Navbar: React.FC = () => {
 
   const handleSignOut = async () => {
     try {
-      await LogOut();
+      await logOut();
       navigate("/login", { replace: true });
       toast({ title: "Success", description: "Signed out successfully" });
     } catch {
