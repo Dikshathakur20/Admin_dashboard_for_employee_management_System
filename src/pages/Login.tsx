@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useLogin } from '@/contexts/LoginContext'; // updated hook
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,12 +8,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User, Lock, Eye, EyeOff } from 'lucide-react';
 
-const Auth = () => {
+const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { user, signIn, signOut } = useAuth();
+  const { user, login, logout } = useLogin(); // updated hook usage
   const { toast } = useToast();
   const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -28,11 +28,11 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await signIn(emailOrUsername, password);
+      const { error } = await login(emailOrUsername, password);
       if (error) {
-        toast({ title: "Sign In Issue", description: error.message, variant: "destructive", duration: 2000 });
+        toast({ title: "Login Issue", description: error.message, variant: "destructive", duration: 2000 });
       } else {
-        toast({ title: "Welcome", description: "Successfully signed in!", duration: 1500 });
+        toast({ title: "Welcome", description: "Successfully logged in!", duration: 1500 });
         resetInactivityTimer();
         navigate('/dashboard', { replace: true });
       }
@@ -48,8 +48,8 @@ const Auth = () => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     inactivityTimer.current = setTimeout(() => {
       toast({ title: "Session Expired", description: "Due to inactivity, please log in again.", variant: "destructive" });
-      signOut();
-      navigate('/auth', { replace: true });
+      logout();
+      navigate('/login', { replace: true });
     }, 5 * 60 * 1000);
   };
 
@@ -65,10 +65,10 @@ const Auth = () => {
 
   // Logout on tab close
   useEffect(() => {
-    const handleUnload = () => signOut();
+    const handleUnload = () => logout();
     window.addEventListener('beforeunload', handleUnload);
     return () => window.removeEventListener('beforeunload', handleUnload);
-  }, [signOut]);
+  }, [logout]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
@@ -138,15 +138,15 @@ const Auth = () => {
 
             {/* Sign In Button */}
             <div className="flex items-center justify-center mt-6">
-            <Button
-              type="submit"
-              className=" bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
-              title="Click to sign in"
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
-            </Button>
-              </div>
+              <Button
+                type="submit"
+                className=" bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
+                title="Click to sign in"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
+              </Button>
+            </div>
           </CardContent>
         </form>
       </Card>
@@ -154,4 +154,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default Login; // changed from Auth
