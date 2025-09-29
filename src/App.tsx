@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
-import Layout from "@/components/dashboard/Layout"; // ✅ Import Layout
+ // ✅ Import Layout
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -119,11 +119,9 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <InactivityHandler>
-              <Layout>
                 <Navbar />
                 <AppRoutes />
                 <Footer />
-              </Layout>
             </InactivityHandler>
           </BrowserRouter>
         </TooltipProvider>
