@@ -151,17 +151,25 @@ const Login = () => {
               </div>
 
               {/* Forgot Password */}
-              <div className="text-right mt-2">
-                <button type="button" className="text-sm text-blue-600 hover:underline"
-                  onClick={() => setShowReset(true)}>Forgot Password?</button>
+                           <div className="text-right mt-2">
+                <a
+                  href="#"
+                  className="text-sm text-blue-600 hover:underline"
+                  onClick={(e) => { 
+                    e.preventDefault(); // prevent page jump
+                    setShowReset(true); 
+                  }}
+                >
+                  Forgot Password?
+                </a>
               </div>
 
-              {/* Sign In Button */}
               <div className="flex items-center justify-center mt-6">
-                <Button type="submit" className="w-full bg-[#001F7A] text-white">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
-                </Button>
-              </div>
+  <Button type="submit" className="w-64 bg-[#001F7A] text-white px-4 py-2">
+    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
+  </Button>
+</div>
+
             </form>
           ) : (
             // ----------------------
@@ -180,7 +188,7 @@ const Login = () => {
                 />
               </div>
               <div className="flex items-center justify-between mt-4">
-                <Button type="submit" className="bg-green-600 text-white w-full">
+                 <Button type="submit" className="w-64 bg-[#001F7A] text-white px-4 py-2">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Link"}
                 </Button>
               </div>
