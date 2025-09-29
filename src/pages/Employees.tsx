@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Login } from "@/contexts/LoginContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Edit, Trash2, Eye,ChevronDown } from "lucide-react";
@@ -72,7 +72,7 @@ const Employees = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/Login" replace />;
 
   useEffect(() => {
     fetchData();
