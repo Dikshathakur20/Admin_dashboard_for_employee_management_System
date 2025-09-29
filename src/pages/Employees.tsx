@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { Login } from "@/contexts/LoginContext";
+import { useLogin } from "@/contexts/LoginContext"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Edit, Trash2, Eye,ChevronDown } from "lucide-react";
@@ -54,7 +54,7 @@ interface Designation {
 }
 
 const Employees = () => {
-  const { user } = useAuth();
+  const { user } = useLogin();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
@@ -72,7 +72,7 @@ const Employees = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  if (!user) return <Navigate to="/Login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
 
   useEffect(() => {
     fetchData();
