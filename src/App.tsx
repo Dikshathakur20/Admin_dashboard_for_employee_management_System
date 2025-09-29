@@ -5,12 +5,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LoginProvider, useLogin } from "@/contexts/LoginContext"; // updated
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
- // ✅ Import Layout
+
+// ✅ Import pages
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
+import Login from "./pages/Login"; // renamed page
 import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
@@ -25,16 +26,16 @@ const queryClient = new QueryClient();
 // Protected Route
 // ----------------------
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useLogin(); // updated
   if (loading) return null;
-  return user ? children : <Navigate to="/auth" replace />;
+  return user ? children : <Navigate to="/login" replace />;
 };
 
 // ----------------------
 // Force fresh-tab login
 // ----------------------
 const ForceFreshTab = () => {
-  const { signOut } = useAuth();
+  const { signOut } = useLogin(); // updated
 
   useEffect(() => {
     if (!sessionStorage.getItem("tabInitialized")) {
@@ -50,13 +51,13 @@ const ForceFreshTab = () => {
 // Inactivity Handler
 // ----------------------
 const InactivityHandler = ({ children }: { children: React.ReactNode }) => {
-  const { signOut } = useAuth();
+  const { signOut } = useLogin(); // updated
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const logout = () => {
     signOut();
-    navigate("/auth", { replace: true });
+    navigate("/login", { replace: true });
   };
 
   const resetTimer = () => {
@@ -66,10 +67,7 @@ const InactivityHandler = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
-    const handleVisibilityChange = () => {
-      if (document.hidden) resetTimer();
-      else resetTimer();
-    };
+    const handleVisibilityChange = () => resetTimer();
 
     activityEvents.forEach((e) => window.addEventListener(e, resetTimer));
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -93,13 +91,13 @@ const AppRoutes = () => (
   <>
     <ForceFreshTab />
     <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
       <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/auth" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   </>
 );
@@ -113,19 +111,19 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <LoginProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
             <InactivityHandler>
-                <Navbar />
-                <AppRoutes />
-                <Footer />
+              <Navbar />
+              <AppRoutes />
+              <Footer />
             </InactivityHandler>
           </BrowserRouter>
         </TooltipProvider>
-      </AuthProvider>
+      </LoginProvider>
     </QueryClientProvider>
   );
 };
