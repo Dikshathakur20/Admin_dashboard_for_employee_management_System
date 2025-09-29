@@ -169,8 +169,7 @@ const Departments = () => {
     return <div className="flex justify-center p-8">Loading departments...</div>;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* …rest of the component remains unchanged… */}
+   
       <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
   <Card className="w-full border-0 shadow-none bg-transparent">
