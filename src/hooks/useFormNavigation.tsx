@@ -36,7 +36,22 @@ export const useFormNavigation = () => {
           target.tagName === "INPUT" &&
           (target as HTMLInputElement).type === "file"
         ) {
-          (target as HTMLInputElement).click(); // open file picker
+          const fileInput = target as HTMLInputElement;
+          fileInput.click(); // open file picker
+
+          // 🔥 After file selection, move focus to submit button
+          const submitButton = form.querySelector(
+            "button[type='submit']"
+          ) as HTMLButtonElement | null;
+
+          if (submitButton) {
+            const handleChange = () => {
+              submitButton.focus();
+              fileInput.removeEventListener("change", handleChange);
+            };
+            fileInput.addEventListener("change", handleChange);
+          }
+
           return;
         }
 
@@ -75,6 +90,20 @@ export const useFormNavigation = () => {
         e.preventDefault();
         const prev = focusable[index - 1];
         if (prev) prev.focus();
+      }
+
+      // -----------------------------
+      // Handle Escape → focus Cancel button
+      // -----------------------------
+      if (e.key === "Escape") {
+        e.preventDefault();
+        const cancelButton = Array.from(form.querySelectorAll("button")).find(
+          (btn) =>
+            btn.textContent?.trim().toLowerCase() === "cancel" ||
+            btn.getAttribute("data-role") === "cancel"
+        ) as HTMLButtonElement | undefined;
+
+        if (cancelButton) cancelButton.focus();
       }
     };
 
