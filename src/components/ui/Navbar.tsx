@@ -9,7 +9,7 @@ import { useLogin } from '@/contexts/LoginContext';
 import { useToast } from "@/hooks/use-toast";
 
 const Navbar: React.FC = () => {
-  const { signOut } = useLogin();
+  const { signOut } = Login();
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
