@@ -171,6 +171,211 @@ const Departments = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* …rest of the component remains unchanged… */}
+      <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-2">
+  <Card className="w-full border-0 shadow-none bg-transparent">
+    {/* Header with Title + Search + Actions */}
+    <CardHeader className="px-0 py-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <CardTitle className="text-2xl font-bold">Departments</CardTitle>
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+          {/* Search bar */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+            <Input
+              placeholder="Search department"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowNewDialog(true)}
+              className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+              title=" Add department"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
+                  Sort
+                   <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
+                <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
+                  Name A - Z
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
+                  Name Z - A
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
+                  Old → New
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
+                  New → Old
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+    </CardHeader>
+
+          <CardContent className="px-0">
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Department</TableHead>
+                    <TableHead className="font-bold text-center">
+                      Total Designations
+                    </TableHead>
+                    <TableHead className="font-bold text-end">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginated.map((d) => (
+                    <TableRow key={d.department_id}>
+                      <TableCell>{d.department_name}</TableCell>
+                      <TableCell className="text-center">
+                        {d.total_designations || 0}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end space-x-3">
+                          <Button
+                            size="sm"
+                            className="bg-blue-900 text-white hover:bg-blue-700"
+                            style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}
+                            title="View"
+                            onClick={async () => {
+                              await fetchDepartmentDesignations(d.department_id);
+                              setViewingDepartment(d);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-blue-900 text-white hover:bg-blue-700"
+                            title="Edit"
+                            onClick={() => setEditingDepartment(d)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-blue-900 text-white hover:bg-blue-700"
+                            title="Delete"
+                            onClick={() => handleDelete(d.department_id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {paginated.length === 0 && (
+              <div className="text-center p-8 text-muted-foreground">
+                {searchTerm
+                  ? "No departments match your search."
+                  : "No departments found."}
+              </div>
+            )}
+
+            {/* ⭐ Pagination */}
+            <div className="flex justify-center items-center gap-x-4 mt-4">
+              <Button
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
+                title="Previous page"
+              >
+                Previous
+              </Button>
+              <span className="text-sm font-medium text-gray-800">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
+                title="Next page"
+              >
+                Next
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      {/* Edit / New Dialogs */}
+      <EditDepartmentDialog
+        department={editingDepartment}
+        open={!!editingDepartment}
+        onOpenChange={(open) => !open && setEditingDepartment(null)}
+        onSuccess={fetchDepartments}
+      />
+      <NewDepartmentDialog
+        open={showNewDialog}
+        onOpenChange={setShowNewDialog}
+        onSuccess={fetchDepartments}
+      />
+
+      {/* Details Dialog */}
+      <Dialog
+        open={!!viewingDepartment}
+        onOpenChange={(open) => !open && setViewingDepartment(null)}
+      >
+        <DialogContent className="max-w-lg bg-blue-50 p-6 rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-blue-900">
+              Department Details
+            </DialogTitle>
+          </DialogHeader>
+          {viewingDepartment && (
+            <div className="space-y-3">
+              <p>
+                <span className="font-semibold">Department Name:</span>{" "}
+                {viewingDepartment.department_name}
+              </p>
+              <p>
+                <span className="font-semibold">Location:</span>{" "}
+                {viewingDepartment.location || "-"}
+              </p>
+              <p>
+                <span className="font-semibold">Total Designations:</span>{" "}
+                {departmentDesignations.length}
+              </p>
+              {departmentDesignations.length > 0 ? (
+                <ul className="list-disc list-inside ml-4">
+                  {departmentDesignations.map((des) => (
+                    <li key={des.designation_id}>{des.designation_title}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No designations found.</p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    
     </div>
   );
 };
