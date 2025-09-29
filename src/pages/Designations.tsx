@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { Login } from '@/contexts/LoginContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Edit, Trash2,ChevronDown } from 'lucide-react';
@@ -31,7 +31,7 @@ interface Department {
 type SortOption = 'name-asc' | 'name-desc' | 'id-asc' | 'id-desc';
 
 const Designations = () => {
-  const { user } = useAuth();
+  const { user } = Login();
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +44,7 @@ const Designations = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/Login" replace />;
 
   useEffect(() => {
     fetchDesignations();
