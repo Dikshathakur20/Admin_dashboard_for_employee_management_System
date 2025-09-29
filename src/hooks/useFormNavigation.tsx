@@ -5,7 +5,7 @@ export const useFormNavigation = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
 
-      // Only apply inside inputs, selects, textareas, buttons
+      // Only handle specific elements
       if (!["INPUT", "SELECT", "TEXTAREA", "BUTTON", "DIV"].includes(target.tagName)) return;
 
       const form = target.closest("form");
@@ -25,48 +25,47 @@ export const useFormNavigation = () => {
       const index = focusable.indexOf(target);
 
       // -----------------------------
-      // Handle Enter Key
+      // Enter Key
       // -----------------------------
-if (e.key === "Enter") {
-  e.preventDefault();
+      if (e.key === "Enter") {
+        e.preventDefault();
 
-  // File input special case
-  if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "file") {
-    const fileInput = target as HTMLInputElement;
-    fileInput.click();
-    const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
-    if (submitButton) {
-      const handleChange = () => {
-        submitButton.focus();
-        fileInput.removeEventListener("change", handleChange);
-      };
-      fileInput.addEventListener("change", handleChange);
-    }
-    return;
-  }
+        // File input special case
+        if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "file") {
+          const fileInput = target as HTMLInputElement;
+          fileInput.click();
+          const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
+          if (submitButton) {
+            const handleChange = () => {
+              submitButton.focus();
+              fileInput.removeEventListener("change", handleChange);
+            };
+            fileInput.addEventListener("change", handleChange);
+          }
+          return;
+        }
 
-  // Custom SelectTrigger
-  if (target.getAttribute("role") === "button") {
-    const next = focusable[index + 1];
-    if (next) next.focus();
-    return;
-  }
+        // Custom SelectTrigger
+        if (target.getAttribute("role") === "button") {
+          const next = focusable[index + 1];
+          if (next) next.focus();
+          return;
+        }
 
-  // Regular inputs
-  const next = focusable[index + 1];
-  if (next) {
-    next.focus();
-  } else {
-    // Last input → submit form automatically
-    const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
-    if (submitButton) {
-      submitButton.click();
-    } else {
-      form.submit();
-    }
-  }
-}
-
+        // Regular inputs
+        const next = focusable[index + 1];
+        if (next) {
+          next.focus();
+        } else {
+          // Last input → submit form automatically
+          const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
+          if (submitButton) {
+            submitButton.click();
+          } else {
+            form.submit();
+          }
+        }
+      }
 
       // -----------------------------
       // Arrow keys navigation
