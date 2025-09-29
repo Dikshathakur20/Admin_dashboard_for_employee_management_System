@@ -55,10 +55,10 @@ const InactivityHandler = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const logout = () => {
-    logOut();
-    navigate("/login", { replace: true });
-  };
+  const handleLogout = () => {
+  logout(); // ✅ call the context logout
+  navigate("/login", { replace: true });
+};
 
   const resetTimer = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
