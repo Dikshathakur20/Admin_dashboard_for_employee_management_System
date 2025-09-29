@@ -167,25 +167,33 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                maxLength={25}
-                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={e => /^[A-Za-z\s]*$/.test(e.target.value) && setFirstName(capitalizeWords(e.target.value))
-                required
-              />
+             <Input
+  id="firstName"
+  value={firstName}
+  maxLength={25}
+  className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+  onChange={e => {
+    if (/^[A-Za-z\s]*$/.test(e.target.value)) {
+      setFirstName(capitalizeWords(e.target.value));
+    }
+  }}
+  required
+/>
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name</Label>
               <Input
-                id="lastName"
-                value={lastName}
-                maxLength={25}
-                 className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={e => /^[A-Za-z\s]*$/.test(e.target.value) && setLastName(capitalizeWords(e.target.value))       
-                 required
-              />
+  id="lastName"
+  value={lastName}
+  maxLength={25}
+  className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+  onChange={e => {
+    if (/^[A-Za-z\s]*$/.test(e.target.value)) {
+      setLastName(capitalizeWords(e.target.value));
+    }
+  }}
+  required
+/>
             </div>
           </div>
 
