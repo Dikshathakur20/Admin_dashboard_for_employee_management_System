@@ -93,9 +93,8 @@ const Departments = () => {
       setDepartments(enriched);
     } catch {
       toast({
-         title: "Cannot delete",
-        description: "This designation has active employees. Reassign them first.",
-        variant: "destructive",
+       title: "Error",
+        description: "Unable to fetch departments",
       });
     } finally {
       setLoading(false);
@@ -120,8 +119,9 @@ const Departments = () => {
       fetchDepartments();
     } catch {
       toast({
-        title: "Error",
-        description: "Unable to delete department",
+        title: "Cannot delete",
+        description: "This designation has active employees. Reassign them first.",
+        variant: "destructive",
       });
     }
   };
