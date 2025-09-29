@@ -130,9 +130,7 @@ const Login = () => {
               </div>
 
               {/* Password */}
-              <div className="space-y-1">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
+                              <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <Input
                     id="password"
@@ -141,14 +139,23 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="pl-10 pr-10" // ← Add left padding for the icon
                   />
                   {showPassword ? (
-                    <EyeOff className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" size={18} onClick={() => setShowPassword(false)} />
+                    <EyeOff
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
+                      size={18}
+                      onClick={() => setShowPassword(false)}
+                    />
                   ) : (
-                    <Eye className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" size={18} onClick={() => setShowPassword(true)} />
+                    <Eye
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
+                      size={18}
+                      onClick={() => setShowPassword(true)}
+                    />
                   )}
                 </div>
-              </div>
+
 
               {/* Forgot Password */}
                            <div className="text-right mt-2">
@@ -165,10 +172,14 @@ const Login = () => {
               </div>
 
               <div className="flex items-center justify-center mt-6">
-  <Button type="submit" className="w-64 bg-[#001F7A] text-white px-4 py-2">
-    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
-  </Button>
-</div>
+              <Button
+                type="submit"
+                className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 transition-colors"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
+              </Button>
+              
+              </div>
 
             </form>
           ) : (
