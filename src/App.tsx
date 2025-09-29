@@ -35,14 +35,14 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // Force fresh-tab login
 // ----------------------
 const ForceFreshTab = () => {
-  const { signOut } = useLogin(); // updated
+  const { logout } = useLogin(); // updated
 
   useEffect(() => {
     if (!sessionStorage.getItem("tabInitialized")) {
-      signOut().catch(console.error);
+      logout().catch(console.error);
       sessionStorage.setItem("tabInitialized", "true");
     }
-  }, [signOut]);
+  }, [logout]);
 
   return null;
 };
@@ -51,12 +51,12 @@ const ForceFreshTab = () => {
 // Inactivity Handler
 // ----------------------
 const InactivityHandler = ({ children }: { children: React.ReactNode }) => {
-  const { signOut } = useLogin(); // updated
+  const { logout } = useLogin(); // updated
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const logout = () => {
-    signOut();
+    logOut();
     navigate("/login", { replace: true });
   };
 
