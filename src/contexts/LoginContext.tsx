@@ -1,26 +1,28 @@
-// src/contexts/AuthContext.tsx
+// src/contexts/LoginContext.tsx
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-interface AuthContextType {
+interface LoginContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string, userName: string) => Promise<{ error: any; needsConfirmation?: boolean; message?: string }>;
-  signIn: (emailOrUsername: string, password: string) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
+  login: (emailOrUsername: string, password: string) => Promise<{ error: any }>;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const LoginContext = createContext<LoginContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+// Hook for accessing login context
+export const useLogin = () => {
+  const context = useContext(LoginContext);
+  if (!context) throw new Error('useLogin must be used within a LoginProvider');
   return context;
 };
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+// Provider
+export const LoginProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'Please enter a valid email address' } };
       }
 
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/login`; // redirect to login after confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -79,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (authData.user && !authData.session) {
-        return { error: null, needsConfirmation: true, message: '✅ Signup successful! Check your email to confirm.' };
+        return { error: null, needsConfirmation: true, message: '✅ Signup successful! Check your email to login.' };
       }
 
       if (authData.user && authData.session) {
@@ -94,12 +96,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // ------------------------
-  // Sign In
+  // Login (Sign In)
   // ------------------------
-  const signIn = async (emailOrUsername: string, password: string) => {
+  const login = async (emailOrUsername: string, password: string) => {
     try {
       let email = emailOrUsername.trim();
 
+      // If username is provided instead of email
       if (!email.includes('@')) {
         const { data: adminData, error: adminError } = await supabase
           .from('tbladmins')
@@ -120,21 +123,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(data.session ?? null);
       return { error: null };
     } catch (error: any) {
-      return { error: { message: error.message || 'Unexpected error during sign in' } };
+      return { error: { message: error.message || 'Unexpected error during login' } };
     }
   };
 
   // ------------------------
-  // Sign Out
+  // Logout (Sign Out)
   // ------------------------
-  const signOut = async () => {
-    // Clear local state immediately
+  const logout = async () => {
     setUser(null);
     setSession(null);
     await supabase.auth.signOut();
   };
 
-  const value: AuthContextType = { user, session, loading, signUp, signIn, signOut };
+  const value: LoginContextType = { user, session, loading, signUp, login, logout };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <LoginContext.Provider value={value}>{children}</LoginContext.Provider>;
 };
