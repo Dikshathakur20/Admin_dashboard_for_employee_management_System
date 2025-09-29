@@ -132,7 +132,7 @@ const Login = () => {
 
               {/* Password */}
               <div className="space-y-1">
-                <<Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Password</Label>
                               <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <Input
