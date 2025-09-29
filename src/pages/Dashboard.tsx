@@ -1,12 +1,12 @@
 // src/pages/Dashboard.jsx
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+import {Login} from'@/contexts/LoginContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+   const { user } = useLogin(); 
   const navigate = useNavigate();
   const [employeeCount, setEmployeeCount] = useState(0);
   const [departmentCount, setDepartmentCount] = useState(0);
@@ -26,7 +26,7 @@ const Dashboard = () => {
     fetchCounts();
   }, []);
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/Login" replace />;
 
   const cards = [
     {
