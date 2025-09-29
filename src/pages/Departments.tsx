@@ -120,7 +120,7 @@ const Departments = () => {
     } catch {
       toast({
         title: "Cannot delete",
-        description: "This designation has active employees. Reassign them first.",
+        description: "This department  has active employees. Reassign them first.",
         variant: "destructive",
       });
     }
