@@ -28,44 +28,40 @@ export const useFormNavigation = () => {
       // Handle Enter Key
       // -----------------------------
       if (e.key === "Enter") {
-        e.preventDefault();
+  e.preventDefault();
 
-        // Special case: File input
-        if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "file") {
-          const fileInput = target as HTMLInputElement;
-          fileInput.click();
-          const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
-          if (submitButton) {
-            const handleChange = () => {
-              submitButton.focus();
-              fileInput.removeEventListener("change", handleChange);
-            };
-            fileInput.addEventListener("change", handleChange);
-          }
-          return;
-        }
+  // File input special case
+  if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "file") {
+    const fileInput = target as HTMLInputElement;
+    fileInput.click();
+    const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
+    if (submitButton) {
+      const handleChange = () => {
+        submitButton.focus();
+        fileInput.removeEventListener("change", handleChange);
+      };
+      fileInput.addEventListener("change", handleChange);
+    }
+    return;
+  }
 
-        // Special case: Custom SelectTrigger
-        if (target.getAttribute("role") === "button") {
-          // Move to next focusable element instead of opening dropdown
-          const next = focusable[index + 1];
-          if (next) {
-            next.focus();
-          }
-          return;
-        }
+  // Custom SelectTrigger
+  if (target.getAttribute("role") === "button") {
+    const next = focusable[index + 1];
+    if (next) next.focus();
+    return;
+  }
 
-        // Regular inputs/buttons
-        const next = focusable[index + 1];
-        if (next) {
-          next.focus();
-        } else {
-          const submitButton = Array.from(form.querySelectorAll("button")).find(
-            (btn) => btn.type === "submit" || btn.getAttribute("data-role") === "submit"
-          ) as HTMLButtonElement | undefined;
-          if (submitButton) submitButton.focus();
-        }
-      }
+  // Regular inputs
+  const next = focusable[index + 1];
+  if (next) {
+    next.focus();
+  } else {
+    // Focus Add (submit) button explicitly
+    const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
+    if (submitButton) submitButton.focus();
+  }
+}
 
       // -----------------------------
       // Arrow keys navigation
