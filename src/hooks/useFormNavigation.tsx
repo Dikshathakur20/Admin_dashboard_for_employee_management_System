@@ -97,7 +97,21 @@ export const useFormNavigation = () => {
       }
     };
 
+    const focusFirstInput = () => {
+      const forms = document.querySelectorAll("form");
+      forms.forEach((form) => {
+        const firstInput = form.querySelector<HTMLElement>(
+          "input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])"
+        );
+        if (firstInput) firstInput.focus();
+      });
+    };
+
     document.addEventListener("keydown", handleKeyDown);
+
+    // Focus first input on mount (useful for modals/dialogs)
+    focusFirstInput();
+
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 };
