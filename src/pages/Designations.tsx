@@ -31,7 +31,7 @@ interface Department {
 type SortOption = 'name-asc' | 'name-desc' | 'id-asc' | 'id-desc';
 
 const Designations = () => {
-  const { user } = Login();
+  const { user } =useLogin();
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +44,7 @@ const Designations = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  if (!user) return <Navigate to="/Login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
 
   useEffect(() => {
     fetchDesignations();
