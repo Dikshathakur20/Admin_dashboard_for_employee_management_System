@@ -1,19 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLogin } from '@/contexts/LoginContext'; // updated hook
+import { useLogin } from '@/contexts/LoginContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User, Lock, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { user, login, logout } = useLogin(); // updated hook usage
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+
+  const { user, login, logout } = useLogin();
   const { toast } = useToast();
   const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -23,7 +27,9 @@ const Login = () => {
     if (user) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
-  // Handle form submit
+  // ----------------------
+  // Login Form
+  // ----------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -43,7 +49,25 @@ const Login = () => {
     }
   };
 
-  // Auto logout after 5 minutes of inactivity
+  // ----------------------
+  // Forgot Password
+  // ----------------------
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/login`, // redirect after reset
+    });
+    setLoading(false);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else toast({ title: "Success", description: "Check your email to reset your password" });
+    setShowReset(false);
+  };
+
+  // ----------------------
+  // Inactivity Timer
+  // ----------------------
   const resetInactivityTimer = () => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     inactivityTimer.current = setTimeout(() => {
@@ -74,84 +98,102 @@ const Login = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
       <h1 className="text-blue-700 text-3xl font-bold mb-8">Admin Portal</h1>
 
-      <Card
-        className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
-        style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}
-      >
-        <form onSubmit={handleSubmit} className="p-6">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-800">Login</CardTitle>
-            <CardDescription className="text-gray-600 mt-1">
-              Enter your credentials to access the admin dashboard
-            </CardDescription>
-          </CardHeader>
+      <Card className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
+        style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
+        
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold text-gray-800">{showReset ? "Reset Password" : "Login"}</CardTitle>
+          <CardDescription className="text-gray-600 mt-1">
+            {showReset ? "Enter your email to reset your password" : "Enter your credentials to access the admin dashboard"}
+          </CardDescription>
+        </CardHeader>
 
-          <CardContent className="space-y-5 mt-4">
-            {/* Email/Username */}
-            <div className="space-y-1">
-              <Label htmlFor="email" className="font-medium text-gray-700">Email or Username</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        <CardContent className="space-y-5 mt-4">
+          {!showReset ? (
+            <form onSubmit={handleSubmit}>
+              {/* Email/Username */}
+              <div className="space-y-1">
+                <Label htmlFor="email">Email or Username</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <Input
+                    id="email"
+                    type="text"
+                    placeholder="Enter email or username"
+                    value={emailOrUsername}
+                    onChange={(e) => setEmailOrUsername(e.target.value)}
+                    required
+                    autoComplete="off"
+                    className="pl-10 pr-10"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  {showPassword ? (
+                    <EyeOff className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" size={18} onClick={() => setShowPassword(false)} />
+                  ) : (
+                    <Eye className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" size={18} onClick={() => setShowPassword(true)} />
+                  )}
+                </div>
+              </div>
+
+              {/* Forgot Password */}
+              <div className="text-right mt-2">
+                <button type="button" className="text-sm text-blue-600 hover:underline"
+                  onClick={() => setShowReset(true)}>Forgot Password?</button>
+              </div>
+
+              {/* Sign In Button */}
+              <div className="flex items-center justify-center mt-6">
+                <Button type="submit" className="w-full bg-[#001F7A] text-white">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            // ----------------------
+            // Reset Password Form
+            // ----------------------
+            <form onSubmit={handleResetPassword}>
+              <div className="space-y-1">
+                <Label htmlFor="resetEmail">Email</Label>
                 <Input
-                  id="email"
-                  type="text"
-                  placeholder="Enter email or username"
-                  value={emailOrUsername}
-                  onChange={(e) => setEmailOrUsername(e.target.value)}
+                  id="resetEmail"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
                   required
-                  autoComplete="off"
-                  className="pl-10 bg-white border border-gray-400 shadow-sm text-black placeholder-gray-500 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                 />
               </div>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1">
-              <Label htmlFor="password" className="font-medium text-gray-700">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  className="pl-10 pr-10 bg-white border border-gray-400 shadow-sm text-black placeholder-gray-500 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                />
-                {showPassword ? (
-                  <EyeOff
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
-                    size={18}
-                    onClick={() => setShowPassword(false)}
-                  />
-                ) : (
-                  <Eye
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
-                    size={18}
-                    onClick={() => setShowPassword(true)}
-                  />
-                )}
+              <div className="flex items-center justify-between mt-4">
+                <Button type="submit" className="bg-green-600 text-white w-full">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Link"}
+                </Button>
               </div>
-            </div>
-
-            {/* Sign In Button */}
-            <div className="flex items-center justify-center mt-6">
-              <Button
-                type="submit"
-                className=" bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
-                title="Click to sign in"
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
-              </Button>
-            </div>
-          </CardContent>
-        </form>
+              <div className="mt-2 text-right">
+                <button type="button" className="text-sm text-gray-600 hover:underline"
+                  onClick={() => setShowReset(false)}>Back to Login</button>
+              </div>
+            </form>
+          )}
+        </CardContent>
       </Card>
     </div>
   );
 };
 
-export default Login; // changed from Auth
+export default Login;
