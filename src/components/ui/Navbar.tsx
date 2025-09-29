@@ -3,11 +3,13 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { LogOut, Users, Building, Briefcase, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useLogin } from '@/contexts/LoginContext';
+
+
 import { useToast } from "@/hooks/use-toast";
 
 const Navbar: React.FC = () => {
-  const { signOut } = useAuth();
+  const { signOut } = useLogin();
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
@@ -27,7 +29,7 @@ const Navbar: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate("/auth", { replace: true });
+      navigate("/Login", { replace: true });
       toast({ title: "Success", description: "Signed out successfully" });
     } catch {
       toast({ title: "Error", description: "Could not sign out properly" });
