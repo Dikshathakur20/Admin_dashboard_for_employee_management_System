@@ -27,7 +27,7 @@ export const useFormNavigation = () => {
       // -----------------------------
       // Handle Enter Key
       // -----------------------------
-      if (e.key === "Enter") {
+if (e.key === "Enter") {
   e.preventDefault();
 
   // File input special case
@@ -57,11 +57,16 @@ export const useFormNavigation = () => {
   if (next) {
     next.focus();
   } else {
-    // Focus Add (submit) button explicitly
+    // Last input → submit form automatically
     const submitButton = form.querySelector("button[type='submit']") as HTMLButtonElement | null;
-    if (submitButton) submitButton.focus();
+    if (submitButton) {
+      submitButton.click();
+    } else {
+      form.submit();
+    }
   }
 }
+
 
       // -----------------------------
       // Arrow keys navigation
