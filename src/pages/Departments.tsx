@@ -93,8 +93,9 @@ const Departments = () => {
       setDepartments(enriched);
     } catch {
       toast({
-        title: "Error",
-        description: "Unable to fetch departments",
+         title: "Cannot delete",
+        description: "This designation has active employees. Reassign them first.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -254,7 +255,7 @@ const Departments = () => {
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
-                            style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}
+                           
                             title="View"
                             onClick={async () => {
                               await fetchDepartmentDesignations(d.department_id);
