@@ -19,7 +19,7 @@ const Index = () => {
             Comprehensive admin dashboard for managing employees, departments, and designations with powerful CRUD operations.
           </p>
           <div className="flex items-center justify-center mt-6">
-          <Link to="/auth">
+          <Link to="/login">
           <Button
             className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
             title="Click to login as admin"
@@ -119,7 +119,7 @@ const Index = () => {
             Ready to manage your workforce effectively?
           </p>
            <div className="flex items-center justify-center  mt-6">
-          <Link to="/auth">
+          <Link to="/login">
                   <Button
         className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm font-semibold"
         title="Get Started Now"
