@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
 
 const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -198,14 +199,23 @@ const Login = () => {
                   required
                 />
               </div>
-              <div className="flex items-center justify-between mt-4">
-                 <Button type="submit" className="w-64 bg-[#001F7A] text-white px-4 py-2">
+              <div className="flex items-center justify-center mt-4">
+                <Button
+                  type="submit"
+                  className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+                >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Link"}
                 </Button>
               </div>
-              <div className="mt-2 text-right">
-                <button type="button" className="text-sm text-gray-600 hover:underline"
-                  onClick={() => setShowReset(false)}>Back to Login</button>
+
+                <div className="mt-2 text-right">
+                <Link
+                  to="/login"
+                  className="text-sm text-gray-600 hover:underline"
+                  onClick={() => setShowReset(false)} // optional, if you also want to hide the reset form
+                >
+                  Back to Login
+                </Link>
               </div>
             </form>
           )}
