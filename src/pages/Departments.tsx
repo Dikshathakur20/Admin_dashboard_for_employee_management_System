@@ -43,6 +43,18 @@ interface Designation {
   designation_title: string;
   department_id: number;
 }
+interface Employee {
+  employee_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  hire_date: string;
+  salary: number | null;
+  department_id: number | null;
+  designation_id: number | null;
+  file_data?: string | null;
+}
+
 
 const Departments = () => {
   const { user } = useLogin();
