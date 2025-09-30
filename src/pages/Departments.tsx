@@ -311,14 +311,7 @@ const enriched = (deptData || []).map((dept: any) => ({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="sm"
-                            className="bg-blue-900 text-white hover:bg-blue-700"
-                            title="Edit"
-                            onClick={() => setEditingDepartment(d)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
@@ -395,7 +388,19 @@ const enriched = (deptData || []).map((dept: any) => ({
      
         <div className="space-y-3 relative">
     {/* Edit button inside the card, top-right corner */}
-  
+   <Button
+      size="sm"
+      variant="outline"
+      className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
+      title="Edit Employee"
+      onClick={() => {
+        setEditingEmployee(viewingEmployee);
+        setViewingEmployee(null); // close details dialog when opening edit
+      }}
+    >
+      <Edit className="h-4 w-4 mr-1" />
+      Edit
+    </Button>
         <p>
           <span className="font-semibold">Department Name:</span>{" "}
           {viewingDepartment.department_name}
