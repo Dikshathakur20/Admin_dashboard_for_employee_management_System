@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Eye, Edit, Trash2, ChevronDown } from "lucide-react";
@@ -270,23 +271,24 @@ const enriched = (deptData || []).map((dept: any) => ({
                 <TableBody>
                   {paginated.map((d) => (
                     <TableRow key={d.department_id}>
-                      <TableCell>{d.department_name}</TableCell>
-                      <TableCell className="text-center">
-                        <button
+                                        <TableCell>{d.department_name}</TableCell>
+                                       <TableCell className="text-center">
+                    <Link
+                      to={`/employees?department=${d.department_id}`}
+                      className="text-blue-900 underline hover:text-blue-700"
+                    >
+                      {d.total_employees || 0}
+                    </Link>
+                  </TableCell>
                   
-                          onClick={() => navigate(`/employees?department=${d.department_id}`)}
-                        >
-                          {d.total_employees || 0}
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <button
-                          
-                          onClick={() => navigate(`/designations?department=${d.department_id}`)}
-                        >
-                          {d.total_designations || 0}
-                        </button>
-                      </TableCell>
+                  <TableCell className="text-center">
+                    <Link
+                      to={`/designations?department=${d.department_id}`}
+                      className="text-blue-900 underline hover:text-blue-700"
+                    >
+                      {d.total_designations || 0}
+                    </Link>
+                  </TableCell>
                       <TableCell>
                         <div className="flex justify-end space-x-3">
                           <Button
