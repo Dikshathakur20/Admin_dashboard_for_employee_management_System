@@ -271,7 +271,7 @@ const Departments = () => {
                       <TableCell>{d.department_name}</TableCell>
                       <TableCell className="text-center">
                         <button
-                          className="text-blue-900 underline hover:text-blue-700"
+                  
                           onClick={() => navigate(`/employees?department=${d.department_id}`)}
                         >
                           {d.total_employees || 0}
@@ -279,7 +279,7 @@ const Departments = () => {
                       </TableCell>
                       <TableCell className="text-center">
                         <button
-                          className="text-blue-900 underline hover:text-blue-700"
+                          
                           onClick={() => navigate(`/designations?department=${d.department_id}`)}
                         >
                           {d.total_designations || 0}
