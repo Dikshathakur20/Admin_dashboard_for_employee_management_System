@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
-import { useLogin } from "@/contexts/LoginContext"; // ✅ updated
+import { Navigate, useNavigate } from "react-router-dom";
+import { useLogin } from "@/contexts/LoginContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Eye, Edit, Trash2, ChevronDown } from "lucide-react";
@@ -35,6 +35,7 @@ interface Department {
   department_name: string;
   location: string | null;
   total_designations?: number;
+  total_employees?: number;
 }
 
 interface Designation {
@@ -44,40 +45,38 @@ interface Designation {
 }
 
 const Departments = () => {
-  const { user } = useLogin(); // ✅ replaced useAuth
+  const { user } = useLogin();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [editingDepartment, setEditingDepartment] =
-    useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [viewingDepartment, setViewingDepartment] =
-    useState<Department | null>(null);
-  const [departmentDesignations, setDepartmentDesignations] = useState<
-    Designation[]
-  >([]);
+  const [viewingDepartment, setViewingDepartment] = useState<Department | null>(null);
+  const [departmentDesignations, setDepartmentDesignations] = useState<Designation[]>([]);
 
-  // ⭐ Sorting & Pagination
-  const [sortOption, setSortOption] = useState<
-    "id-asc" | "id-desc" | "name-asc" | "name-desc"
-  >("id-desc");
+  const [sortOption, setSortOption] = useState<"id-asc" | "id-desc" | "name-asc" | "name-desc">("id-desc");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  if (!user) return <Navigate to="/login" replace />; // ✅ updated
+  if (!user) return <Navigate to="/login" replace />;
 
   useEffect(() => {
-    fetchDepartments();
-  }, []);
+    fetchDepartments(currentPage);
+  }, [currentPage]);
 
-  const fetchDepartments = async () => {
+  const fetchDepartments = async (page = 1) => {
     setLoading(true);
     try {
+      const from = (page - 1) * pageSize;
+      const to = page * pageSize - 1;
+
       const { data, error } = await supabase
         .from("tbldepartments")
-        .select("*, tbldesignations (designation_id)");
+        .select("*, tbldesignations (designation_id), tblemployees(id)")
+        .range(from, to);
 
       if (error) throw error;
 
@@ -85,16 +84,16 @@ const Departments = () => {
         department_id: dept.department_id,
         department_name: dept.department_name,
         location: dept.location,
-        total_designations: dept.tbldesignations
-          ? dept.tbldesignations.length
-          : 0,
+        total_designations: dept.tbldesignations?.length || 0,
+        total_employees: dept.tblemployees?.filter((e:any) => e.status === "active")?.length || 0,
       }));
 
       setDepartments(enriched);
     } catch {
       toast({
-       title: "Error",
+        title: "Error",
         description: "Unable to fetch departments",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -103,24 +102,15 @@ const Departments = () => {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this department?")) return;
-
     try {
-      const { error } = await supabase
-        .from("tbldepartments")
-        .delete()
-        .eq("department_id", id);
-
+      const { error } = await supabase.from("tbldepartments").delete().eq("department_id", id);
       if (error) throw error;
-
-      toast({
-        title: "Deleted",
-        description: "Department removed successfully",
-      });
-      fetchDepartments();
+      toast({ title: "Deleted", description: "Department removed successfully" });
+      fetchDepartments(currentPage);
     } catch {
       toast({
         title: "Cannot delete",
-        description: "This department  has active employees. Reassign them first.",
+        description: "This department has active employees. Reassign them first.",
         variant: "destructive",
       });
     }
@@ -137,15 +127,29 @@ const Departments = () => {
       if (error) throw error;
       setDepartmentDesignations(data || []);
     } catch {
-      toast({
-        title: "Error",
-        description: "Unable to fetch designations",
-      });
+      toast({ title: "Error", description: "Unable to fetch designations" });
       setDepartmentDesignations([]);
     }
   };
 
-  // ⭐ Filter + Sort + Paginate
+  const handleUpdateDepartment = async (dept: Department) => {
+    try {
+      const { error } = await supabase
+        .from("tbldepartments")
+        .update({
+          department_name: dept.department_name,
+          location: dept.location,
+        })
+        .eq("department_id", dept.department_id);
+
+      if (error) throw error;
+      toast({ title: "Updated", description: "Department updated successfully" });
+      fetchDepartments(currentPage);
+    } catch {
+      toast({ title: "Error", description: "Unable to update department", variant: "destructive" });
+    }
+  };
+
   const filtered = departments.filter((d) =>
     d.department_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -153,93 +157,73 @@ const Departments = () => {
   const sorted = [...filtered].sort((a, b) => {
     if (sortOption === "id-asc") return a.department_id - b.department_id;
     if (sortOption === "id-desc") return b.department_id - a.department_id;
-    if (sortOption === "name-asc")
-      return a.department_name.localeCompare(b.department_name);
-    if (sortOption === "name-desc")
-      return b.department_name.localeCompare(a.department_name);
+    if (sortOption === "name-asc") return a.department_name.localeCompare(b.department_name);
+    if (sortOption === "name-desc") return b.department_name.localeCompare(a.department_name);
     return 0;
   });
 
   const totalPages = Math.ceil(sorted.length / pageSize);
-  const paginated = sorted.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginated = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  if (loading)
-    return <div className="flex justify-center p-8">Loading departments...</div>;
+  if (loading) return <div className="flex justify-center p-8">Loading departments...</div>;
 
   return (
-   
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
-  <Card className="w-full border-0 shadow-none bg-transparent">
-    {/* Header with Title + Search + Actions */}
-    <CardHeader className="px-0 py-2">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <CardTitle className="text-2xl font-bold">Departments</CardTitle>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
-          {/* Search bar */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-            <Input
-              placeholder="Search department"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setShowNewDialog(true)}
-              className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
-              title=" Add department"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
-                  Sort
-                   <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
-                <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
-                  Name A - Z
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
-                  Name Z - A
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
-                  Old → New
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
-                  New → Old
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </CardHeader>
-
+        <Card className="w-full border-0 shadow-none bg-transparent">
+          <CardHeader className="px-0 py-2">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <CardTitle className="text-2xl font-bold">Departments</CardTitle>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+                  <Input
+                    placeholder="Search department"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowNewDialog(true)}
+                    className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+                    title="Add department"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
+                        Sort <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-white"
+                      style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+                    >
+                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>Name A - Z</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>Name Z - A</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>Old → New</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>New → Old</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
           <CardContent className="px-0">
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="font-bold">Department</TableHead>
-                    <TableHead className="font-bold text-center">
-                      Total Designations
-                    </TableHead>
+                    <TableHead className="font-bold text-center">Active Employees</TableHead>
+                    <TableHead className="font-bold text-center">Total Designations</TableHead>
                     <TableHead className="font-bold text-end">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -248,14 +232,26 @@ const Departments = () => {
                     <TableRow key={d.department_id}>
                       <TableCell>{d.department_name}</TableCell>
                       <TableCell className="text-center">
-                        {d.total_designations || 0}
+                        <button
+                          className="text-blue-900 underline hover:text-blue-700"
+                          onClick={() => navigate(`/employees?department=${d.department_id}`)}
+                        >
+                          {d.total_employees || 0}
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <button
+                          className="text-blue-900 underline hover:text-blue-700"
+                          onClick={() => navigate(`/designations?department=${d.department_id}`)}
+                        >
+                          {d.total_designations || 0}
+                        </button>
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end space-x-3">
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
-                           
                             title="View"
                             onClick={async () => {
                               await fetchDepartmentDesignations(d.department_id);
@@ -290,20 +286,17 @@ const Departments = () => {
 
             {paginated.length === 0 && (
               <div className="text-center p-8 text-muted-foreground">
-                {searchTerm
-                  ? "No departments match your search."
-                  : "No departments found."}
+                {searchTerm ? "No departments match your search." : "No departments found."}
               </div>
             )}
 
-            {/* ⭐ Pagination */}
+            {/* Pagination */}
             <div className="flex justify-center items-center gap-x-4 mt-4">
               <Button
                 size="sm"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                title="Previous page"
               >
                 Previous
               </Button>
@@ -315,7 +308,6 @@ const Departments = () => {
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
                 className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-                title="Next page"
               >
                 Next
               </Button>
@@ -329,15 +321,15 @@ const Departments = () => {
         department={editingDepartment}
         open={!!editingDepartment}
         onOpenChange={(open) => !open && setEditingDepartment(null)}
-        onSuccess={fetchDepartments}
+        onSuccess={() => fetchDepartments(currentPage)}
       />
       <NewDepartmentDialog
         open={showNewDialog}
         onOpenChange={setShowNewDialog}
-        onSuccess={fetchDepartments}
+        onSuccess={() => fetchDepartments(currentPage)}
       />
 
-      {/* Details Dialog */}
+      {/* Details / Inline Edit Dialog */}
       <Dialog
         open={!!viewingDepartment}
         onOpenChange={(open) => !open && setViewingDepartment(null)}
@@ -350,18 +342,35 @@ const Departments = () => {
           </DialogHeader>
           {viewingDepartment && (
             <div className="space-y-3">
-              <p>
-                <span className="font-semibold">Department Name:</span>{" "}
-                {viewingDepartment.department_name}
-              </p>
-              <p>
-                <span className="font-semibold">Location:</span>{" "}
-                {viewingDepartment.location || "-"}
-              </p>
-              <p>
-                <span className="font-semibold">Total Designations:</span>{" "}
-                {departmentDesignations.length}
-              </p>
+              <div className="flex gap-2 items-center">
+                <span className="font-semibold">Department Name:</span>
+                <Input
+                  value={viewingDepartment.department_name}
+                  onChange={(e) =>
+                    setViewingDepartment({ ...viewingDepartment, department_name: e.target.value })
+                  }
+                />
+              </div>
+              <div className="flex gap-2 items-center">
+                <span className="font-semibold">Location:</span>
+                <Input
+                  value={viewingDepartment.location || ""}
+                  onChange={(e) =>
+                    setViewingDepartment({ ...viewingDepartment, location: e.target.value })
+                  }
+                />
+              </div>
+              <div className="flex gap-2 items-center">
+                <span className="font-semibold">Total Designations:</span>
+                <button
+                  className="text-blue-900 underline hover:text-blue-700"
+                  onClick={() =>
+                    navigate(`/designations?department=${viewingDepartment.department_id}`)
+                  }
+                >
+                  {departmentDesignations.length}
+                </button>
+              </div>
               {departmentDesignations.length > 0 ? (
                 <ul className="list-disc list-inside ml-4">
                   {departmentDesignations.map((des) => (
@@ -371,11 +380,16 @@ const Departments = () => {
               ) : (
                 <p>No designations found.</p>
               )}
+              <Button
+                className="bg-green-700 text-white mt-2"
+                onClick={() => viewingDepartment && handleUpdateDepartment(viewingDepartment)}
+              >
+                Save Changes
+              </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
-    
     </div>
   );
 };
