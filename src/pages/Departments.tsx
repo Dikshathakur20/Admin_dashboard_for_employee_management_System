@@ -67,29 +67,47 @@ const Departments = () => {
     fetchDepartments(currentPage);
   }, [currentPage]);
 
+  // ✅ Fixed fetch logic
   const fetchDepartments = async (page = 1) => {
     setLoading(true);
     try {
       const from = (page - 1) * pageSize;
       const to = page * pageSize - 1;
 
-      const { data, error } = await supabase
+      // Fetch departments
+      const { data: deptData, error: deptError } = await supabase
         .from("tbldepartments")
-        .select("*, tbldesignations (designation_id), tblemployees(id)")
+        .select("*")
         .range(from, to);
+      if (deptError) throw deptError;
 
-      if (error) throw error;
+      // Fetch employees
+      const deptIds = deptData?.map((d: any) => d.department_id) || [];
+      const { data: empData, error: empError } = await supabase
+        .from("tblemployees")
+        .select("id, department_id, status")
+        .in("department_id", deptIds);
+      if (empError) throw empError;
 
-      const enriched = (data || []).map((dept: any) => ({
+      // Fetch designations
+      const { data: desData, error: desError } = await supabase
+        .from("tbldesignations")
+        .select("designation_id, department_id")
+        .in("department_id", deptIds);
+      if (desError) throw desError;
+
+      // Combine counts
+      const enriched = (deptData || []).map((dept: any) => ({
         department_id: dept.department_id,
         department_name: dept.department_name,
         location: dept.location,
-        total_designations: dept.tbldesignations?.length || 0,
-        total_employees: dept.tblemployees?.filter((e:any) => e.status === "active")?.length || 0,
+        total_employees: empData?.filter((e: any) => e.department_id === dept.department_id && e.status === "active")?.length || 0,
+        total_designations: desData?.filter((d: any) => d.department_id === dept.department_id)?.length || 0,
       }));
 
       setDepartments(enriched);
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast({
         title: "Error",
         description: "Unable to fetch departments",
