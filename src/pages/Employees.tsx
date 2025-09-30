@@ -484,7 +484,14 @@ const designationFilter = params.get("designation");
                       className="w-full h-full object-cover"
                     />
                   )
-                    <Button
+                   : (
+                    <div className="w-full h-full flex items-center justify-center text-white text-2xl bg-gray-400">
+                      {viewingEmployee.first_name[0]}
+                      {viewingEmployee.last_name[0]}
+                    </div>
+                  )}
+                </div>
+                 <Button
       size="sm"
       variant="outline"
       className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
@@ -496,13 +503,7 @@ const designationFilter = params.get("designation");
     >
       <Edit className="h-4 w-4 mr-1" />
       Edit
-    </Button>: (
-                    <div className="w-full h-full flex items-center justify-center text-white text-2xl bg-gray-400">
-                      {viewingEmployee.first_name[0]}
-                      {viewingEmployee.last_name[0]}
-                    </div>
-                  )}
-                </div>
+    </Button>
               </div>
             </div>
           )}
