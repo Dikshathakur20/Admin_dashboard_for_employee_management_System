@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { EditDesignationDialog } from '@/components/dashboard/EditDesignationDialog';
 import { NewDesignationDialog } from '@/components/dashboard/NewDesignationDialog';
+import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -26,6 +27,17 @@ interface Designation {
 interface Department {
   department_id: number;
   department_name: string;
+}
+interface Employee {
+  employee_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  hire_date: string;
+  salary: number | null;
+  department_id: number | null;
+  designation_id: number | null;
+  file_data?: string | null;
 }
 
 type SortOption = 'name-asc' | 'name-desc' | 'id-asc' | 'id-desc';
@@ -50,29 +62,44 @@ const Designations = () => {
     fetchDesignations();
   }, []);
 
-  const fetchDesignations = async () => {
-    setLoading(true);
-    try {
-      const [designationsResult, departmentsResult] = await Promise.all([
-        supabase.from('tbldesignations').select('*'),
-        supabase.from('tbldepartments').select('*').order('department_name'),
-      ]);
+ const fetchDesignations = async () => {
+  setLoading(true);
+  try {
+    const [designationsResult, departmentsResult, employeesResult] = await Promise.all([
+      supabase.from('tbldesignations').select('*'),
+      supabase.from('tbldepartments').select('*').order('department_name'),
+      supabase.from('tblemployees').select('employee_id, designation_id, status')
+    ]);
 
-      if (designationsResult.error) throw designationsResult.error;
-      if (departmentsResult.error) throw departmentsResult.error;
+    if (designationsResult.error) throw designationsResult.error;
+    if (departmentsResult.error) throw departmentsResult.error;
+    if (employeesResult.error) throw employeesResult.error;
 
-      setDesignations(designationsResult.data || []);
-      setDepartments(departmentsResult.data || []);
-    } catch {
-      toast({
-        title: "Data Loading Issue",
-        description: "Unable to fetch designation information",
-        variant: "default"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    setDepartments(departmentsResult.data || []);
+
+    const designationsWithCount = (designationsResult.data || []).map(des => ({
+      ...des,
+      total_employees: employeesResult.data?.filter(
+        (e: Employee) => e.designation_id === des.designation_id && e.ac === 'active'
+      ).length || 0
+    }));
+
+    setDesignations(designationsWithCount);
+
+  } catch {
+    toast({
+      title: "Data Loading Issue",
+      description: "Unable to fetch designation information",
+      variant: "default"
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+     
+  
 
   const handleDelete = async (designationId: number) => {
     if (!confirm('Are you sure you want to remove this designation?')) return;
