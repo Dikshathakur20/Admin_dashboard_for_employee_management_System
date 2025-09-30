@@ -47,7 +47,7 @@ const ResetPassword = () => {
 
       // Send OTP via Supabase function / email
       // For demo, just log it or store in a table
-      await supabase.from("otps").insert({ email, otp: generatedOtp });
+      await supabase.functions.invoke("send-otp", { body: { email } });
 
       toast({ title: "OTP Sent", description: "Check your email inbox." });
       setStep("otp");
@@ -80,9 +80,11 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       // Use Admin API (requires service role in edge function) OR handle via RLS table
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        password: newPassword,
-      });
+      // ✅ New way (safe via Edge Function)
+const { data, error } = await supabase.functions.invoke("reset-password", {
+  body: { email, otp, newPassword },
+});
+
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
