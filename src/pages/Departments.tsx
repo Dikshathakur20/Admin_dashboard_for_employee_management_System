@@ -368,43 +368,46 @@ const Departments = () => {
       />
 
       {/* Details / Inline Edit Dialog */}
-     <Dialog
-        open={!!viewingDepartment}
-        onOpenChange={(open) => !open && setViewingDepartment(null)}
-      >
-        <DialogContent className="max-w-lg bg-blue-50 p-6 rounded-xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-blue-900">
-              Department Details
-            </DialogTitle>
-          </DialogHeader>
-          {viewingDepartment && (
-            <div className="space-y-3">
-              <p>
-                <span className="font-semibold">Department Name:</span>{" "}
-                {viewingDepartment.department_name}
-              </p>
-              <p>
-                <span className="font-semibold">Location:</span>{" "}
-                {viewingDepartment.location || "-"}
-              </p>
-              <p>
-                <span className="font-semibold">Total Designations:</span>{" "}
-                {departmentDesignations.length}
-              </p>
-              {departmentDesignations.length > 0 ? (
-                <ul className="list-disc list-inside ml-4">
-                  {departmentDesignations.map((des) => (
-                    <li key={des.designation_id}>{des.designation_title}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No designations found.</p>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+    {viewingDepartment && (
+  <div className="space-y-3 relative">
+    {/* Edit button inside the card, top-right corner */}
+    <Button
+      size="sm"
+      className="absolute top-0 right-0 bg-blue-900 text-white hover:bg-blue-700"
+      title="Edit"
+      onClick={() => {
+        setEditingDepartment(viewingDepartment);
+        // optionally close the dialog if you want
+        setViewingDepartment(null);
+      }}
+    >
+      <Edit className="h-4 w-4" />
+    </Button>
+
+    <p>
+      <span className="font-semibold">Department Name:</span>{" "}
+      {viewingDepartment.department_name}
+    </p>
+    <p>
+      <span className="font-semibold">Location:</span>{" "}
+      {viewingDepartment.location || "-"}
+    </p>
+    <p>
+      <span className="font-semibold">Total Designations:</span>{" "}
+      {departmentDesignations.length}
+    </p>
+    {departmentDesignations.length > 0 ? (
+      <ul className="list-disc list-inside ml-4">
+        {departmentDesignations.map((des) => (
+          <li key={des.designation_id}>{des.designation_title}</li>
+        ))}
+      </ul>
+    ) : (
+      <p>No designations found.</p>
+    )}
+  </div>
+)}
+
     </div>
   );
 };
