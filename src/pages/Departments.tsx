@@ -368,7 +368,7 @@ const Departments = () => {
       />
 
       {/* Details / Inline Edit Dialog */}
-      <Dialog
+     <Dialog
         open={!!viewingDepartment}
         onOpenChange={(open) => !open && setViewingDepartment(null)}
       >
@@ -380,35 +380,18 @@ const Departments = () => {
           </DialogHeader>
           {viewingDepartment && (
             <div className="space-y-3">
-              <div className="flex gap-2 items-center">
-                <span className="font-semibold">Department Name:</span>
-                <Input
-                  value={viewingDepartment.department_name}
-                  onChange={(e) =>
-                    setViewingDepartment({ ...viewingDepartment, department_name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="flex gap-2 items-center">
-                <span className="font-semibold">Location:</span>
-                <Input
-                  value={viewingDepartment.location || ""}
-                  onChange={(e) =>
-                    setViewingDepartment({ ...viewingDepartment, location: e.target.value })
-                  }
-                />
-              </div>
-              <div className="flex gap-2 items-center">
-                <span className="font-semibold">Total Designations:</span>
-                <button
-                  className="text-blue-900 underline hover:text-blue-700"
-                  onClick={() =>
-                    navigate(`/designations?department=${viewingDepartment.department_id}`)
-                  }
-                >
-                  {departmentDesignations.length}
-                </button>
-              </div>
+              <p>
+                <span className="font-semibold">Department Name:</span>{" "}
+                {viewingDepartment.department_name}
+              </p>
+              <p>
+                <span className="font-semibold">Location:</span>{" "}
+                {viewingDepartment.location || "-"}
+              </p>
+              <p>
+                <span className="font-semibold">Total Designations:</span>{" "}
+                {departmentDesignations.length}
+              </p>
               {departmentDesignations.length > 0 ? (
                 <ul className="list-disc list-inside ml-4">
                   {departmentDesignations.map((des) => (
@@ -418,12 +401,6 @@ const Departments = () => {
               ) : (
                 <p>No designations found.</p>
               )}
-              <Button
-                className="bg-green-700 text-white mt-2"
-                onClick={() => viewingDepartment && handleUpdateDepartment(viewingDepartment)}
-              >
-                Save Changes
-              </Button>
             </div>
           )}
         </DialogContent>
