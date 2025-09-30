@@ -220,6 +220,7 @@ const Designations = () => {
                   <TableRow>
                     <TableHead className="font-bold">Designation</TableHead>
                     <TableHead className="font-bold">Department</TableHead>
+                    <TableHead className="font-bold text-center">Active Employees</TableHead>
                     <TableHead className="font-bold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -229,6 +230,19 @@ const Designations = () => {
                     <TableRow key={designation.designation_id}>
                       <TableCell className="font-medium">{designation.designation_title}</TableCell>
                       <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
+                      <TableCell className="text-center">
+                        {designation.total_employees && designation.total_employees > 0 ? (
+                          <Link
+                            to={`/employees?designation=${designation.designation_id}`}
+                            className="text-blue-900 underline hover:text-blue-700"
+                          >
+                            {designation.total_employees}
+                          </Link>
+                        ) : (
+                          <span>0</span>
+                        )}
+                      </TableCell>
+
                       <TableCell>
                         <div className="flex justify-center space-x-2">
                           <Button
