@@ -68,7 +68,7 @@ const Designations = () => {
     const [designationsResult, departmentsResult, employeesResult] = await Promise.all([
       supabase.from('tbldesignations').select('*'),
       supabase.from('tbldepartments').select('*').order('department_name'),
-      supabase.from('tblemployees').select('employee_id, designation_id, status')
+      supabase.from('tblemployees').select('employee_id, designation_id')
     ]);
 
     if (designationsResult.error) throw designationsResult.error;
@@ -80,7 +80,7 @@ const Designations = () => {
     const designationsWithCount = (designationsResult.data || []).map(des => ({
       ...des,
       total_employees: employeesResult.data?.filter(
-        (e: Employee) => e.designation_id === des.designation_id && e.ac === 'active'
+        (e: Employee) => e.designation_id === des.designation_id
       ).length || 0
     }));
 
