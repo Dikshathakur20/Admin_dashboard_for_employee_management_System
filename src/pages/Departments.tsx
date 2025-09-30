@@ -395,18 +395,7 @@ const enriched = (deptData || []).map((dept: any) => ({
      
         <div className="space-y-3 relative">
     {/* Edit button inside the card, top-right corner */}
-    <Button
-      size="sm"
-      className="absolute top-0 right-0 bg-blue-900 text-white hover:bg-blue-700"
-      title="Edit"
-      onClick={() => {
-        setEditingDepartment(viewingDepartment);
-        // optionally close the dialog if you want
-        setViewingDepartment(null);
-      }}
-    >
-      <Edit className="h-4 w-4" />
-    </Button>
+  
         <p>
           <span className="font-semibold">Department Name:</span>{" "}
           {viewingDepartment.department_name}
