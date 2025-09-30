@@ -113,16 +113,18 @@ const Departments = () => {
       .in("department_id", deptIds);
     if (desError) throw desError;
 
+    
     // Combine counts
-    const enriched = (deptData || []).map((dept: any) => ({
-      department_id: dept.department_id,
-      department_name: dept.department_name,
-      location: dept.location,
-      total_employees:
-        empData?.filter((e: any) => e.department_id === dept.department_id && e.status === "active").length || 0,
-      total_designations:
-        desData?.filter((d: any) => d.department_id === dept.department_id).length || 0,
-    }));
+const enriched = (deptData || []).map((dept: any) => ({
+  department_id: dept.department_id,
+  department_name: dept.department_name,
+  location: dept.location,
+  // Remove the `status === "active"` filter to count all employees linked to the department
+  total_employees:
+    empData?.filter((e: any) => e.department_id === dept.department_id).length || 0,
+  total_designations:
+    desData?.filter((d: any) => d.department_id === dept.department_id).length || 0,
+}));
 
     setDepartments(enriched);
   } catch (error) {
