@@ -271,25 +271,34 @@ const enriched = (deptData || []).map((dept: any) => ({
                 <TableBody>
                   {paginated.map((d) => (
                     <TableRow key={d.department_id}>
-                                        <TableCell>{d.department_name}</TableCell>
-                                       <TableCell className="text-center">
-                    <Link
-                      to={`/employees?department=${d.department_id}`}
-                      className="text-blue-900 underline hover:text-blue-700"
-                    >
-                      {d.total_employees || 0}
-                    </Link>
-                  </TableCell>
-                  
-                  <TableCell className="text-center">
-                    <Link
-                      to={`/designations?department=${d.department_id}`}
-                      className="text-blue-900 underline hover:text-blue-700"
-                    >
-                      {d.total_designations || 0}
-                    </Link>
-                  </TableCell>
-                      <TableCell>
+                    <TableCell>{d.department_name}</TableCell>
+                 <TableCell className="text-center">
+                      {d.total_employees > 0 ? (
+                        <Link
+                          to={`/employees?department=${d.department_id}`}
+                          className="text-blue-900 underline hover:text-blue-700"
+                        >
+                          {d.total_employees}
+                        </Link>
+                      ) : (
+                        <span>{d.total_employees}</span> // plain text for 0
+                      )}
+                    </TableCell>
+                    
+                    <TableCell className="text-center">
+                      {d.total_designations > 0 ? (
+                        <Link
+                          to={`/designations?department=${d.department_id}`}
+                          className="text-blue-900 underline hover:text-blue-700"
+                        >
+                          {d.total_designations}
+                        </Link>
+                      ) : (
+                        <span>{d.total_designations}</span> // plain text for 0
+                      )}
+                    </TableCell>
+             
+                                                        
                         <div className="flex justify-end space-x-3">
                           <Button
                             size="sm"
