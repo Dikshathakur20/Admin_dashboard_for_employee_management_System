@@ -102,7 +102,7 @@ const Departments = () => {
     // Fetch employees (use correct column name)
     const { data: empData, error: empError } = await supabase
       .from("tblemployees")
-      .select("employee_id, department_id, status")
+      .select("employee_id, department_id ")
       .in("department_id", deptIds);
     if (empError) throw empError;
 
