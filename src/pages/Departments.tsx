@@ -142,20 +142,51 @@ const enriched = (deptData || []).map((dept: any) => ({
 
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this department?")) return;
-    try {
-      const { error } = await supabase.from("tbldepartments").delete().eq("department_id", id);
-      if (error) throw error;
-      toast({ title: "Deleted", description: "Department removed successfully" });
-      fetchDepartments(currentPage);
-    } catch {
+  try {
+    // Step 1: Check if department has employees
+    const { count, error: countError } = await supabase
+      .from("tblemployees")
+      .select("employee_id", { count: "exact", head: true })
+      .eq("department_id", id);
+
+    if (countError) throw countError;
+
+    if (count && count > 0) {
       toast({
         title: "Cannot delete",
-        description: "This department has active employees. Reassign them first.",
+        description: `This department has ${count} active employee(s). Reassign them first.`,
         variant: "destructive",
       });
+      return;
     }
-  };
+
+    // Step 2: If no employees, then confirm deletion
+    if (!confirm("Are you sure you want to delete this department?")) return;
+
+    // Step 3: Delete department
+    const { error } = await supabase
+      .from("tbldepartments")
+      .delete()
+      .eq("department_id", id);
+
+    if (error) throw error;
+
+    toast({
+      title: "Deleted",
+      description: "Department removed successfully",
+    });
+
+    fetchDepartments(currentPage);
+  } catch (err) {
+    console.error(err);
+    toast({
+      title: "Error",
+      description: "Something went wrong while deleting department.",
+      variant: "destructive",
+    });
+  }
+};
+
 
   const fetchDepartmentDesignations = async (id: number) => {
     try {
