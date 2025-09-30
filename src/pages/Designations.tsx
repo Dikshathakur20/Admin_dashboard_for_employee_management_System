@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useLogin } from '@/contexts/LoginContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, Edit, Trash2,ChevronDown } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { EditDesignationDialog } from '@/components/dashboard/EditDesignationDialog';
 import { NewDesignationDialog } from '@/components/dashboard/NewDesignationDialog';
-import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -22,6 +21,7 @@ interface Designation {
   designation_id: number;
   designation_title: string;
   department_id: number | null;
+  total_employees?: number;
 }
 
 interface Department {
@@ -43,7 +43,7 @@ interface Employee {
 type SortOption = 'name-asc' | 'name-desc' | 'id-asc' | 'id-desc';
 
 const Designations = () => {
-  const { user } =useLogin();
+  const { user } = useLogin();
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,50 +56,50 @@ const Designations = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const departmentFilter = params.get("department"); // department id if passed
+
   if (!user) return <Navigate to="/login" replace />;
 
   useEffect(() => {
     fetchDesignations();
   }, []);
 
- const fetchDesignations = async () => {
-  setLoading(true);
-  try {
-    const [designationsResult, departmentsResult, employeesResult] = await Promise.all([
-      supabase.from('tbldesignations').select('*'),
-      supabase.from('tbldepartments').select('*').order('department_name'),
-      supabase.from('tblemployees').select('employee_id, designation_id')
-    ]);
+  const fetchDesignations = async () => {
+    setLoading(true);
+    try {
+      const [designationsResult, departmentsResult, employeesResult] = await Promise.all([
+        supabase.from('tbldesignations').select('*'),
+        supabase.from('tbldepartments').select('*').order('department_name'),
+        supabase.from('tblemployees').select('employee_id, designation_id')
+      ]);
 
-    if (designationsResult.error) throw designationsResult.error;
-    if (departmentsResult.error) throw departmentsResult.error;
-    if (employeesResult.error) throw employeesResult.error;
+      if (designationsResult.error) throw designationsResult.error;
+      if (departmentsResult.error) throw departmentsResult.error;
+      if (employeesResult.error) throw employeesResult.error;
 
-    setDepartments(departmentsResult.data || []);
+      setDepartments(departmentsResult.data || []);
 
-    const designationsWithCount = (designationsResult.data || []).map(des => ({
-      ...des,
-      total_employees: employeesResult.data?.filter(
-        (e: Employee) => e.designation_id === des.designation_id
-      ).length || 0
-    }));
+      const designationsWithCount = (designationsResult.data || []).map(des => ({
+        ...des,
+        total_employees: employeesResult.data?.filter(
+          (e: Employee) => e.designation_id === des.designation_id
+        ).length || 0
+      }));
 
-    setDesignations(designationsWithCount);
+      setDesignations(designationsWithCount);
 
-  } catch {
-    toast({
-      title: "Data Loading Issue",
-      description: "Unable to fetch designation information",
-      variant: "default"
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-     
-  
+    } catch {
+      toast({
+        title: "Data Loading Issue",
+        description: "Unable to fetch designation information",
+        variant: "default"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async (designationId: number) => {
     if (!confirm('Are you sure you want to remove this designation?')) return;
@@ -126,9 +126,13 @@ const Designations = () => {
     return dept?.department_name || 'Unknown';
   };
 
-  const filteredDesignations = designations.filter(designation =>
-    designation.designation_title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDesignations = designations
+    .filter(designation =>
+      designation.designation_title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(designation =>
+      departmentFilter ? designation.department_id === Number(departmentFilter) : true
+    );
 
   const sortedDesignations = [...filteredDesignations].sort((a, b) => {
     switch (sortOption) {
@@ -153,66 +157,77 @@ const Designations = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
-  <Card className="w-full border-0 shadow-none bg-transparent">
-    {/* Header with Title + Search + Actions */}
-    <CardHeader className="px-0 py-2">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <CardTitle className="text-2xl font-bold">Designations</CardTitle>
+        <Card className="w-full border-0 shadow-none bg-transparent">
+          {/* Header with Title + Search + Actions */}
+          <CardHeader className="px-0 py-2">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <CardTitle className="text-2xl font-bold">Designations</CardTitle>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
-          {/* Search bar */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-            <Input
-              placeholder="Search designation"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
-            />
-          </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+                {/* Search bar */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+                  <Input
+                    placeholder="Search designation"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
+                  />
+                </div>
 
-          {/* Buttons */}
-          <div className="flex items-center gap-2"
-          title="Add designation">
-            <Button
-              onClick={() => setShowNewDialog(true)}
-              className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort"  >
-                  Sort
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }} >
-                <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
-                  Name A - Z
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
-                  Name Z - A
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
-                  Old → New
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
-                  New → Old
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </CardHeader>
-
+                {/* Buttons */}
+                <div className="flex items-center gap-2"
+                title="Add designation">
+                  <Button
+                    onClick={() => setShowNewDialog(true)}
+                    className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort"  >
+                        Sort
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }} >
+                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
+                        Name A - Z
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
+                        Name Z - A
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
+                        Old → New
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
+                        New → Old
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
 
           <CardContent className="px-0">
+            {/* Back to all button when filtered */}
+            {departmentFilter && (
+              <div className="mb-4">
+                <Button
+                  onClick={() => window.location.href = "/designations"}
+                  className="bg-gray-600 text-white hover:bg-gray-800"
+                >
+                  Back to All Designations
+                </Button>
+              </div>
+            )}
+
             {/* Table */}
             <div className="border rounded-lg overflow-hidden">
               <Table className="table-auto">
