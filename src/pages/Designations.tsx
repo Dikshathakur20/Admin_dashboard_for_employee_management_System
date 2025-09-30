@@ -221,9 +221,10 @@ const Designations = () => {
               <div className="mb-4">
                 <Button
                   onClick={() => window.location.href = "/designations"}
-                  className="bg-gray-600 text-white hover:bg-gray-800"
+                  title="Restore Designation"
+                  className="bg-blue-600 text-white hover:bg-blue-800"
                 >
-                  Back to All Designations
+                  All designations
                 </Button>
               </div>
             )}
