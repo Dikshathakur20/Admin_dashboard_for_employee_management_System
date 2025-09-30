@@ -445,6 +445,19 @@ const designationFilter = params.get("designation");
           {viewingEmployee && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-2 flex-1 text-sm">
+                <Button
+      size="sm"
+      variant="outline"
+      className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
+      title="Edit Employee"
+      onClick={() => {
+        setEditingEmployee(viewingEmployee);
+        setViewingEmployee(null); // close details dialog when opening edit
+      }}
+    >
+      <Edit className="h-4 w-4 mr-1" />
+      Edit
+    </Button>
                 <p>
                   <span className="font-semibold">Name:</span>{" "}
                   {viewingEmployee.first_name} {viewingEmployee.last_name}
