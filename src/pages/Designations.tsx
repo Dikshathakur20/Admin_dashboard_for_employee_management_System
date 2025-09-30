@@ -101,24 +101,52 @@ const Designations = () => {
     }
   };
 
-  const handleDelete = async (designationId: number) => {
-    if (!confirm('Are you sure you want to remove this designation?')) return;
-    try {
-      const { error } = await supabase
-        .from('tbldesignations')
-        .delete()
-        .eq('designation_id', designationId);
+ const handleDelete = async (designationId: number) => {
+  try {
+    // Step 1: Check if any employees are assigned to this designation
+    const { count, error: countError } = await supabase
+      .from("tblemployees")
+      .select("employee_id", { count: "exact", head: true })
+      .eq("designation_id", designationId);
 
-      if (error) throw error;
+    if (countError) throw countError;
 
-      toast({ title: "Success", description: "Designation removed successfully" });
-      fetchDesignations();
-    } catch {
-      toast({ title: "Cannot delete",
-        description: "This designation has active employees. Reassign them first.",
-        variant: "destructive" });
+    if (count && count > 0) {
+      toast({
+        title: "Cannot delete",
+        description: `This designation has ${count} active employee(s). Reassign them first.`,
+        variant: "destructive",
+      });
+      return;
     }
-  };
+
+    // Step 2: Confirm deletion
+    if (!confirm("Are you sure you want to remove this designation?")) return;
+
+    // Step 3: Delete designation
+    const { error } = await supabase
+      .from("tbldesignations")
+      .delete()
+      .eq("designation_id", designationId);
+
+    if (error) throw error;
+
+    toast({
+      title: "Success",
+      description: "Designation removed successfully",
+    });
+
+    fetchDesignations();
+  } catch (err) {
+    console.error(err);
+    toast({
+      title: "Error",
+      description: "Something went wrong while deleting designation.",
+      variant: "destructive",
+    });
+  }
+};
+
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return 'Not Assigned';
