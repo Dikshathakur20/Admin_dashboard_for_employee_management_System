@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +62,11 @@ const Employees = () => {
   const [loading, setLoading] = useState(true);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
+  const location = useLocation();
+const params = new URLSearchParams(location.search);
+const departmentFilter = params.get("department");
+const designationFilter = params.get("designation");
+
   const [showNewDialog, setShowNewDialog] = useState(false);
   const { toast } = useToast();
 
@@ -150,11 +155,18 @@ const Employees = () => {
     );
   };
 
-  const filteredEmployees = employees.filter(
+  const filteredEmployees = employees
+  .filter(
     (emp) =>
       emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.email.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  .filter((emp) =>
+    departmentFilter ? emp.department_id === Number(departmentFilter) : true
+  )
+  .filter((emp) =>
+    designationFilter ? emp.designation_id === Number(designationFilter) : true
   );
 
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
@@ -212,7 +224,18 @@ const Employees = () => {
     {/* Header with Title + Search + Actions */}
     <CardHeader className="px-0 py-2">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <CardTitle className="text-2xl font-bold">Employees</CardTitle>
+      <CardTitle className="text-2xl font-bold">
+  {departmentFilter || designationFilter ? (
+    <>
+      Employees{" "}
+      {departmentFilter && `: ${getDepartmentName(Number(departmentFilter))} Department`}
+      {designationFilter && ` : ${getDesignationTitle(Number(designationFilter))}`}
+    </>
+  ) : (
+    "Employees"
+  )}
+</CardTitle>
+
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
           {/* Search bar */}
