@@ -298,7 +298,7 @@ const enriched = (deptData || []).map((dept: any) => ({
                       )}
                     </TableCell>
              
-                                                        
+                          <TableCell className="text-center">                             
                         <div className="flex justify-end space-x-3">
                           <Button
                             size="sm"
