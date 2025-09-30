@@ -345,15 +345,7 @@ const designationFilter = params.get("designation");
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
-                              title="Edit"
-                              onClick={() => setEditingEmployee(emp)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            
                             <Button
                               size="sm"
                               variant="outline"
