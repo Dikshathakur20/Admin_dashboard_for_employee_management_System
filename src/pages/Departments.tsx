@@ -80,55 +80,63 @@ const Departments = () => {
   }, [currentPage]);
 
   // ✅ Fixed fetch logic
-  const fetchDepartments = async (page = 1) => {
-    setLoading(true);
-    try {
-      const from = (page - 1) * pageSize;
-      const to = page * pageSize - 1;
+ const fetchDepartments = async (page = 1) => {
+  setLoading(true);
+  try {
+    const from = (page - 1) * pageSize;
+    const to = page * pageSize - 1;
 
-      // Fetch departments
-      const { data: deptData, error: deptError } = await supabase
-        .from("tbldepartments")
-        .select("*")
-        .range(from, to);
-      if (deptError) throw deptError;
+    // Fetch departments
+    const { data: deptData, error: deptError } = await supabase
+      .from("tbldepartments")
+      .select("*")
+      .range(from, to);
+    if (deptError) throw deptError;
 
-      // Fetch employees
-      const deptIds = deptData?.map((d: any) => d.department_id) || [];
-      const { data: empData, error: empError } = await supabase
-        .from("tblemployees")
-        .select("id, department_id, status")
-        .in("department_id", deptIds);
-      if (empError) throw empError;
-
-      // Fetch designations
-      const { data: desData, error: desError } = await supabase
-        .from("tbldesignations")
-        .select("designation_id, department_id")
-        .in("department_id", deptIds);
-      if (desError) throw desError;
-
-      // Combine counts
-      const enriched = (deptData || []).map((dept: any) => ({
-        department_id: dept.department_id,
-        department_name: dept.department_name,
-        location: dept.location,
-        total_employees: empData?.filter((e: any) => e.department_id === dept.department_id && e.status === "active")?.length || 0,
-        total_designations: desData?.filter((d: any) => d.department_id === dept.department_id)?.length || 0,
-      }));
-
-      setDepartments(enriched);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Unable to fetch departments",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+    const deptIds = deptData?.map((d: any) => d.department_id) || [];
+    if (deptIds.length === 0) {
+      setDepartments([]);
+      return;
     }
-  };
+
+    // Fetch employees (use correct column name)
+    const { data: empData, error: empError } = await supabase
+      .from("tblemployees")
+      .select("employee_id, department_id, status")
+      .in("department_id", deptIds);
+    if (empError) throw empError;
+
+    // Fetch designations
+    const { data: desData, error: desError } = await supabase
+      .from("tbldesignations")
+      .select("designation_id, department_id")
+      .in("department_id", deptIds);
+    if (desError) throw desError;
+
+    // Combine counts
+    const enriched = (deptData || []).map((dept: any) => ({
+      department_id: dept.department_id,
+      department_name: dept.department_name,
+      location: dept.location,
+      total_employees:
+        empData?.filter((e: any) => e.department_id === dept.department_id && e.status === "active").length || 0,
+      total_designations:
+        desData?.filter((d: any) => d.department_id === dept.department_id).length || 0,
+    }));
+
+    setDepartments(enriched);
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Error",
+      description: "Unable to fetch departments",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this department?")) return;
