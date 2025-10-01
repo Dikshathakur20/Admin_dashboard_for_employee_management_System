@@ -324,7 +324,7 @@ const Departments = () => {
                         {d.total_designations > 0 ? (
                           <Link
                             to={`/designations?department=${d.department_id}`}
-                            className="absolute inset-0 opacity-0 group-hover:opacity-100 text-blue-900 underline"
+                            className="text-gray-900 hover:text-blue-900 hover:underline transition-colors duration-200"
                           >
                             {d.total_designations}
                           </Link>
@@ -336,7 +336,7 @@ const Departments = () => {
                         {d.total_employees > 0 ? (
                           <Link
                             to={`/employees?department=${d.department_id}`}
-                            className="absolute inset-0 opacity-0 group-hover:opacity-100 text-blue-900 underline"
+                            className="text-gray-900 hover:text-blue-900 hover:underline transition-colors duration-200"
                           >
                             {d.total_employees}
                           </Link>
