@@ -28,6 +28,7 @@ interface Department {
   department_id: number;
   department_name: string;
 }
+
 interface Employee {
   employee_id: number;
   first_name: string;
@@ -51,7 +52,6 @@ const Designations = () => {
   const [editingDesignation, setEditingDesignation] = useState<Designation | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const { toast } = useToast();
-
   const [sortOption, setSortOption] = useState<SortOption>('id-desc');
 
   // Infinite scroll states
@@ -64,28 +64,10 @@ const Designations = () => {
 
   if (!user) return <Navigate to="/login" replace />;
 
+  // Fetch data on mount
   useEffect(() => {
     fetchDesignations();
   }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 10, sortedDesignations.length));
-        }
-      },
-      { threshold: 1 }
-    );
-
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
-
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
-  }, [sortedDesignations.length]);
 
   const fetchDesignations = async () => {
     setLoading(true);
@@ -110,7 +92,6 @@ const Designations = () => {
       }));
 
       setDesignations(designationsWithCount);
-
     } catch {
       toast({
         title: "Data Loading Issue",
@@ -171,6 +152,7 @@ const Designations = () => {
     return dept?.department_name || 'Unknown';
   };
 
+  // Filtering & sorting
   const filteredDesignations = designations
     .filter(designation =>
       designation.designation_title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -193,6 +175,24 @@ const Designations = () => {
         return 0;
     }
   });
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 10, sortedDesignations.length));
+        }
+      },
+      { threshold: 1 }
+    );
+
+    if (loaderRef.current) observer.observe(loaderRef.current);
+
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, [sortedDesignations.length]);
 
   const visibleDesignations = sortedDesignations.slice(0, visibleCount);
 
