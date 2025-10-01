@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Edit, Trash2, Eye,ChevronDown } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -63,9 +63,9 @@ const Employees = () => {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
   const location = useLocation();
-const params = new URLSearchParams(location.search);
-const departmentFilter = params.get("department");
-const designationFilter = params.get("designation");
+  const params = new URLSearchParams(location.search);
+  const departmentFilter = params.get("department");
+  const designationFilter = params.get("designation");
 
   const [showNewDialog, setShowNewDialog] = useState(false);
   const { toast } = useToast();
@@ -74,8 +74,9 @@ const designationFilter = params.get("designation");
     "name-asc" | "name-desc" | "id-asc" | "id-desc"
   >("id-desc");
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  // Infinite scroll states
+  const [visibleCount, setVisibleCount] = useState(10);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -92,14 +93,8 @@ const designationFilter = params.get("designation");
             .from("tblemployees")
             .select("*")
             .order("employee_id", { ascending: false }),
-          supabase
-            .from("tbldepartments")
-            .select("*")
-            .order("department_name"),
-          supabase
-            .from("tbldesignations")
-            .select("*")
-            .order("designation_title"),
+          supabase.from("tbldepartments").select("*").order("department_name"),
+          supabase.from("tbldesignations").select("*").order("designation_title"),
         ]);
 
       if (employeesResult.error) throw employeesResult.error;
@@ -156,18 +151,18 @@ const designationFilter = params.get("designation");
   };
 
   const filteredEmployees = employees
-  .filter(
-    (emp) =>
-      emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.email.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-  .filter((emp) =>
-    departmentFilter ? emp.department_id === Number(departmentFilter) : true
-  )
-  .filter((emp) =>
-    designationFilter ? emp.designation_id === Number(designationFilter) : true
-  );
+    .filter(
+      (emp) =>
+        emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.email.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((emp) =>
+      departmentFilter ? emp.department_id === Number(departmentFilter) : true
+    )
+    .filter((emp) =>
+      designationFilter ? emp.designation_id === Number(designationFilter) : true
+    );
 
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
     if (sortOption === "name-asc")
@@ -183,11 +178,29 @@ const designationFilter = params.get("designation");
     return b.employee_id - a.employee_id;
   });
 
-  const totalPages = Math.ceil(sortedEmployees.length / itemsPerPage);
-  const paginatedEmployees = sortedEmployees.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const visibleEmployees = sortedEmployees.slice(0, visibleCount);
+
+  // Infinite scroll logic
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const target = entries[0];
+      if (target.isIntersecting) {
+        setVisibleCount((prev) =>
+          prev + 10 <= sortedEmployees.length ? prev + 10 : prev
+        );
+      }
+    },
+    [sortedEmployees.length]
   );
+
+  useEffect(() => {
+    const option = { root: null, rootMargin: "20px", threshold: 1.0 };
+    const observer = new IntersectionObserver(handleObserver, option);
+    if (loaderRef.current) observer.observe(loaderRef.current);
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, [handleObserver]);
 
   const handleNewEmployee = (newEmp: Employee) =>
     setEmployees((prev) => [newEmp, ...prev]);
@@ -220,79 +233,87 @@ const designationFilter = params.get("designation");
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
-  <Card className="w-full border-0 shadow-none bg-transparent">
-    {/* Header with Title + Search + Actions */}
-    <CardHeader className="px-0 py-2">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-      <CardTitle className="text-2xl font-bold">
-  {departmentFilter || designationFilter ? (
-    <>
-      Employees{" "}
-      {departmentFilter && `: ${getDepartmentName(Number(departmentFilter))} Department`}
-      {designationFilter && ` : ${getDesignationTitle(Number(designationFilter))}`}
-    </>
-  ) : (
-    "Employees"
-  )}
-</CardTitle>
+        <Card className="w-full border-0 shadow-none bg-transparent">
+          {/* Header */}
+          <CardHeader className="px-0 py-2">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <CardTitle className="text-2xl font-bold">
+                {departmentFilter || designationFilter ? (
+                  <>
+                    Employees{" "}
+                    {departmentFilter &&
+                      `: ${getDepartmentName(Number(departmentFilter))} Department`}
+                    {designationFilter &&
+                      ` : ${getDesignationTitle(Number(designationFilter))}`}
+                  </>
+                ) : (
+                  "Employees"
+                )}
+              </CardTitle>
 
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+                {/* Search bar */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+                  <Input
+                    placeholder="Search employee"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setVisibleCount(10);
+                    }}
+                    className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
+                  />
+                </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
-          {/* Search bar */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-            <Input
-              placeholder="Search employee"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setShowNewDialog(true)}
-              className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
-              title="Add Employee"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
-                  Sort
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white" style={{
-            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
-          }}>
-                <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
-                  Name A - Z
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
-                  Name Z - A
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
-                  Old → New
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
-                  New → Old
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </CardHeader>
+                {/* Buttons */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowNewDialog(true)}
+                    className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+                    title="Add Employee"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+                        title="Sort"
+                      >
+                        Sort
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-white"
+                      style={{
+                        background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
+                      }}
+                    >
+                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
+                        Name A - Z
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
+                        Name Z - A
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
+                        Old → New
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
+                        New → Old
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
 
           {/* Table */}
-          <CardContent className="px-0" >
+          <CardContent className="px-0">
             <div className="border rounded-2g overflow-hidden">
               <Table>
                 <TableHeader>
@@ -308,8 +329,8 @@ const designationFilter = params.get("designation");
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedEmployees.length > 0 ? (
-                    paginatedEmployees.map((emp) => (
+                  {visibleEmployees.length > 0 ? (
+                    visibleEmployees.map((emp) => (
                       <TableRow key={emp.employee_id}>
                         <TableCell>{renderProfilePicture(emp, 36)}</TableCell>
                         <TableCell className="font-medium">
@@ -345,7 +366,6 @@ const designationFilter = params.get("designation");
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            
                             <Button
                               size="sm"
                               variant="outline"
@@ -375,30 +395,13 @@ const designationFilter = params.get("designation");
               </Table>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-4">
-                <Button
-                  size="sm"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-8"
-                  title="Previous page"
-                >
-                  Prev
-                </Button>
-                <span className="text-sm font-medium text-gray-800">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  size="sm"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-8"
-                  title=" Next page "
-                >
-                  Next
-                </Button>
+            {/* Infinite scroll loader */}
+            {visibleCount < sortedEmployees.length && (
+              <div
+                ref={loaderRef}
+                className="text-center py-4 text-gray-600 text-sm"
+              >
+                Loading more...
               </div>
             )}
           </CardContent>
@@ -426,9 +429,12 @@ const designationFilter = params.get("designation");
         open={!!viewingEmployee}
         onOpenChange={(open) => !open && setViewingEmployee(null)}
       >
-        <DialogContent className="w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-blue-50 p-6 rounded-xl" style={{
+        <DialogContent
+          className="w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-blue-50 p-6 rounded-xl"
+          style={{
             background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
-          }}>
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-blue-900">
               Employee Details
@@ -437,7 +443,6 @@ const designationFilter = params.get("designation");
           {viewingEmployee && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-2 flex-1 text-sm">
-                
                 <p>
                   <span className="font-semibold">Name:</span>{" "}
                   {viewingEmployee.first_name} {viewingEmployee.last_name}
@@ -475,27 +480,26 @@ const designationFilter = params.get("designation");
                       alt={`${viewingEmployee.first_name} ${viewingEmployee.last_name}`}
                       className="w-full h-full object-cover"
                     />
-                  )
-                   : (
+                  ) : (
                     <div className="w-full h-full flex items-center justify-center text-white text-2xl bg-gray-400">
                       {viewingEmployee.first_name[0]}
                       {viewingEmployee.last_name[0]}
                     </div>
                   )}
                 </div>
-                 <Button
-      size="sm"
-      variant="outline"
-      className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
-      title="Edit Employee"
-      onClick={() => {
-        setEditingEmployee(viewingEmployee);
-        setViewingEmployee(null); // close details dialog when opening edit
-      }}
-    >
-      <Edit className="h-4 w-4 mr-1" />
-      Edit
-    </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
+                  title="Edit Employee"
+                  onClick={() => {
+                    setEditingEmployee(viewingEmployee);
+                    setViewingEmployee(null);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
               </div>
             </div>
           )}
