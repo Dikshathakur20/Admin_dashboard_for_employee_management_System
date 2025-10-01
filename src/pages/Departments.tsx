@@ -311,8 +311,8 @@ const Departments = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="font-bold">Department</TableHead>
-                    <TableHead className="font-bold text-center">Active Employees</TableHead>
                     <TableHead className="font-bold text-center">Total Designations</TableHead>
+                     <TableHead className="font-bold text-center">Active Employees</TableHead>
                     <TableHead className="font-bold text-end">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -320,6 +320,18 @@ const Departments = () => {
                   {sorted.map((d) => (
                     <TableRow key={d.department_id}>
                       <TableCell>{d.department_name}</TableCell>
+                       <TableCell className="text-center">
+                        {d.total_designations > 0 ? (
+                          <Link
+                            to={`/designations?department=${d.department_id}`}
+                            className="text-blue-900 underline hover:text-blue-700"
+                          >
+                            {d.total_designations}
+                          </Link>
+                        ) : (
+                          <span>{d.total_designations}</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center">
                         {d.total_employees > 0 ? (
                           <Link
@@ -330,18 +342,6 @@ const Departments = () => {
                           </Link>
                         ) : (
                           <span>{d.total_employees}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {d.total_designations > 0 ? (
-                          <Link
-                            to={`/designations?department=${d.department_id}`}
-                            className="text-blue-900 underline hover:text-blue-700"
-                          >
-                            {d.total_designations}
-                          </Link>
-                        ) : (
-                          <span>{d.total_designations}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
