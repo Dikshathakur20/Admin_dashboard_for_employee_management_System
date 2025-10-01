@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Eye, Edit, Trash2, ChevronDown } from "lucide-react";
@@ -44,18 +43,6 @@ interface Designation {
   designation_title: string;
   department_id: number;
 }
-interface Employee {
-  employee_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  hire_date: string;
-  salary: number | null;
-  department_id: number | null;
-  designation_id: number | null;
-  file_data?: string | null;
-}
-
 
 const Departments = () => {
   const { user } = useLogin();
@@ -71,122 +58,141 @@ const Departments = () => {
   const [departmentDesignations, setDepartmentDesignations] = useState<Designation[]>([]);
 
   const [sortOption, setSortOption] = useState<"id-asc" | "id-desc" | "name-asc" | "name-desc">("id-desc");
-  const [currentPage, setCurrentPage] = useState(1);
+
+  // ✅ Infinite scroll state
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
   const pageSize = 10;
 
   if (!user) return <Navigate to="/login" replace />;
 
+  // Fetch departments when page changes
   useEffect(() => {
-    fetchDepartments(currentPage);
-  }, [currentPage]);
+    fetchDepartments(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
-  // ✅ Fixed fetch logic
- const fetchDepartments = async (page = 1) => {
-  setLoading(true);
-  try {
-    const from = (page - 1) * pageSize;
-    const to = page * pageSize - 1;
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 1 }
+    );
 
-    // Fetch departments
-    const { data: deptData, error: deptError } = await supabase
-      .from("tbldepartments")
-      .select("*")
-      .range(from, to);
-    if (deptError) throw deptError;
+    if (loaderRef.current) observer.observe(loaderRef.current);
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, [hasMore, loading]);
 
-    const deptIds = deptData?.map((d: any) => d.department_id) || [];
-    if (deptIds.length === 0) {
-      setDepartments([]);
-      return;
-    }
+  // ✅ Fixed fetch logic with append
+  const fetchDepartments = async (pageNum = 1) => {
+    setLoading(true);
+    try {
+      const from = (pageNum - 1) * pageSize;
+      const to = pageNum * pageSize - 1;
 
-    // Fetch employees (use correct column name)
-    const { data: empData, error: empError } = await supabase
-      .from("tblemployees")
-      .select("employee_id, department_id ")
-      .in("department_id", deptIds);
-    if (empError) throw empError;
+      // Fetch departments
+      const { data: deptData, error: deptError } = await supabase
+        .from("tbldepartments")
+        .select("*")
+        .range(from, to);
+      if (deptError) throw deptError;
 
-    // Fetch designations
-    const { data: desData, error: desError } = await supabase
-      .from("tbldesignations")
-      .select("designation_id, department_id")
-      .in("department_id", deptIds);
-    if (desError) throw desError;
+      if (!deptData || deptData.length === 0) {
+        setHasMore(false);
+        return;
+      }
 
-    
-    // Combine counts
-const enriched = (deptData || []).map((dept: any) => ({
-  department_id: dept.department_id,
-  department_name: dept.department_name,
-  location: dept.location,
-  // Remove the `status === "active"` filter to count all employees linked to the department
-  total_employees:
-    empData?.filter((e: any) => e.department_id === dept.department_id).length || 0,
-  total_designations:
-    desData?.filter((d: any) => d.department_id === dept.department_id).length || 0,
-}));
+      const deptIds = deptData.map((d: any) => d.department_id) || [];
 
-    setDepartments(enriched);
-  } catch (error) {
-    console.error(error);
-    toast({
-      title: "Error",
-      description: "Unable to fetch departments",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      // Fetch employees count
+      const { data: empData, error: empError } = await supabase
+        .from("tblemployees")
+        .select("employee_id, department_id")
+        .in("department_id", deptIds);
+      if (empError) throw empError;
 
+      // Fetch designations count
+      const { data: desData, error: desError } = await supabase
+        .from("tbldesignations")
+        .select("designation_id, department_id")
+        .in("department_id", deptIds);
+      if (desError) throw desError;
 
-  const handleDelete = async (id: number) => {
-  try {
-    // Step 1: Check if department has employees
-    const { count, error: countError } = await supabase
-      .from("tblemployees")
-      .select("employee_id", { count: "exact", head: true })
-      .eq("department_id", id);
+      const enriched = deptData.map((dept: any) => ({
+        department_id: dept.department_id,
+        department_name: dept.department_name,
+        location: dept.location,
+        total_employees:
+          empData?.filter((e: any) => e.department_id === dept.department_id).length || 0,
+        total_designations:
+          desData?.filter((d: any) => d.department_id === dept.department_id).length || 0,
+      }));
 
-    if (countError) throw countError;
-
-    if (count && count > 0) {
+      setDepartments((prev) => [...prev, ...enriched]);
+    } catch (error) {
+      console.error(error);
       toast({
-        title: "Cannot delete",
-        description: `This department has ${count} active employee(s). Reassign them first.`,
+        title: "Error",
+        description: "Unable to fetch departments",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Step 2: If no employees, then confirm deletion
-    if (!confirm("Are you sure you want to delete this department?")) return;
+  const handleDelete = async (id: number) => {
+    try {
+      const { count, error: countError } = await supabase
+        .from("tblemployees")
+        .select("employee_id", { count: "exact", head: true })
+        .eq("department_id", id);
 
-    // Step 3: Delete department
-    const { error } = await supabase
-      .from("tbldepartments")
-      .delete()
-      .eq("department_id", id);
+      if (countError) throw countError;
 
-    if (error) throw error;
+      if (count && count > 0) {
+        toast({
+          title: "Cannot delete",
+          description: `This department has ${count} active employee(s). Reassign them first.`,
+          variant: "destructive",
+        });
+        return;
+      }
 
-    toast({
-      title: "Deleted",
-      description: "Department removed successfully",
-    });
+      if (!confirm("Are you sure you want to delete this department?")) return;
 
-    fetchDepartments(currentPage);
-  } catch (err) {
-    console.error(err);
-    toast({
-      title: "Error",
-      description: "Something went wrong while deleting department.",
-      variant: "destructive",
-    });
-  }
-};
+      const { error } = await supabase
+        .from("tbldepartments")
+        .delete()
+        .eq("department_id", id);
 
+      if (error) throw error;
+
+      toast({
+        title: "Deleted",
+        description: "Department removed successfully",
+      });
+
+      // Reset and refetch from start
+      setDepartments([]);
+      setPage(1);
+      setHasMore(true);
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "Something went wrong while deleting department.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchDepartmentDesignations = async (id: number) => {
     try {
@@ -216,9 +222,15 @@ const enriched = (deptData || []).map((dept: any) => ({
 
       if (error) throw error;
       toast({ title: "Updated", description: "Department updated successfully" });
-      fetchDepartments(currentPage);
+      setDepartments([]);
+      setPage(1);
+      setHasMore(true);
     } catch {
-      toast({ title: "Error", description: "Unable to update department", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Unable to update department",
+        variant: "destructive",
+      });
     }
   };
 
@@ -234,10 +246,8 @@ const enriched = (deptData || []).map((dept: any) => ({
     return 0;
   });
 
-  const totalPages = Math.ceil(sorted.length / pageSize);
-  const paginated = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  if (loading) return <div className="flex justify-center p-8">Loading departments...</div>;
+  if (loading && departments.length === 0)
+    return <div className="flex justify-center p-8">Loading departments...</div>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -254,7 +264,6 @@ const enriched = (deptData || []).map((dept: any) => ({
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
-                      setCurrentPage(1);
                     }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
@@ -278,10 +287,18 @@ const enriched = (deptData || []).map((dept: any) => ({
                       className="bg-white"
                       style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
                     >
-                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>Name A - Z</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>Name Z - A</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>Old → New</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>New → Old</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
+                        Name A - Z
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
+                        Name Z - A
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
+                        Old → New
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
+                        New → Old
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -300,36 +317,34 @@ const enriched = (deptData || []).map((dept: any) => ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginated.map((d) => (
+                  {sorted.map((d) => (
                     <TableRow key={d.department_id}>
-                    <TableCell>{d.department_name}</TableCell>
-                 <TableCell className="text-center">
-                      {d.total_employees > 0 ? (
-                        <Link
-                          to={`/employees?department=${d.department_id}`}
-                          className="text-blue-900 underline hover:text-blue-700"
-                        >
-                          {d.total_employees}
-                        </Link>
-                      ) : (
-                        <span>{d.total_employees}</span> // plain text for 0
-                      )}
-                    </TableCell>
-                    
-                    <TableCell className="text-center">
-                      {d.total_designations > 0 ? (
-                        <Link
-                          to={`/designations?department=${d.department_id}`}
-                          className="text-blue-900 underline hover:text-blue-700"
-                        >
-                          {d.total_designations}
-                        </Link>
-                      ) : (
-                        <span>{d.total_designations}</span> // plain text for 0
-                      )}
-                    </TableCell>
-             
-                          <TableCell className="text-center">                             
+                      <TableCell>{d.department_name}</TableCell>
+                      <TableCell className="text-center">
+                        {d.total_employees > 0 ? (
+                          <Link
+                            to={`/employees?department=${d.department_id}`}
+                            className="text-blue-900 underline hover:text-blue-700"
+                          >
+                            {d.total_employees}
+                          </Link>
+                        ) : (
+                          <span>{d.total_employees}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {d.total_designations > 0 ? (
+                          <Link
+                            to={`/designations?department=${d.department_id}`}
+                            className="text-blue-900 underline hover:text-blue-700"
+                          >
+                            {d.total_designations}
+                          </Link>
+                        ) : (
+                          <span>{d.total_designations}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <div className="flex justify-end space-x-3">
                           <Button
                             size="sm"
@@ -342,7 +357,6 @@ const enriched = (deptData || []).map((dept: any) => ({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          
                           <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700"
@@ -359,34 +373,18 @@ const enriched = (deptData || []).map((dept: any) => ({
               </Table>
             </div>
 
-            {paginated.length === 0 && (
+            {sorted.length === 0 && (
               <div className="text-center p-8 text-muted-foreground">
                 {searchTerm ? "No departments match your search." : "No departments found."}
               </div>
             )}
 
-            {/* Pagination */}
-            <div className="flex justify-center items-center gap-x-4 mt-4">
-              <Button
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                Previous
-              </Button>
-              <span className="text-sm font-medium text-gray-800">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                Next
-              </Button>
-            </div>
+            {/* Infinite scroll loader */}
+            {hasMore && (
+              <div ref={loaderRef} className="text-center py-4 text-gray-600 text-sm">
+                {loading ? "Loading more..." : "Scroll down to load more"}
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
@@ -396,69 +394,60 @@ const enriched = (deptData || []).map((dept: any) => ({
         department={editingDepartment}
         open={!!editingDepartment}
         onOpenChange={(open) => !open && setEditingDepartment(null)}
-        onSuccess={() => fetchDepartments(currentPage)}
+        onSuccess={() => {
+          setDepartments([]);
+          setPage(1);
+          setHasMore(true);
+        }}
       />
       <NewDepartmentDialog
         open={showNewDialog}
         onOpenChange={setShowNewDialog}
-        onSuccess={() => fetchDepartments(currentPage)}
+        onSuccess={() => {
+          setDepartments([]);
+          setPage(1);
+          setHasMore(true);
+        }}
       />
 
-      {/* Details / Inline Edit Dialog */}
-  <Dialog
-  open={!!viewingDepartment}
-  onOpenChange={(open) => !open && setViewingDepartment(null)}
->
-  <DialogContent className="max-w-lg bg-blue-50 p-6 rounded-xl">
-    <DialogHeader>
-      <DialogTitle className="text-xl font-bold text-blue-900">
-        Department Details
-      </DialogTitle>
-    </DialogHeader>
-    {viewingDepartment && (
-     
-        <div className="space-y-3 relative">
-    {/* Edit button inside the card, top-right corner */}
-   <Button
-      size="sm"
-      variant="outline"
-      className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
-      title="Edit Employee"
-      onClick={() => {
-        setEditingEmployee(viewingEmployee);
-        setViewingEmployee(null); // close details dialog when opening edit
-      }}
-    >
-      <Edit className="h-4 w-4 mr-1" />
-      Edit
-    </Button>
-        <p>
-          <span className="font-semibold">Department Name:</span>{" "}
-          {viewingDepartment.department_name}
-        </p>
-        <p>
-          <span className="font-semibold">Location:</span>{" "}
-          {viewingDepartment.location || "-"}
-        </p>
-        <p>
-          <span className="font-semibold">Total Designations:</span>{" "}
-          {departmentDesignations.length}
-        </p>
-        {departmentDesignations.length > 0 ? (
-          <ul className="list-disc list-inside ml-4">
-            {departmentDesignations.map((des) => (
-              <li key={des.designation_id}>{des.designation_title}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>No designations found.</p>
-        )}
-      </div>
-    )}
-  </DialogContent>
-</Dialog>
-
-
+      {/* Details Dialog */}
+      <Dialog
+        open={!!viewingDepartment}
+        onOpenChange={(open) => !open && setViewingDepartment(null)}
+      >
+        <DialogContent className="max-w-lg bg-blue-50 p-6 rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-blue-900">
+              Department Details
+            </DialogTitle>
+          </DialogHeader>
+          {viewingDepartment && (
+            <div className="space-y-3 relative">
+              <p>
+                <span className="font-semibold">Department Name:</span>{" "}
+                {viewingDepartment.department_name}
+              </p>
+              <p>
+                <span className="font-semibold">Location:</span>{" "}
+                {viewingDepartment.location || "-"}
+              </p>
+              <p>
+                <span className="font-semibold">Total Designations:</span>{" "}
+                {departmentDesignations.length}
+              </p>
+              {departmentDesignations.length > 0 ? (
+                <ul className="list-disc list-inside ml-4">
+                  {departmentDesignations.map((des) => (
+                    <li key={des.designation_id}>{des.designation_title}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No designations found.</p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
