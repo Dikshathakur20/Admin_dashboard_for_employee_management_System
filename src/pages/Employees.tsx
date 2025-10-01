@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useLogin } from "@/contexts/LoginContext"; 
+import { useLogin } from "@/contexts/LoginContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Edit, Trash2, Eye, ChevronDown } from "lucide-react";
@@ -74,11 +74,29 @@ const Employees = () => {
     "name-asc" | "name-desc" | "id-asc" | "id-desc"
   >("id-desc");
 
+  // 👇 Infinite Scroll States
+  const [visibleCount, setVisibleCount] = useState(10);
+
   if (!user) return <Navigate to="/login" replace />;
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Infinite scroll listener
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >=
+          document.documentElement.scrollHeight - 100 &&
+        visibleCount < employees.length
+      ) {
+        setVisibleCount((prev) => prev + 10);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [employees, visibleCount]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -174,8 +192,8 @@ const Employees = () => {
     return b.employee_id - a.employee_id;
   });
 
-  // Show all employees (no infinite scroll)
-  const visibleEmployees = sortedEmployees;
+  // 👇 Apply Lazy Loading
+  const visibleEmployees = sortedEmployees.slice(0, visibleCount);
 
   const handleNewEmployee = (newEmp: Employee) =>
     setEmployees((prev) => [newEmp, ...prev]);
@@ -193,7 +211,7 @@ const Employees = () => {
           src={emp.file_data}
           alt={`${emp.first_name} ${emp.last_name}`}
           className="w-full h-full object-cover"
-          loading="lazy"  // 👈 Lazy loading
+          loading="lazy"
         />
       </div>
     ) : (
@@ -234,7 +252,10 @@ const Employees = () => {
                   <Input
                     placeholder="Search employee"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setVisibleCount(10); // reset visible count on search
+                    }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
@@ -367,6 +388,11 @@ const Employees = () => {
                 </TableBody>
               </Table>
             </div>
+            {visibleEmployees.length < sortedEmployees.length && (
+              <div className="text-center py-4 text-sm text-gray-600">
+                Loading more employees...
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
