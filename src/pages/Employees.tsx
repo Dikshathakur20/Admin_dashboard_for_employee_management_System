@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext"; 
 import { Button } from "@/components/ui/button";
@@ -73,10 +73,6 @@ const Employees = () => {
   const [sortOption, setSortOption] = useState<
     "name-asc" | "name-desc" | "id-asc" | "id-desc"
   >("id-desc");
-
-  // Infinite scroll states
-  const [visibleCount, setVisibleCount] = useState(10);
-  const loaderRef = useRef<HTMLDivElement | null>(null);
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -178,29 +174,8 @@ const Employees = () => {
     return b.employee_id - a.employee_id;
   });
 
-  const visibleEmployees = sortedEmployees.slice(0, visibleCount);
-
-  // Infinite scroll logic
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const target = entries[0];
-      if (target.isIntersecting) {
-        setVisibleCount((prev) =>
-          prev + 10 <= sortedEmployees.length ? prev + 10 : prev
-        );
-      }
-    },
-    [sortedEmployees.length]
-  );
-
-  useEffect(() => {
-    const option = { root: null, rootMargin: "20px", threshold: 1.0 };
-    const observer = new IntersectionObserver(handleObserver, option);
-    if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
-  }, [handleObserver]);
+  // Show all employees (no infinite scroll)
+  const visibleEmployees = sortedEmployees;
 
   const handleNewEmployee = (newEmp: Employee) =>
     setEmployees((prev) => [newEmp, ...prev]);
@@ -218,6 +193,7 @@ const Employees = () => {
           src={emp.file_data}
           alt={`${emp.first_name} ${emp.last_name}`}
           className="w-full h-full object-cover"
+          loading="lazy"  // 👈 Lazy loading
         />
       </div>
     ) : (
@@ -258,10 +234,7 @@ const Employees = () => {
                   <Input
                     placeholder="Search employee"
                     value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setVisibleCount(10);
-                    }}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
@@ -394,16 +367,6 @@ const Employees = () => {
                 </TableBody>
               </Table>
             </div>
-
-            {/* Infinite scroll loader */}
-            {visibleCount < sortedEmployees.length && (
-              <div
-                ref={loaderRef}
-                className="text-center py-4 text-gray-600 text-sm"
-              >
-                Loading more...
-              </div>
-            )}
           </CardContent>
         </Card>
       </main>
@@ -479,6 +442,7 @@ const Employees = () => {
                       src={viewingEmployee.file_data}
                       alt={`${viewingEmployee.first_name} ${viewingEmployee.last_name}`}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white text-2xl bg-gray-400">
