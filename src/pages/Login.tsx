@@ -61,11 +61,18 @@ const Login = () => {
   setLoading(true);
 
   try {
-    const res = await fetch("https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: resetEmail }),
-    });
+   const res = await fetch(
+  "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.SUPABASE_ANON_KEY}` // <-- important
+    },
+    body: JSON.stringify({ email: resetEmail }),
+  }
+);
+
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to send OTP");
