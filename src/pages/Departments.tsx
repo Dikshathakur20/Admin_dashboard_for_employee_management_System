@@ -324,7 +324,7 @@ const Departments = () => {
                         {d.total_designations > 0 ? (
                           <Link
                             to={`/designations?department=${d.department_id}`}
-                            className="text-blue-900 underline hover:text-blue-700"
+                            className="text-blue-900  hover:text-blue-700 underline"
                           >
                             {d.total_designations}
                           </Link>
@@ -336,7 +336,7 @@ const Departments = () => {
                         {d.total_employees > 0 ? (
                           <Link
                             to={`/employees?department=${d.department_id}`}
-                            className="text-blue-900 underline hover:text-blue-700"
+                            className="text-blue-900  hover:text-blue-700 underline "
                           >
                             {d.total_employees}
                           </Link>
