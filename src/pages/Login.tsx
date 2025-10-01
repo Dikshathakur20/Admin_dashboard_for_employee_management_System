@@ -210,37 +210,39 @@ const Login = () => {
             // ----------------------
             // Reset Password Form
             // ----------------------
-            <form onSubmit={handleResetPassword}>
-              <div className="space-y-1">
-                <Label htmlFor="resetEmail">Email</Label>
-                <Input
-                  id="resetEmail"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="flex items-center justify-center mt-4">
-                <Button
-                  type="submit"
-                  className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Link"}
-                </Button>
-              </div>
+           <form onSubmit={handleResetPassword}>
+  <div className="space-y-1">
+    <Label htmlFor="resetEmail">Email</Label>
+    <Input
+      id="resetEmail"
+      type="email"
+      placeholder="Enter your email"
+      value={resetEmail}
+      onChange={(e) => setResetEmail(e.target.value)}
+      required
+    />
+  </div>
 
-                <div className="mt-2 text-right">
-                <Link
-                  to="/login"
-                  className="text-sm text-gray-600 hover:underline"
-                  onClick={() => setShowReset(false)} // optional, if you also want to hide the reset form
-                >
-                  Back to Login
-                </Link>
-              </div>
-            </form>
+  <div className="flex items-center justify-center mt-4">
+    <Button
+      type="submit"
+      className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
+    </Button>
+  </div>
+
+  <div className="mt-2 text-right">
+    <Link
+      to="/login"
+      className="text-sm text-gray-600 hover:underline"
+      onClick={() => setShowReset(false)} // optional, if you also want to hide the reset form
+    >
+      Back to Login
+    </Link>
+  </div>
+</form>
+
           )}
         </CardContent>
       </Card>
