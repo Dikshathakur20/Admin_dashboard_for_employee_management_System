@@ -70,9 +70,7 @@ const Employees = () => {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const { toast } = useToast();
 
-  const [sortOption, setSortOption] = useState<
-    "name-asc" | "name-desc" | "id-asc" | "id-desc"
-  >("id-desc");
+  const [sortOption, setSortOption] = useState<"name-asc" | "name-desc" | "id-asc" | "id-desc">("id-desc");
 
   // 👇 Infinite Scroll States
   const [visibleCount, setVisibleCount] = useState(10);
@@ -87,8 +85,7 @@ const Employees = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 100 &&
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100 &&
         visibleCount < employees.length
       ) {
         setVisibleCount((prev) => prev + 10);
@@ -101,15 +98,11 @@ const Employees = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [employeesResult, departmentsResult, designationsResult] =
-        await Promise.all([
-          supabase
-            .from("tblemployees")
-            .select("*")
-            .order("employee_id", { ascending: false }),
-          supabase.from("tbldepartments").select("*").order("department_name"),
-          supabase.from("tbldesignations").select("*").order("designation_title"),
-        ]);
+      const [employeesResult, departmentsResult, designationsResult] = await Promise.all([
+        supabase.from("tblemployees").select("*").order("employee_id", { ascending: false }),
+        supabase.from("tbldepartments").select("*").order("department_name"),
+        supabase.from("tbldesignations").select("*").order("designation_title"),
+      ]);
 
       if (employeesResult.error) throw employeesResult.error;
       if (departmentsResult.error) throw departmentsResult.error;
@@ -132,81 +125,54 @@ const Employees = () => {
   const handleDelete = async (employeeId: number) => {
     if (!confirm("Are you sure you want to remove this employee?")) return;
     try {
-      const { error } = await supabase
-        .from("tblemployees")
-        .delete()
-        .eq("employee_id", employeeId);
+      const { error } = await supabase.from("tblemployees").delete().eq("employee_id", employeeId);
       if (error) throw error;
       toast({ title: "Success", description: "Employee removed successfully" });
       fetchData();
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Removal Issue",
-        description: "Unable to remove employee",
-      });
+      toast({ title: "Removal Issue", description: "Unable to remove employee" });
     }
   };
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return "Not Assigned";
-    return (
-      departments.find((d) => d.department_id === departmentId)
-        ?.department_name || "Unknown"
-    );
+    return departments.find((d) => d.department_id === departmentId)?.department_name || "Unknown";
   };
 
   const getDesignationTitle = (designationId: number | null) => {
     if (!designationId) return "Not Assigned";
-    return (
-      designations.find((d) => d.designation_id === designationId)
-        ?.designation_title || "Unknown"
-    );
+    return designations.find((d) => d.designation_id === designationId)?.designation_title || "Unknown";
   };
 
   const filteredEmployees = employees
-    .filter(
-      (emp) =>
-        emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
     .filter((emp) =>
-      departmentFilter ? emp.department_id === Number(departmentFilter) : true
+      emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.email.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter((emp) =>
-      designationFilter ? emp.designation_id === Number(designationFilter) : true
-    );
+    .filter((emp) => (departmentFilter ? emp.department_id === Number(departmentFilter) : true))
+    .filter((emp) => (designationFilter ? emp.designation_id === Number(designationFilter) : true));
 
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
     if (sortOption === "name-asc")
-      return (a.first_name + " " + a.last_name).localeCompare(
-        b.first_name + " " + b.last_name
-      );
+      return (a.first_name + " " + a.last_name).localeCompare(b.first_name + " " + b.last_name);
     if (sortOption === "name-desc")
-      return (b.first_name + " " + b.last_name).localeCompare(
-        a.first_name + " " + a.last_name
-      );
+      return (b.first_name + " " + b.last_name).localeCompare(a.first_name + " " + a.last_name);
     if (sortOption === "id-asc") return a.employee_id - b.employee_id;
     if (sortOption === "id-desc") return b.employee_id - a.employee_id;
     return b.employee_id - a.employee_id;
   });
 
-  // 👇 Apply Lazy Loading
   const visibleEmployees = sortedEmployees.slice(0, visibleCount);
 
-  const handleNewEmployee = (newEmp: Employee) =>
-    setEmployees((prev) => [newEmp, ...prev]);
+  const handleNewEmployee = (newEmp: Employee) => setEmployees((prev) => [newEmp, ...prev]);
 
-  if (loading)
-    return <div className="flex justify-center p-6">Loading employees...</div>;
+  if (loading) return <div className="flex justify-center p-6">Loading employees...</div>;
 
   const renderProfilePicture = (emp: Employee, size = 40) =>
     emp.file_data ? (
-      <div
-        className="rounded-full overflow-hidden border border-blue-900"
-        style={{ width: size, height: size }}
-      >
+      <div className="rounded-full overflow-hidden border border-blue-900" style={{ width: size, height: size }}>
         <img
           src={emp.file_data}
           alt={`${emp.first_name} ${emp.last_name}`}
@@ -235,10 +201,8 @@ const Employees = () => {
                 {departmentFilter || designationFilter ? (
                   <>
                     Employees{" "}
-                    {departmentFilter &&
-                      `: ${getDepartmentName(Number(departmentFilter))} Department`}
-                    {designationFilter &&
-                      ` : ${getDesignationTitle(Number(designationFilter))}`}
+                    {departmentFilter && `: ${getDepartmentName(Number(departmentFilter))} Department`}
+                    {designationFilter && ` : ${getDesignationTitle(Number(designationFilter))}`}
                   </>
                 ) : (
                   "Employees"
@@ -272,10 +236,7 @@ const Employees = () => {
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
-                        title="Sort"
-                      >
+                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
                         Sort
                         <ChevronDown className="ml-2 h-4 w-4" />
                       </Button>
@@ -283,22 +244,12 @@ const Employees = () => {
                     <DropdownMenuContent
                       align="end"
                       className="bg-white"
-                      style={{
-                        background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
-                      }}
+                      style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
                     >
-                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
-                        Name A - Z
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
-                        Name Z - A
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
-                        Old → New
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
-                        New → Old
-                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>Name A - Z</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>Name Z - A</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>Old → New</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>New → Old</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -308,6 +259,19 @@ const Employees = () => {
 
           {/* Table */}
           <CardContent className="px-0">
+            {/* Restore Button */}
+            {(departmentFilter || designationFilter) && (
+              <div className="mb-4">
+                <Button
+                  onClick={() => window.location.href = "/employees"}
+                  className="bg-blue-600 text-white hover:bg-blue-800"
+                  title="Restore Employees"
+                >
+                  All Employees
+                </Button>
+              </div>
+            )}
+
             <div className="border rounded-2g overflow-hidden">
               <Table>
                 <TableHeader>
@@ -327,27 +291,17 @@ const Employees = () => {
                     visibleEmployees.map((emp) => (
                       <TableRow key={emp.employee_id}>
                         <TableCell>{renderProfilePicture(emp, 36)}</TableCell>
-                        <TableCell className="font-medium">
-                          {emp.first_name} {emp.last_name}
-                        </TableCell>
+                        <TableCell className="font-medium">{emp.first_name} {emp.last_name}</TableCell>
                         <TableCell>{emp.email}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
-                            {getDepartmentName(emp.department_id)}
-                          </Badge>
+                          <Badge variant="secondary">{getDepartmentName(emp.department_id)}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
-                            {getDesignationTitle(emp.designation_id)}
-                          </Badge>
+                          <Badge variant="secondary">{getDesignationTitle(emp.designation_id)}</Badge>
                         </TableCell>
+                        <TableCell>{new Date(emp.hire_date).toLocaleDateString("en-GB")}</TableCell>
                         <TableCell>
-                          {new Date(emp.hire_date).toLocaleDateString("en-GB")}
-                        </TableCell>
-                        <TableCell>
-                          {emp.salary
-                            ? `₹${emp.salary.toLocaleString("en-IN")}`
-                            : "Not Set"}
+                          {emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "Not Set"}
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end space-x-2">
@@ -375,13 +329,8 @@ const Employees = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell
-                        colSpan={8}
-                        className="text-center py-3 text-muted-foreground"
-                      >
-                        {searchTerm
-                          ? "No employees found matching your search."
-                          : "No employees found."}
+                      <TableCell colSpan={8} className="text-center py-3 text-muted-foreground">
+                        {searchTerm ? "No employees found matching your search." : "No employees found."}
                       </TableCell>
                     </TableRow>
                   )}
@@ -389,9 +338,7 @@ const Employees = () => {
               </Table>
             </div>
             {visibleEmployees.length < sortedEmployees.length && (
-              <div className="text-center py-4 text-sm text-gray-600">
-                Loading more employees...
-              </div>
+              <div className="text-center py-4 text-sm text-gray-600">Loading more employees...</div>
             )}
           </CardContent>
         </Card>
@@ -414,52 +361,23 @@ const Employees = () => {
       />
 
       {/* Employee Details Dialog */}
-      <Dialog
-        open={!!viewingEmployee}
-        onOpenChange={(open) => !open && setViewingEmployee(null)}
-      >
+      <Dialog open={!!viewingEmployee} onOpenChange={(open) => !open && setViewingEmployee(null)}>
         <DialogContent
           className="w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-blue-50 p-6 rounded-xl"
-          style={{
-            background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
-          }}
+          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
         >
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-blue-900">
-              Employee Details
-            </DialogTitle>
+            <DialogTitle className="text-xl font-bold text-blue-900">Employee Details</DialogTitle>
           </DialogHeader>
           {viewingEmployee && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-2 flex-1 text-sm">
-                <p>
-                  <span className="font-semibold">Name:</span>{" "}
-                  {viewingEmployee.first_name} {viewingEmployee.last_name}
-                </p>
-                <p>
-                  <span className="font-semibold">Email:</span>{" "}
-                  {viewingEmployee.email}
-                </p>
-                <p>
-                  <span className="font-semibold">Department:</span>{" "}
-                  {getDepartmentName(viewingEmployee.department_id)}
-                </p>
-                <p>
-                  <span className="font-semibold">Designation:</span>{" "}
-                  {getDesignationTitle(viewingEmployee.designation_id)}
-                </p>
-                <p>
-                  <span className="font-semibold">Hire Date:</span>{" "}
-                  {new Date(
-                    viewingEmployee.hire_date
-                  ).toLocaleDateString("en-GB")}
-                </p>
-                <p>
-                  <span className="font-semibold">Salary:</span>{" "}
-                  {viewingEmployee.salary
-                    ? `₹${viewingEmployee.salary}`
-                    : "Not set"}
-                </p>
+                <p><span className="font-semibold">Name:</span> {viewingEmployee.first_name} {viewingEmployee.last_name}</p>
+                <p><span className="font-semibold">Email:</span> {viewingEmployee.email}</p>
+                <p><span className="font-semibold">Department:</span> {getDepartmentName(viewingEmployee.department_id)}</p>
+                <p><span className="font-semibold">Designation:</span> {getDesignationTitle(viewingEmployee.designation_id)}</p>
+                <p><span className="font-semibold">Hire Date:</span> {new Date(viewingEmployee.hire_date).toLocaleDateString("en-GB")}</p>
+                <p><span className="font-semibold">Salary:</span> {viewingEmployee.salary ? `₹${viewingEmployee.salary}` : "Not set"}</p>
               </div>
               <div className="shrink-0">
                 <div className="w-24 h-24 rounded-full overflow-hidden border border-blue-900">
@@ -472,8 +390,7 @@ const Employees = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white text-2xl bg-gray-400">
-                      {viewingEmployee.first_name[0]}
-                      {viewingEmployee.last_name[0]}
+                      {viewingEmployee.first_name[0]}{viewingEmployee.last_name[0]}
                     </div>
                   )}
                 </div>
