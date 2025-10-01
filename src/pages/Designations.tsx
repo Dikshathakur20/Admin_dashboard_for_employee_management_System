@@ -286,7 +286,7 @@ const Designations = () => {
                         {designation.total_employees && designation.total_employees > 0 ? (
                           <Link
                             to={`/employees?designation=${designation.designation_id}`}
-                            className="absolute inset-0 opacity-0 group-hover:opacity-100 text-blue-900 underline"
+                            className="text-gray-900 hover:text-blue-900 hover:underline transition-colors duration-200"
                           >
                             {designation.total_employees}
                           </Link>
