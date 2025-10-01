@@ -61,7 +61,7 @@ const Login = () => {
   setLoading(true);
 
   try {
-    const res = await fetch("https://<your-project-ref>.functions.supabase.co/send-otp", {
+    const res = await fetch("https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: resetEmail }),
