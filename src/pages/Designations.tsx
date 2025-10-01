@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useLogin } from '@/contexts/LoginContext';
 import { Button } from '@/components/ui/button';
@@ -53,18 +53,39 @@ const Designations = () => {
   const { toast } = useToast();
 
   const [sortOption, setSortOption] = useState<SortOption>('id-desc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+
+  // Infinite scroll states
+  const [visibleCount, setVisibleCount] = useState(10);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const departmentFilter = params.get("department"); // department id if passed
+  const departmentFilter = params.get("department");
 
   if (!user) return <Navigate to="/login" replace />;
 
   useEffect(() => {
     fetchDesignations();
   }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 10, sortedDesignations.length));
+        }
+      },
+      { threshold: 1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, [sortedDesignations.length]);
 
   const fetchDesignations = async () => {
     setLoading(true);
@@ -101,52 +122,48 @@ const Designations = () => {
     }
   };
 
- const handleDelete = async (designationId: number) => {
-  try {
-    // Step 1: Check if any employees are assigned to this designation
-    const { count, error: countError } = await supabase
-      .from("tblemployees")
-      .select("employee_id", { count: "exact", head: true })
-      .eq("designation_id", designationId);
+  const handleDelete = async (designationId: number) => {
+    try {
+      const { count, error: countError } = await supabase
+        .from("tblemployees")
+        .select("employee_id", { count: "exact", head: true })
+        .eq("designation_id", designationId);
 
-    if (countError) throw countError;
+      if (countError) throw countError;
 
-    if (count && count > 0) {
+      if (count && count > 0) {
+        toast({
+          title: "Cannot delete",
+          description: `This designation has ${count} active employee(s). Reassign them first.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!confirm("Are you sure you want to remove this designation?")) return;
+
+      const { error } = await supabase
+        .from("tbldesignations")
+        .delete()
+        .eq("designation_id", designationId);
+
+      if (error) throw error;
+
       toast({
-        title: "Cannot delete",
-        description: `This designation has ${count} active employee(s). Reassign them first.`,
+        title: "Success",
+        description: "Designation removed successfully",
+      });
+
+      fetchDesignations();
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "Something went wrong while deleting designation.",
         variant: "destructive",
       });
-      return;
     }
-
-    // Step 2: Confirm deletion
-    if (!confirm("Are you sure you want to remove this designation?")) return;
-
-    // Step 3: Delete designation
-    const { error } = await supabase
-      .from("tbldesignations")
-      .delete()
-      .eq("designation_id", designationId);
-
-    if (error) throw error;
-
-    toast({
-      title: "Success",
-      description: "Designation removed successfully",
-    });
-
-    fetchDesignations();
-  } catch (err) {
-    console.error(err);
-    toast({
-      title: "Error",
-      description: "Something went wrong while deleting designation.",
-      variant: "destructive",
-    });
-  }
-};
-
+  };
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return 'Not Assigned';
@@ -177,8 +194,7 @@ const Designations = () => {
     }
   });
 
-  const totalPages = Math.ceil(sortedDesignations.length / pageSize);
-  const paginatedDesignations = sortedDesignations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const visibleDesignations = sortedDesignations.slice(0, visibleCount);
 
   if (loading) return <div className="flex justify-center p-8">Loading designations...</div>;
 
@@ -186,17 +202,16 @@ const Designations = () => {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
         <Card className="w-full border-0 shadow-none bg-transparent">
-          {/* Header with Title + Search + Actions */}
+          {/* Header */}
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-             <CardTitle className="text-2xl font-bold">
-  {departmentFilter
-    ? `Designation : ${getDepartmentName(Number(departmentFilter))} Department`
-    : "Designations"}
-</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                {departmentFilter
+                  ? `Designation : ${getDepartmentName(Number(departmentFilter))} Department`
+                  : "Designations"}
+              </CardTitle>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
-                {/* Search bar */}
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
                   <Input
@@ -204,15 +219,13 @@ const Designations = () => {
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
-                      setCurrentPage(1);
+                      setVisibleCount(10);
                     }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
 
-                {/* Buttons */}
-                <div className="flex items-center gap-2"
-                title="Add designation">
+                <div className="flex items-center gap-2" title="Add designation">
                   <Button
                     onClick={() => setShowNewDialog(true)}
                     className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
@@ -222,24 +235,16 @@ const Designations = () => {
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort"  >
+                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
                         Sort
                         <ChevronDown className="ml-2 h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }} >
-                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
-                        Name A - Z
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
-                        Name Z - A
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>
-                        Old → New
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>
-                        New → Old
-                      </DropdownMenuItem>
+                    <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
+                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>Name A - Z</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>Name Z - A</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>Old → New</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>New → Old</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -248,7 +253,6 @@ const Designations = () => {
           </CardHeader>
 
           <CardContent className="px-0">
-            {/* Back to all button when filtered */}
             {departmentFilter && (
               <div className="mb-4">
                 <Button
@@ -274,7 +278,7 @@ const Designations = () => {
                 </TableHeader>
 
                 <TableBody>
-                  {paginatedDesignations.map((designation) => (
+                  {visibleDesignations.map((designation) => (
                     <TableRow key={designation.designation_id}>
                       <TableCell className="font-medium">{designation.designation_title}</TableCell>
                       <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
@@ -319,34 +323,18 @@ const Designations = () => {
               </Table>
             </div>
 
-            {paginatedDesignations.length === 0 && (
+            {visibleDesignations.length === 0 && (
               <div className="text-center p-8 text-muted-foreground">
                 {searchTerm ? 'No designations found matching your search.' : 'No designations found.'}
               </div>
             )}
 
-            {/* Pagination */}
-            <div className="flex justify-center items-center mt-4 space-x-4">
-              <Button
-                size="sm"
-                title="Previous page"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                Previous
-              </Button>
-              <span>Page {currentPage} of {totalPages}</span>
-              <Button
-                size="sm"
-                title="Next page"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                className="bg-blue-900 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                Next
-              </Button>
-            </div>
+            {/* Infinite Scroll Loader */}
+            {visibleCount < sortedDesignations.length && (
+              <div ref={loaderRef} className="text-center py-4 text-gray-600 text-sm">
+                Loading more...
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
