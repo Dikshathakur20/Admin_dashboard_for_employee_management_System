@@ -73,18 +73,7 @@ const Login = () => {
       }
     );
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to send OTP");
-
-    toast({ title: "Success", description: "Check your email for the OTP" });
-    // Now show OTP input UI
-  } catch (err: any) {
-    toast({ title: "Error", description: err.message, variant: "destructive" });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  
 
 
     const data = await res.json();
