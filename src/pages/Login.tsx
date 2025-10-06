@@ -62,7 +62,7 @@ const Login = () => {
 
   try {
    const res = await fetch(
-  "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/send-otp", // ✅ use your actual function name
+  "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api", // ✅ use your actual function name
   {
     method: "POST",
     headers: {
