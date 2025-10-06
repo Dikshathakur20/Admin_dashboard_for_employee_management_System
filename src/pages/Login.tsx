@@ -52,8 +52,8 @@ const Login = () => {
 
   // ----------------------
   // Forgot Password - Direct Password Reset
-  // ----------------------
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ----------------------o
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!token) {
@@ -226,7 +226,7 @@ const Login = () => {
             // ----------------------
             // Reset Password Form
             // ----------------------
-            <form onSubmit={handleResetPassword}>
+            <form onSubmit={handleResetPasswordSubmit}>
               <div className="space-y-1">
                 <Label htmlFor="resetEmail">Email</Label>
                 <Input
