@@ -101,7 +101,7 @@ const handleResetPassword = async (e: React.FormEvent) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "noreply@yourdomain.com",
+          from: "noreply@antheminfotech.com",
           to: resetEmail,
           subject: "Password Reset Request",
           html: `
