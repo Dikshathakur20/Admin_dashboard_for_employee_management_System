@@ -159,15 +159,15 @@ const Login = () => {
         // Validate token
         const { data: tokenData, error: tokenError } = await supabase
           .from("tbladmins")
-          .select("email, reset_expires_at")
-          .eq("reset_token", token)
+          .select("email, expires_at")
+          .eq("token", token)
           .single();
 
         if (tokenError || !tokenData) {
           return toast({ title: "Invalid Link", description: "Reset link is invalid or expired", variant: "destructive" });
         }
 
-        if (new Date(tokenData.reset_expires_at) < new Date()) {
+        if (new Date(tokenData.expires_at) < new Date()) {
           return toast({ title: "Expired Link", description: "Reset link has expired", variant: "destructive" });
         }
 
@@ -179,7 +179,7 @@ const Login = () => {
         if (updateError) throw updateError;
 
         // Delete token to prevent reuse
-        await supabase.from("tbl_password_resets").delete().eq("token", token);
+        await supabase.from("tbladmins").delete().eq("token", token);
 
         toast({ title: "Success", description: "Password updated successfully!" });
         setNewPassword("");
