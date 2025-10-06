@@ -51,42 +51,42 @@ const Login = () => {
   };
 
   // ----------------------
-  // Forgot Password
+  // Forgot Password - Direct Password Reset
   // ----------------------
- const handleResetPassword = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!resetEmail) {
-    return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
-  }
-  setLoading(true);
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+    }
+    setLoading(true);
 
-  try {
-    const res = await fetch(
-      "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api", // ✅ use your actual function name
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, // ✅ correct for frontend
-        },
-        body: JSON.stringify({ email: resetEmail }),
+    try {
+      // Step 1: Check if email exists in tbladmins
+      const { data: adminData, error: adminError } = await supabase
+        .from("tbladmins")
+        .select("email")
+        .eq("email", resetEmail)
+        .single();
+
+      if (adminError || !adminData) {
+        return toast({ title: "Invalid User", description: "No account found with this email", variant: "destructive" });
       }
-    );
 
-  
+      // Step 2: Send password reset email via Supabase Auth
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/login` // optional redirect after reset
+      });
 
+      if (error) throw error;
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+      toast({ title: "Success", description: "Password reset email sent! Check your inbox." });
 
-    toast({ title: "Success", description: "Check your email for the OTP" });
-    // Now show OTP input UI
-  } catch (err: any) {
-    toast({ title: "Error", description: err.message, variant: "destructive" });
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ----------------------
   // Inactivity Timer
@@ -155,7 +155,7 @@ const Login = () => {
               {/* Password */}
               <div className="space-y-1">
                 <Label htmlFor="password">Password</Label>
-                              <div className="relative">
+                <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <Input
                     id="password"
@@ -164,7 +164,7 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="pl-10 pr-10" // ← Add left padding for the icon
+                    className="pl-10 pr-10"
                   />
                   {showPassword ? (
                     <EyeOff
@@ -180,16 +180,15 @@ const Login = () => {
                     />
                   )}
                 </div>
-                </div>
-
+              </div>
 
               {/* Forgot Password */}
-                           <div className="text-right mt-2">
+              <div className="text-right mt-2">
                 <a
                   href="#"
                   className="text-sm text-blue-600 hover:underline"
                   onClick={(e) => { 
-                    e.preventDefault(); // prevent page jump
+                    e.preventDefault(); 
                     setShowReset(true); 
                   }}
                 >
@@ -198,53 +197,50 @@ const Login = () => {
               </div>
 
               <div className="flex items-center justify-center mt-6">
-              <Button
-                type="submit"
-                className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 transition-colors"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
-              </Button>
-              
+                <Button
+                  type="submit"
+                  className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 transition-colors"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
+                </Button>
               </div>
-
             </form>
           ) : (
             // ----------------------
             // Reset Password Form
             // ----------------------
-           <form onSubmit={handleResetPassword}>
-  <div className="space-y-1">
-    <Label htmlFor="resetEmail">Email</Label>
-    <Input
-      id="resetEmail"
-      type="email"
-      placeholder="Enter your email"
-      value={resetEmail}
-      onChange={(e) => setResetEmail(e.target.value)}
-      required
-    />
-  </div>
+            <form onSubmit={handleResetPassword}>
+              <div className="space-y-1">
+                <Label htmlFor="resetEmail">Email</Label>
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-  <div className="flex items-center justify-center mt-4">
-    <Button
-      type="submit"
-      className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
-    >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
-    </Button>
-  </div>
+              <div className="flex items-center justify-center mt-4">
+                <Button
+                  type="submit"
+                  className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Email"}
+                </Button>
+              </div>
 
-  <div className="mt-2 text-right">
-    <Link
-      to="/login"
-      className="text-sm text-gray-600 hover:underline"
-      onClick={() => setShowReset(false)} // optional, if you also want to hide the reset form
-    >
-      Back to Login
-    </Link>
-  </div>
-</form>
-
+              <div className="mt-2 text-right">
+                <Link
+                  to="/login"
+                  className="text-sm text-gray-600 hover:underline"
+                  onClick={() => setShowReset(false)}
+                >
+                  Back to Login
+                </Link>
+              </div>
+            </form>
           )}
         </CardContent>
       </Card>
