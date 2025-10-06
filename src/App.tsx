@@ -9,6 +9,8 @@ import { LoginProvider, useLogin } from "@/contexts/LoginContext"; // updated
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 
+
+
 // ✅ Import pages
 import Index from "./pages/Index";
 import Login from "./pages/Login"; // renamed page
@@ -17,6 +19,8 @@ import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
 import Designations from "./pages/Designations";
 import ResetPassword from "./pages/ResetPassword";
+import NewPassword from "./pages/NewPassword";
+
 
 // ✅ Import the hook
 import { useFormNavigation } from "@/hooks/useFormNavigation";
@@ -94,7 +98,7 @@ const AppRoutes = () => (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
-         <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/new-password/:token" element={<NewPassword />} /> 
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
