@@ -55,18 +55,29 @@ const Login = () => {
   // ----------------------
  const handleResetPassword = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (!resetEmail) return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+  if (!resetEmail) {
+    return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+  }
   setLoading(true);
 
   try {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/update-password`,
-    });
+    const res = await fetch(
+      "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api", // ✅ use your actual function name
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, // ✅ correct for frontend
+        },
+        body: JSON.stringify({ email: resetEmail }),
+      }
+    );
 
-    if (error) throw error;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to send OTP");
 
-    toast({ title: "Success", description: "Check your email to reset your password" });
-    setShowReset(false);
+    toast({ title: "Success", description: "Check your email for the OTP" });
+    // Now show OTP input UI
   } catch (err: any) {
     toast({ title: "Error", description: err.message, variant: "destructive" });
   } finally {
