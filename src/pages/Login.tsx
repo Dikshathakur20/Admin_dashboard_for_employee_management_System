@@ -55,23 +55,25 @@ const Login = () => {
   // ----------------------
  const handleResetPassword = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (!resetEmail) {
-    return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
-  }
+  if (!resetEmail) return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
   setLoading(true);
 
   try {
-   const res = await fetch(
-  "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api", // ✅ use your actual function name
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, // ✅ correct for frontend
-    },
-    body: JSON.stringify({ email: resetEmail }),
+    const { data, error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+
+    if (error) throw error;
+
+    toast({ title: "Success", description: "Check your email to reset your password" });
+    setShowReset(false);
+  } catch (err: any) {
+    toast({ title: "Error", description: err.message, variant: "destructive" });
+  } finally {
+    setLoading(false);
   }
-);
+};
+
 
 
     const data = await res.json();
