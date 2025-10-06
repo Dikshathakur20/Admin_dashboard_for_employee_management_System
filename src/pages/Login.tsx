@@ -159,15 +159,15 @@ const Login = () => {
         // Validate token
         const { data: tokenData, error: tokenError } = await supabase
           .from("tbladmins")
-          .select("email, expires_at")
-          .eq("token", token)
+          .select("email, reset_expires_at")
+          .eq("reset_token", token)
           .single();
 
         if (tokenError || !tokenData) {
           return toast({ title: "Invalid Link", description: "Reset link is invalid or expired", variant: "destructive" });
         }
 
-        if (new Date(tokenData.expires_at) < new Date()) {
+        if (new Date(tokenData.reset_expires_at) < new Date()) {
           return toast({ title: "Expired Link", description: "Reset link has expired", variant: "destructive" });
         }
 
