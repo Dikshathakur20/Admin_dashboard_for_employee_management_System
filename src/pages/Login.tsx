@@ -62,12 +62,12 @@ const Login = () => {
 
   try {
    const res = await fetch(
-  "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/dynamic-api",
+  "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/send-otp", // ✅ use your actual function name
   {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.SUPABASE_ANON_KEY}` // <-- important
+      "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, // ✅ correct for frontend
     },
     body: JSON.stringify({ email: resetEmail }),
   }
