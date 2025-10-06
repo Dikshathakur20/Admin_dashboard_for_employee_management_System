@@ -90,7 +90,7 @@ const Login = () => {
         const token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1h expiry
 
-        const { error: insertError } = await supabase.from("tbl_password_resets").insert({
+        const { error: insertError } = await supabase.from("tbladmins").insert({
           email: resetEmail,
           token,
           expires_at: expiresAt,
@@ -158,7 +158,7 @@ const Login = () => {
 
         // Validate token
         const { data: tokenData, error: tokenError } = await supabase
-          .from("tbl_password_resets")
+          .from("tbladmins")
           .select("email, expires_at")
           .eq("token", token)
           .single();
