@@ -24,9 +24,25 @@ const Login = () => {
   const navigate = useNavigate();
 
   // Redirect logged-in user to dashboard
-  useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true });
-  }, [user, navigate]);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    const { error } = await login(emailOrUsername, password);
+    if (error) {
+      toast({ title: "Login Issue", description: error.message, variant: "destructive", duration: 2000 });
+    } else {
+      toast({ title: "Welcome", description: "Successfully logged in!", duration: 1500 });
+      resetInactivityTimer();
+      navigate('/dashboard', { replace: true });
+    }
+  } catch {
+    toast({ title: "Connection Issue", description: "An unexpected error occurred", variant: "destructive" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ----------------------
   // Login Form
