@@ -47,44 +47,165 @@ const Login = () => {
   // ----------------------
   // Login Form
   // ----------------------
- const handleResetPassword = async (e: React.FormEvent) => {
+// 🔹 Imports assumed already exist (supabase, toast, crypto, etc.)
+const handleResetPassword = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (!resetEmail) {
-    return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
-  }
   setLoading(true);
 
   try {
-    // Step 1: Check if email exists in tbladmins
-    const { data: adminData, error: adminError } = await supabase
-      .from("tbladmins")
-      .select("email")
-      .eq("email", resetEmail)
-      .single();
+    // -----------------------
+    // MODE 1: Send Reset Email
+    // -----------------------
+    if (!isTokenMode) {
+      if (!resetEmail) {
+        return toast({
+          title: "Error",
+          description: "Enter your email",
+          variant: "destructive",
+        });
+      }
 
-    if (adminError || !adminData) {
-      return toast({ title: "Invalid User", description: "No account found with this email", variant: "destructive" });
+      // Step 1: Check if email exists
+      const { data: adminData, error: adminError } = await supabase
+        .from("tbladmins")
+        .select("email")
+        .eq("email", resetEmail)
+        .single();
+
+      if (adminError || !adminData) {
+        return toast({
+          title: "Invalid User",
+          description: "No account found with this email",
+          variant: "destructive",
+        });
+      }
+
+      // Step 2: Generate token and save to tbl_password_resets
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour expiry
+
+      const { error: insertError } = await supabase.from("tbl_password_resets").insert({
+        email: resetEmail,
+        token,
+        expires_at: expiresAt,
+      });
+      if (insertError) throw insertError;
+
+      // Step 3: Send email with reset link
+      const resetLink = `${window.location.origin}/new-password/${token}`;
+
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "noreply@yourdomain.com",
+          to: resetEmail,
+          subject: "Password Reset Request",
+          html: `
+            <p>Hello,</p>
+            <p>You requested to reset your password.</p>
+            <p>Click the link below to set a new password:</p>
+            <a href="${resetLink}" target="_blank">${resetLink}</a>
+            <p>This link will expire in 1 hour.</p>
+          `,
+        }),
+      });
+
+      toast({
+        title: "Success",
+        description: "Password reset link sent! Check your email inbox.",
+      });
+
+      setResetEmail("");
+      return; // stop here for email send flow
     }
 
-    // Step 2: Send reset link email (with token)
-    const token = Math.random().toString(36).substr(2); // generate a simple token
-    await supabase.from("tbl_password_resets").insert({
-      email: resetEmail,
-      token,
-      expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour validity
-    });
+    // -----------------------
+    // MODE 2: Reset Password via Token
+    // -----------------------
+    if (isTokenMode) {
+      if (!newPassword || !confirmPassword) {
+        return toast({
+          title: "Missing Fields",
+          description: "Please fill all fields",
+          variant: "destructive",
+        });
+      }
 
-    // Send email logic here (Supabase Edge Function / Resend API) with link:
-    // e.g. `${window.location.origin}/new-password/${token}`
+      if (newPassword !== confirmPassword) {
+        return toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match",
+          variant: "destructive",
+        });
+      }
 
-    toast({ title: "Success", description: "Check your email for the reset link." });
+      if (newPassword.length < 6) {
+        return toast({
+          title: "Weak Password",
+          description: "Password must be at least 6 characters long",
+          variant: "destructive",
+        });
+      }
 
+      // Verify token
+      const { data: tokenData, error: tokenError } = await supabase
+        .from("tbl_password_resets")
+        .select("email, expires_at")
+        .eq("token", token)
+        .single();
+
+      if (tokenError || !tokenData) {
+        return toast({
+          title: "Invalid Link",
+          description: "Reset link is invalid or expired",
+          variant: "destructive",
+        });
+      }
+
+      const isExpired = new Date(tokenData.expires_at) < new Date();
+      if (isExpired) {
+        return toast({
+          title: "Expired Link",
+          description: "Your password reset link has expired. Request a new one.",
+          variant: "destructive",
+        });
+      }
+
+      // Update password in tbladmins
+      const { error: updateError } = await supabase
+        .from("tbladmins")
+        .update({ password: newPassword })
+        .eq("email", tokenData.email);
+
+      if (updateError) throw updateError;
+
+      // Optional: delete token to prevent reuse
+      await supabase.from("tbl_password_resets").delete().eq("token", token);
+
+      toast({
+        title: "Success",
+        description: "Your password has been reset successfully!",
+      });
+
+      setNewPassword("");
+      setConfirmPassword("");
+      navigate("/login", { replace: true });
+    }
   } catch (err: any) {
-    toast({ title: "Error", description: err.message, variant: "destructive" });
+    toast({
+      title: "Error",
+      description: err.message,
+      variant: "destructive",
+    });
   } finally {
     setLoading(false);
   }
 };
+
 
 
   // ----------------------
