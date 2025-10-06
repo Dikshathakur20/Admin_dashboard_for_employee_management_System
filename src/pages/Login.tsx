@@ -31,71 +31,37 @@ const Login = () => {
   // ----------------------
   // Login Form
   // ----------------------
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { error } = await login(emailOrUsername, password);
-      if (error) {
-        toast({ title: "Login Issue", description: error.message, variant: "destructive", duration: 2000 });
-      } else {
-        toast({ title: "Welcome", description: "Successfully logged in!", duration: 1500 });
-        resetInactivityTimer();
-        navigate('/dashboard', { replace: true });
-      }
-    } catch {
-      toast({ title: "Connection Issue", description: "An unexpected issue occurred", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ----------------------
-  // Forgot Password - Direct Password Reset
-  // ----------------------o
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+ const handleResetPassword = async (e: React.FormEvent) => {
   e.preventDefault();
-
-  if (!token) {
-    return toast({ title: "Error", description: "Invalid token", variant: "destructive" });
+  if (!resetEmail) {
+    return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
   }
-
-  if (newPassword !== confirmPassword) {
-    return toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
-  }
-
   setLoading(true);
 
   try {
-    // 1️⃣ Verify the token exists and is valid
-    const { data: resetData, error: tokenError } = await supabase
-      .from("tbl_password_resets")
-      .select("*")
-      .eq("token", token)
+    // Step 1: Check if email exists in tbladmins
+    const { data: adminData, error: adminError } = await supabase
+      .from("tbladmins")
+      .select("email")
+      .eq("email", resetEmail)
       .single();
 
-    if (tokenError || !resetData) {
-      throw new Error("Invalid or expired token");
+    if (adminError || !adminData) {
+      return toast({ title: "Invalid User", description: "No account found with this email", variant: "destructive" });
     }
 
-    // 2️⃣ Update the password in tbladmins
-    const { error: updateError } = await supabase
-      .from("tbladmins")
-      .update({ password: newPassword }) // Ideally, hash this password before saving
-      .eq("email", resetData.email);
+    // Step 2: Send reset link email (with token)
+    const token = Math.random().toString(36).substr(2); // generate a simple token
+    await supabase.from("tbl_password_resets").insert({
+      email: resetEmail,
+      token,
+      expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour validity
+    });
 
-    if (updateError) {
-      throw updateError;
-    }
+    // Send email logic here (Supabase Edge Function / Resend API) with link:
+    // e.g. `${window.location.origin}/new-password/${token}`
 
-    // 3️⃣ Delete the token after successful password update
-    await supabase
-      .from("tbl_password_resets")
-      .delete()
-      .eq("token", token);
-
-    toast({ title: "Success", description: "Password updated successfully!" });
-    navigate("/login"); // Redirect to login after reset
+    toast({ title: "Success", description: "Check your email for the reset link." });
 
   } catch (err: any) {
     toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -226,7 +192,7 @@ const Login = () => {
             // ----------------------
             // Reset Password Form
             // ----------------------
-            <form onSubmit={handleResetPasswordSubmit}>
+            <form onSubmit={handleResetPassword}>
               <div className="space-y-1">
                 <Label htmlFor="resetEmail">Email</Label>
                 <Input
