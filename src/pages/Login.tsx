@@ -53,40 +53,57 @@ const Login = () => {
   // ----------------------
   // Forgot Password - Direct Password Reset
   // ----------------------
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetEmail) {
-      return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!token) {
+    return toast({ title: "Error", description: "Invalid token", variant: "destructive" });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+  }
+
+  setLoading(true);
+
+  try {
+    // 1️⃣ Verify the token exists and is valid
+    const { data: resetData, error: tokenError } = await supabase
+      .from("tbl_password_resets")
+      .select("*")
+      .eq("token", token)
+      .single();
+
+    if (tokenError || !resetData) {
+      throw new Error("Invalid or expired token");
     }
-    setLoading(true);
 
-    try {
-      // Step 1: Check if email exists in tbladmins
-      const { data: adminData, error: adminError } = await supabase
-        .from("tbladmins")
-        .select("email")
-        .eq("email", resetEmail)
-        .single();
+    // 2️⃣ Update the password in tbladmins
+    const { error: updateError } = await supabase
+      .from("tbladmins")
+      .update({ password: newPassword }) // Ideally, hash this password before saving
+      .eq("email", resetData.email);
 
-      if (adminError || !adminData) {
-        return toast({ title: "Invalid User", description: "No account found with this email", variant: "destructive" });
-      }
-
-      // Step 2: Send password reset email via Supabase Auth
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/login` // optional redirect after reset
-      });
-
-      if (error) throw error;
-
-      toast({ title: "Success", description: "Password reset email sent! Check your inbox." });
-
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
+    if (updateError) {
+      throw updateError;
     }
-  };
+
+    // 3️⃣ Delete the token after successful password update
+    await supabase
+      .from("tbl_password_resets")
+      .delete()
+      .eq("token", token);
+
+    toast({ title: "Success", description: "Password updated successfully!" });
+    navigate("/login"); // Redirect to login after reset
+
+  } catch (err: any) {
+    toast({ title: "Error", description: err.message, variant: "destructive" });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // ----------------------
   // Inactivity Timer
