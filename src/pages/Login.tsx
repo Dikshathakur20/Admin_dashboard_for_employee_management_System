@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLogin } from '@/contexts/LoginContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,17 +14,13 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const { token } = useParams() as { token?: string }; // safe typing
-  const isTokenMode = Boolean(token);
-
-  const { user, login, logout } = useLogin();
+  const { login, logout } = useLogin();
   const { toast } = useToast();
-  const inactivityTimer = useRef<number | null>(null); // browser-friendly
+  const inactivityTimer = useRef<number | null>(null);
   const navigate = useNavigate();
 
   // ----------------------
@@ -51,109 +47,26 @@ const Login = () => {
   };
 
   // ----------------------
-  // Password Reset (Email + Token)
+  // Forgot Password (Send Reset Email)
   // ----------------------
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    if (!resetEmail) {
+      toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
     try {
-      if (!isTokenMode) {
-        // Send Reset Email
-        if (!resetEmail) {
-          return toast({ title: "Error", description: "Enter your email", variant: "destructive" });
-        }
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/new-password`
+      });
+      if (error) throw error;
 
-        const { data: adminData, error: adminError } = await supabase
-          .from("tbladmins")
-          .select("email")
-          .eq("email", resetEmail)
-          .single();
-
-        if (adminError || !adminData) {
-          return toast({ title: "Invalid User", description: "No account found with this email", variant: "destructive" });
-        }
-
-        const tokenValue = (crypto?.randomUUID?.()) || Math.random().toString(36).substring(2, 15); // fallback
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-
-        const { error: updateError } = await supabase
-          .from("tbladmins")
-          .update({ token: tokenValue, expires_at: expiresAt })
-          .eq("email", resetEmail);
-
-        if (updateError) throw updateError;
-
-        const resetLink = `${window.location.origin}/new-password/${tokenValue}`;
-
-        const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
-        if (!resendApiKey) throw new Error("Resend API key is missing in environment variables");
-
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${resendApiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: "no-reply@antheminfotech.com",
-            to: resetEmail,
-            subject: "Password Reset Request",
-            html: `
-              <p>Hello,</p>
-              <p>You requested to reset your password.</p>
-              <p>Click below to set a new password:</p>
-              <a href="${resetLink}" target="_blank">${resetLink}</a>
-              <p>This link will expire in 1 hour.</p>
-            `,
-          }),
-        });
-
-        toast({ title: "Success", description: "Password reset link sent! Check your inbox." });
-        setResetEmail("");
-        return;
-      }
-
-      // Reset via token
-      if (isTokenMode) {
-        if (!newPassword || !confirmPassword) {
-          return toast({ title: "Missing Fields", description: "Please fill all fields", variant: "destructive" });
-        }
-
-        if (newPassword !== confirmPassword) {
-          return toast({ title: "Password Mismatch", description: "Passwords do not match", variant: "destructive" });
-        }
-
-        if (newPassword.length < 6) {
-          return toast({ title: "Weak Password", description: "Password must be at least 6 characters long", variant: "destructive" });
-        }
-
-        const { data: tokenData, error: tokenError } = await supabase
-          .from("tbladmins")
-          .select("email, expires_at")
-          .eq("token", token)
-          .single();
-
-        if (tokenError || !tokenData) {
-          return toast({ title: "Invalid Link", description: "Reset link is invalid or expired", variant: "destructive" });
-        }
-
-        if (new Date(tokenData.expires_at) < new Date()) {
-          return toast({ title: "Expired Link", description: "Reset link has expired", variant: "destructive" });
-        }
-
-        const { error: updatePasswordError } = await supabase
-          .from("tbladmins")
-          .update({ password: newPassword, token: null, expires_at: null })
-          .eq("email", tokenData.email);
-
-        if (updatePasswordError) throw updatePasswordError;
-
-        toast({ title: "Success", description: "Password updated successfully!" });
-        setNewPassword("");
-        setConfirmPassword("");
-        navigate("/login", { replace: true });
-      }
+      toast({ title: "Success", description: "Check your inbox for the reset link!" });
+      setResetEmail("");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -196,15 +109,15 @@ const Login = () => {
         style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800">
-            {showReset || isTokenMode ? "Reset Password" : "Login"}
+            {showReset ? "Reset Password" : "Login"}
           </CardTitle>
           <CardDescription className="text-gray-600 mt-1">
-            {showReset || isTokenMode ? "Enter your email or new password" : "Enter your credentials to access the admin dashboard"}
+            {showReset ? "Enter your email to receive reset link" : "Enter your credentials to access the admin dashboard"}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-5 mt-4">
-          {!showReset && !isTokenMode ? (
+          {!showReset ? (
             <form onSubmit={handleSubmit}>
               <div className="space-y-1">
                 <Label htmlFor="email">Email or Username</Label>
@@ -258,36 +171,29 @@ const Login = () => {
             </form>
           ) : (
             <form onSubmit={handleResetPassword}>
-              {!isTokenMode && (
-                <div className="space-y-1">
-                  <Label htmlFor="resetEmail">Email</Label>
-                  <Input id="resetEmail" type="email" placeholder="Enter your email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} required />
-                </div>
-              )}
-              {isTokenMode && (
-                <>
-                  <div className="space-y-1">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input id="newPassword" type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input id="confirmPassword" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-                  </div>
-                </>
-              )}
+              <div className="space-y-1">
+                <Label htmlFor="resetEmail">Email</Label>
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+              </div>
 
               <div className="flex items-center justify-center mt-4">
-                <Button type="submit" disabled={loading} className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isTokenMode ? "Reset Password" : "Send Reset Email"}
+                <Button type="submit" disabled={loading} className="w-64 bg-[#001F7A] text-white px-4 py-2 hover:bg-blue-600 transition-colors">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Email"}
                 </Button>
               </div>
 
-              {!isTokenMode && (
-                <div className="mt-2 text-right">
-                  <Link to="/login" className="text-sm text-gray-600 hover:underline" onClick={() => setShowReset(false)}>Back to Login</Link>
-                </div>
-              )}
+              <div className="mt-2 text-right">
+                <a href="#" className="text-sm text-gray-600 hover:underline" onClick={(e) => { e.preventDefault(); setShowReset(false); }}>
+                  Back to Login
+                </a>
+              </div>
             </form>
           )}
         </CardContent>
