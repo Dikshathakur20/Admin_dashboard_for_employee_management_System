@@ -165,9 +165,9 @@ const Login = () => {
                     className="pl-10 pr-10"
                   />
                   {showPassword ? (
-                    <EyeOff className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer" size={18} onClick={() => setShowPassword(false)} />
+                    <EyeOff className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer" size={6} onClick={() => setShowPassword(false)} />
                   ) : (
-                    <Eye className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer" size={18} onClick={() => setShowPassword(true)} />
+                    <Eye className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer" size={6} onClick={() => setShowPassword(true)} />
                   )}
                 </div>
               </div>
