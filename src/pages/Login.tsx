@@ -49,32 +49,46 @@ const Login = () => {
   // ----------------------
   // Forgot Password (Send Reset Email)
   // ----------------------
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+ const handleResetPassword = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    if (!resetEmail) {
-      toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+  if (!resetEmail) {
+    toast({ title: "Error", description: "Enter your email", variant: "destructive" });
+    setLoading(false);
+    return;
+  }
+
+  try {
+    // Check if email exists in tbladmins
+    const { data, error: fetchError } = await supabase
+      .from('tbladmins')
+      .select('email')
+      .eq('email', resetEmail)
+      .single(); // get single record
+
+    if (fetchError || !data) {
+      toast({ title: "Error", description: "Account is not registered", variant: "destructive" });
       setLoading(false);
       return;
     }
 
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: 'https://admin-dashboard-for-employee-manage.vercel.app/new-password'
-      });
-      if (error) throw error;
+    // If email exists, send reset password email
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: 'https://admin-dashboard-for-employee-manage.vercel.app/new-password'
+    });
 
-      toast({ title: "Success", description: "Check your inbox for the reset link!" });
-      setResetEmail("");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (error) throw error;
 
-  // ----------------------
+    toast({ title: "Success", description: "Check your inbox for the reset link!" });
+    setResetEmail("");
+  } catch (err: any) {
+    toast({ title: "Error", description: err.message, variant: "destructive" });
+  } finally {
+    setLoading(false);
+  }
+};
+-------------------
   // Inactivity Timer
   // ----------------------
   const resetInactivityTimer = () => {
