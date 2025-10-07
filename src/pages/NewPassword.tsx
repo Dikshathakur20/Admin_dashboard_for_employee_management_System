@@ -9,7 +9,12 @@ const NewPassword = () => {
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
-  const token = searchParams.get('access_token');
+  // Get token from query or fallback to hash
+  let token = searchParams.get('access_token');
+  if (!token && window.location.hash) {
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+    token = hashParams.get('access_token');
+  }
 
   useEffect(() => {
     if (!token) setMessage('Invalid or expired link');
