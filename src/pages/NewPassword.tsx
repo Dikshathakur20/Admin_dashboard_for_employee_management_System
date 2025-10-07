@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,31 +18,13 @@ const NewPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
-  const location = useLocation();
 
-  // ✅ Extract email from query params (?email=...)
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const userEmail = queryParams.get("email");
-    if (userEmail) {
-      setEmail(userEmail);
-    } else {
-      toast({
-        title: "Invalid Link",
-        description: "Reset link is missing email info.",
-        variant: "destructive",
-      });
-      navigate("/login", { replace: true });
-    }
-  }, [location, navigate, toast]);
-
-  // ✅ Handle password update in tbladmins
+  // Handle password update for current authenticated admin
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -67,22 +49,10 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // Update the password in tbladmins table
-      const { data, error } = await supabase
-        .from("tbladmins")
-        .update({ password })
-        .eq("email", email);
+      // Update password for the currently logged-in user
+      const { error } = await supabase.auth.updateUser({ password });
 
       if (error) throw error;
-
-      if (!data || data.length === 0) {
-        toast({
-          title: "Error",
-          description: "No admin found with this email.",
-          variant: "destructive",
-        });
-        return;
-      }
 
       toast({
         title: "Success",
@@ -118,7 +88,7 @@ const NewPassword = () => {
 
         <CardContent className="space-y-5 mt-4">
           <form onSubmit={handleUpdatePassword} className="space-y-4">
-            {/* ✅ Password Field with Eye Toggle */}
+            {/* Password Field with Eye Toggle */}
             <div className="relative">
               <Label htmlFor="password">New Password</Label>
               <Input
@@ -138,7 +108,7 @@ const NewPassword = () => {
               </button>
             </div>
 
-            {/* ✅ Confirm Password Field with Eye Toggle */}
+            {/* Confirm Password Field with Eye Toggle */}
             <div className="relative">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -163,11 +133,7 @@ const NewPassword = () => {
               className="w-full bg-[#001F7A] text-white"
               disabled={loading}
             >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Update Password"
-              )}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update Password"}
             </Button>
           </form>
         </CardContent>
