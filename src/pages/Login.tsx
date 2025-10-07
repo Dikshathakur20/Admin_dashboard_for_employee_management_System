@@ -61,7 +61,7 @@ const Login = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/new-password`
+        redirectTo: 'https://admin-dashboard-for-employee-manage.vercel.app/new-password' // no token yet
       });
       if (error) throw error;
 
