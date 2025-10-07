@@ -98,7 +98,7 @@ const AppRoutes = () => (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/new-password/:token" element={<NewPassword />} /> 
+      <Route path="/new-password/" element={<NewPassword />} /> 
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
