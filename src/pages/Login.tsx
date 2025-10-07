@@ -65,7 +65,7 @@ const Login = () => {
       .from('tbladmins')
       .select('email')
       .eq('email', resetEmail)
-      .maybesingle(); // get single record
+      .maybeSingle(); // get single record
 
     if (fetchError || !data) {
       toast({ title: "Error", description: "Account is not registered", variant: "destructive" });
