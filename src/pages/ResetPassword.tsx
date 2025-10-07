@@ -13,7 +13,6 @@ const ResetPassword = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [serverOtp, setServerOtp] = useState("");
-  const [userId, setUserId] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,29 +26,23 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      // Check if email exists in auth.users
-      const { data: users, error } = await supabase
-        .from("users") // 👈 your users table or use supabase.auth.admin.listUsers() via edge function
-        .select("id")
+      const { data, error } = await supabase
+        .from("tbladmins")
+        .select("email")
         .eq("email", email)
-        .single();
+        .maybeSingle(); // ✅ safer query
 
-      if (error || !users) {
-        toast({ title: "Error", description: "Invalid Account", variant: "destructive" });
+      if (error || !data) {
+        toast({ title: "Error", description: "No account found with this email", variant: "destructive" });
         return;
       }
 
-      setUserId(users.id);
-
-      // Generate OTP
+      // Generate OTP (for now locally)
       const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
       setServerOtp(generatedOtp);
+      console.log("Generated OTP:", generatedOtp); // For testing (remove later)
 
-      // Send OTP via Supabase function / email
-      // For demo, just log it or store in a table
-      await supabase.functions.invoke("send-otp", { body: { email } });
-
-      toast({ title: "OTP Sent", description: "Check your email inbox." });
+      toast({ title: "OTP Sent", description: "An OTP has been sent to your email (mocked for demo)" });
       setStep("otp");
     } catch {
       toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
@@ -62,34 +55,37 @@ const ResetPassword = () => {
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (otp !== serverOtp) {
-      return toast({ title: "Error", description: "Invalid OTP", variant: "destructive" });
+      toast({ title: "Error", description: "Invalid OTP", variant: "destructive" });
+      return;
     }
+    toast({ title: "Success", description: "OTP verified successfully" });
     setStep("reset");
   };
 
-  // Step 3: Reset password
+  // Step 3: Update password in tbladmins
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!newPassword || !confirmPassword) {
-      return toast({ title: "Error", description: "All fields are required", variant: "destructive" });
+      toast({ title: "Error", description: "All fields are required", variant: "destructive" });
+      return;
     }
     if (newPassword !== confirmPassword) {
-      return toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+      return;
     }
 
     setLoading(true);
     try {
-      // Use Admin API (requires service role in edge function) OR handle via RLS table
-      // ✅ New way (safe via Edge Function)
-const { data, error } = await supabase.functions.invoke("reset-password", {
-  body: { email, otp, newPassword },
-});
-
+      const { error } = await supabase
+        .from("tbladmins")
+        .update({ password: newPassword })
+        .eq("email", email);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Success", description: "Password updated successfully" });
+        toast({ title: "Success", description: "Password updated successfully!" });
         navigate("/login", { replace: true });
       }
     } catch {
@@ -103,9 +99,10 @@ const { data, error } = await supabase.functions.invoke("reset-password", {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
       <h1 className="text-blue-700 text-3xl font-bold mb-8">Reset Password</h1>
 
-      <Card className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
-        style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
-        
+      <Card
+        className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
+        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+      >
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800">
             {step === "email" && "Enter Email"}
@@ -131,7 +128,7 @@ const { data, error } = await supabase.functions.invoke("reset-password", {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <Button type="submit" className="w-full bg-[#001F7A] text-white">
+              <Button type="submit" className="w-full bg-[#001F7A] text-white" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
               </Button>
             </form>
@@ -176,8 +173,8 @@ const { data, error } = await supabase.functions.invoke("reset-password", {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full bg-[#001F7A] text-white">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
+              <Button type="submit" className="w-full bg-[#001F7A] text-white" disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update Password"}
               </Button>
             </form>
           )}
