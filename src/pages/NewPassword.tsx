@@ -24,7 +24,9 @@ const NewPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Handle password update for current authenticated admin
+  // ----------------------
+  // Update password directly in tbladmins
+  // ----------------------
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -49,8 +51,11 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // Update password for the currently logged-in user
-      const { error } = await supabase.auth.updateUser({ password });
+      // Directly update the password in the table
+      const { data, error } = await supabase
+        .from("tbladmins")
+        .update({ password })
+        .eq("id", 1); // <-- Replace '1' with your admin's ID if needed
 
       if (error) throw error;
 
@@ -100,9 +105,8 @@ const NewPassword = () => {
                 required
               />
               <span
-                type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 cursor-pointer"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </span>
@@ -120,9 +124,8 @@ const NewPassword = () => {
                 required
               />
               <span
-                type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 cursor-pointer"
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </span>
