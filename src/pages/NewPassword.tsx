@@ -78,7 +78,7 @@ const NewPassword = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
-      <h1 className="text-blue-700 text-3xl font-bold mb-8">Set New Password</h1>
+      <h1 className="text-blue-700 text-3xl font-bold mb-8"></h1>
 
       <Card
         className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
@@ -136,7 +136,7 @@ const NewPassword = () => {
               className="w-full bg-[#001F7A] text-white"
               disabled={loading}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update Password"}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
             </Button>
           </form>
         </CardContent>
