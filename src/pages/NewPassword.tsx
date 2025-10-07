@@ -98,9 +98,7 @@ const NewPassword = () => {
               </Button>
             </div>
 
-            <div className="mt-2 text-center">
-              {message && <p className="text-red-600">{message}</p>}
-            </div>
+            
           </form>
         </CardContent>
       </Card>
