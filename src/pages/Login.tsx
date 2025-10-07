@@ -49,46 +49,47 @@ const Login = () => {
   // ----------------------
   // Forgot Password (Send Reset Email)
   // ----------------------
- const handleResetPassword = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  if (!resetEmail) {
-    toast({ title: "Error", description: "Enter your email", variant: "destructive" });
-    setLoading(false);
-    return;
-  }
-
-  try {
-    // Check if email exists in tbladmins
-    const { data, error: fetchError } = await supabase
-      .from('tbladmins')
-      .select('email')
-      .eq('email', resetEmail)
-      .maybeSingle(); // get single record
-
-    if (fetchError || !data) {
-      toast({ title: "Error", description: "Account is not registered", variant: "destructive" });
+    if (!resetEmail) {
+      toast({ title: "Error", description: "Enter your email", variant: "destructive" });
       setLoading(false);
       return;
     }
 
-    // If email exists, send reset password email
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: 'https://admin-dashboard-for-employee-manage.vercel.app/new-password'
-    });
+    try {
+      // Check if email exists in tbladmins
+      const { data, error: fetchError } = await supabase
+        .from('tbladmins')
+        .select('email')
+        .eq('email', resetEmail)
+        .maybeSingle(); // ✅ safer than single()
 
-    if (error) throw error;
+      if (fetchError || !data) {
+        toast({ title: "Error", description: "Account is not registered", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
 
-    toast({ title: "Success", description: "Check your inbox for the reset link!" });
-    setResetEmail("");
-  } catch (err: any) {
-    toast({ title: "Error", description: err.message, variant: "destructive" });
-  } finally {
-    setLoading(false);
-  }
-};
--------------------
+      // If email exists, send reset password email
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: 'https://admin-dashboard-for-employee-manage.vercel.app/new-password'
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Check your inbox for the reset link!" });
+      setResetEmail("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ----------------------
   // Inactivity Timer
   // ----------------------
   const resetInactivityTimer = () => {
