@@ -23,6 +23,7 @@ const NewPassword = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const userId = params.get("user_id");
 
   // ----------------------
   // Update password directly in tbladmins
@@ -52,7 +53,7 @@ const NewPassword = () => {
 
     try {
       // Directly update the password in the table
-      const userId = params.get("user_id");
+      
 
       const { data, error } = await supabase
         .from("tbladmins")
