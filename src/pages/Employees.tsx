@@ -394,6 +394,7 @@ const Employees = () => {
                     </div>
                   )}
                 </div>
+                <div>
                 <Button
                   size="sm"
                   variant="outline"
@@ -407,6 +408,7 @@ const Employees = () => {
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
+                  </div>
               </div>
             </div>
           )}
