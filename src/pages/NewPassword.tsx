@@ -14,8 +14,6 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-
-
 const NewPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,47 +24,54 @@ const NewPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Ensure Supabase session from the reset link
- useEffect(() => {
-  // Prevent crash during SSR (Vercel build)
-  if (typeof window === "undefined") return;
+  // ✅ Safe useEffect that won't break during Vercel SSR build
+  useEffect(() => {
+    // Ensure client-side only
+    if (typeof window === "undefined") return;
 
-  // Supabase password reset links use hash params, not query params
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  const accessToken = params.get("access_token");
-  const type = params.get("type");
-
-  // If this is a password recovery link, set the session
-  if (type === "recovery" && accessToken) {
-    (async () => {
+    const handleResetSession = async () => {
       try {
-        await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: accessToken,
-        });
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get("access_token");
+        const type = params.get("type");
+
+        if (type === "recovery" && accessToken) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: accessToken,
+          });
+        } else {
+          toast({
+            title: "Invalid or expired link",
+            description: "Please request a new password reset link.",
+            variant: "destructive",
+          });
+          // Delay navigate so it only happens after hydration
+          setTimeout(() => navigate("/login", { replace: true }), 200);
+        }
       } catch (err) {
-        console.error("Error setting session:", err);
+        console.error("Error during session setup:", err);
+        toast({
+          title: "Error",
+          description: "Failed to verify reset link.",
+          variant: "destructive",
+        });
       }
-    })();
-  } else {
-    toast({
-      title: "Invalid link",
-      description: "The reset link is missing or invalid.",
-      variant: "destructive",
-    });
-    navigate("/login", { replace: true });
-  }
-}, []);
+    };
 
+    // Delay execution until client is ready
+    setTimeout(handleResetSession, 0);
+  }, [navigate, toast]);
 
+  // ✅ Password update handler
   const handleUpdatePassword = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
       toast({
         title: "Error",
-        description: "All fields are required",
+        description: "All fields are required.",
         variant: "destructive",
       });
       return;
@@ -75,30 +80,26 @@ const NewPassword = () => {
     if (password !== confirmPassword) {
       toast({
         title: "Error",
-        description: "Passwords do not match",
+        description: "Passwords do not match.",
         variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
-
     try {
-      // Safe password update for logged-out user via reset token
       const { error } = await supabase.auth.updateUser({ password });
-
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Password updated successfully!",
+        description: "Your password has been updated successfully!",
       });
-
       navigate("/login", { replace: true });
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message || "Failed to update password",
+        description: err.message || "Failed to update password.",
         variant: "destructive",
       });
     } finally {
@@ -113,15 +114,17 @@ const NewPassword = () => {
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
       >
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800">New Password</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-800">
+            Reset Password
+          </CardTitle>
           <CardDescription className="text-gray-600 mt-1">
-            Enter your new password below to complete the reset process.
+            Enter and confirm your new password below.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-5 mt-4">
           <form onSubmit={handleUpdatePassword} className="space-y-4">
-            {/* Password Field */}
+            {/* Password */}
             <div className="relative">
               <Label htmlFor="password">New Password</Label>
               <Input
@@ -140,7 +143,7 @@ const NewPassword = () => {
               </span>
             </div>
 
-            {/* Confirm Password Field */}
+            {/* Confirm Password */}
             <div className="relative">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -164,7 +167,11 @@ const NewPassword = () => {
               className="w-full bg-[#001F7A] text-white"
               disabled={loading}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Reset Password"
+              )}
             </Button>
           </form>
         </CardContent>
