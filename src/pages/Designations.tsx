@@ -72,6 +72,7 @@ const Designations = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const departmentFilter = params.get("department");
+ const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   if (!user) return <Navigate to="/login" replace />;
 
