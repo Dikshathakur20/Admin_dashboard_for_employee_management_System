@@ -148,37 +148,81 @@ const Departments = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      const { count, error: countError } = await supabase
-        .from("tblemployees")
-        .select("employee_id", { count: "exact", head: true })
-        .eq("department_id", id);
+ const handleDelete = async (id: number) => {
+  try {
+    const { count, error: countError } = await supabase
+      .from("tblemployees")
+      .select("employee_id", { count: "exact", head: true })
+      .eq("department_id", id);
 
-      if (countError) throw countError;
+    if (countError) throw countError;
 
-      if (count && count > 0) {
-        toast({
-          title: "Cannot delete",
-          description: `This department has ${count} active employee(s). Reassign them first.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!confirm("Are you sure you want to delete this department?")) return;
-
-      const { error } = await supabase
-        .from("tbldepartments")
-        .delete()
-        .eq("department_id", id);
-
-      if (error) throw error;
-
+    if (count && count > 0) {
       toast({
-        title: "Deleted",
-        description: "Department removed successfully",
+        title: "Cannot delete",
+        description: `This department has ${count} active employee(s). Reassign them first.`,
+        variant: "destructive",
       });
+      return;
+    }
+
+    // ✅ Replace confirm() with toast confirmation
+    toast({
+      title: "Are you sure?",
+      description: (
+        <div className="flex justify-end gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-blue-600 text-white hover:bg-blue-700"
+            onClick={async () => {
+              try {
+                const { error } = await supabase
+                  .from("tbldepartments")
+                  .delete()
+                  .eq("department_id", id);
+
+                if (error) throw error;
+
+                toast({
+                  title: "Deleted",
+                  description: "Department removed successfully",
+                });
+
+                // Optionally refresh data if needed
+                fetchData?.();
+              } catch (error) {
+                console.error(error);
+                toast({
+                  title: "Deletion Failed",
+                  description: "Unable to remove department",
+                  variant: "destructive",
+                });
+              }
+            }}
+          >
+            Confirm
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-gray-300 text-black hover:bg-gray-400"
+          >
+            Cancel
+          </Button>
+        </div>
+      ),
+    });
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Error",
+      description: "Unable to verify department employees",
+      variant: "destructive",
+    });
+  }
+};
+
 
       // Reset and refetch from start
       setDepartments([]);
