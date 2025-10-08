@@ -394,7 +394,7 @@ const Employees = () => {
                     </div>
                   )}
                 </div>
-                <div>
+                <div className="mt-4">
                 <Button
                   size="sm"
                   variant="outline"
