@@ -16,6 +16,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 interface Designation {
   designation_id: number;
@@ -105,6 +116,7 @@ const Designations = () => {
 
 const handleDelete = async (designationId: number) => {
   try {
+    // Check if any employees are linked to this designation
     const { count, error: countError } = await supabase
       .from("tblemployees")
       .select("employee_id", { count: "exact", head: true })
@@ -112,6 +124,7 @@ const handleDelete = async (designationId: number) => {
 
     if (countError) throw countError;
 
+    // Prevent deletion if employees exist
     if (count && count > 0) {
       toast({
         title: "Cannot delete",
@@ -121,59 +134,44 @@ const handleDelete = async (designationId: number) => {
       return;
     }
 
-    // ✅ Toast-based confirmation instead of confirm()
-    toast({
-      title: "Are you sure?",
-      description: (
-        <div className="flex justify-end gap-2 mt-3">
-          <Button
-            size="sm"
-            variant="outline"
-            className="bg-red-600 text-white hover:bg-red-700"
-            onClick={async () => {
-              try {
-                const { error } = await supabase
-                  .from("tbldesignations")
-                  .delete()
-                  .eq("designation_id", designationId);
-
-                if (error) throw error;
-
-                toast({
-                  title: "Deleted",
-                  description: "Designation removed successfully",
-                });
-
-                fetchDesignations(); // refresh list
-              } catch (error) {
-                console.error(error);
-                toast({
-                  title: "Deletion Failed",
-                  description: "Unable to remove designation",
-                  variant: "destructive",
-                });
-              }
-            }}
-          >
-            Confirm
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="bg-gray-300 text-black hover:bg-gray-400"
-          >
-            Cancel
-          </Button>
-        </div>
-      ),
-    });
+    // Open confirmation dialog
+    setConfirmDelete(designationId);
   } catch (err) {
     console.error(err);
     toast({
       title: "Error",
-      description: "Something went wrong while deleting designation.",
+      description: "Something went wrong while checking designation dependencies.",
       variant: "destructive",
     });
+  }
+};
+
+// This function actually deletes after confirmation
+const confirmDeleteAction = async () => {
+  if (!confirmDelete) return;
+  try {
+    const { error } = await supabase
+      .from("tbldesignations")
+      .delete()
+      .eq("designation_id", confirmDelete);
+
+    if (error) throw error;
+
+    toast({
+      title: "Deleted",
+      description: "Designation removed successfully",
+    });
+
+    fetchDesignations(); // Refresh the list
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Deletion Failed",
+      description: "Unable to remove designation.",
+      variant: "destructive",
+    });
+  } finally {
+    setConfirmDelete(null);
   }
 };
 
@@ -385,6 +383,25 @@ const handleDelete = async (designationId: number) => {
         onSuccess={fetchDesignations}
         departments={departments}
       />
+      <AlertDialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+      <AlertDialogDescription>
+        Are you sure you want to remove this designation? This action cannot be undone.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction
+        className="bg-red-600 text-white hover:bg-red-700"
+        onClick={confirmDeleteAction}
+      >
+        Delete
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
     </div>
   );
 };
