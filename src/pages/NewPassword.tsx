@@ -39,7 +39,7 @@ const NewPassword = () => {
     }
   }, []);
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
