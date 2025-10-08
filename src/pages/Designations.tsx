@@ -77,8 +77,9 @@ const Designations = () => {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Fetch data
+  // Fetch designations
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     fetchDesignations();
   }, []);
 
@@ -86,9 +87,9 @@ const Designations = () => {
     setLoading(true);
     try {
       const [designationsResult, departmentsResult, employeesResult] = await Promise.all([
-        supabase.from<Designation>('tbldesignations').select('*'),
-        supabase.from<Department>('tbldepartments').select('*').order('department_name'),
-        supabase.from<Employee>('tblemployees').select('employee_id, designation_id')
+        supabase.from('tbldesignations').select('*'),
+        supabase.from('tbldepartments').select('*').order('department_name'),
+        supabase.from('tblemployees').select('employee_id, designation_id')
       ]);
 
       if (designationsResult.error) throw designationsResult.error;
@@ -105,22 +106,24 @@ const Designations = () => {
       }));
 
       setDesignations(designationsWithCount);
-    } catch {
-      toast({
-        title: "Data Loading Issue",
-        description: "Unable to fetch designation information",
-        variant: "default"
-      });
+    } catch (err) {
+      if (typeof window !== 'undefined') {
+        toast({
+          title: "Data Loading Issue",
+          description: "Unable to fetch designation information",
+          variant: "default"
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (designationId: number) => {
+    if (typeof window === 'undefined') return;
     try {
-      // Check employees
       const { count, error: countError } = await supabase
-        .from<Employee>("tblemployees")
+        .from("tblemployees")
         .select("employee_id", { count: "exact", head: true })
         .eq("designation_id", designationId);
 
@@ -137,17 +140,20 @@ const Designations = () => {
 
       setConfirmDelete(designationId);
     } catch (err) {
-      console.error(err);
-      toast({
-        title: "Error",
-        description: "Something went wrong while checking designation dependencies.",
-        variant: "destructive",
-      });
+      if (typeof window !== 'undefined') {
+        toast({
+          title: "Error",
+          description: "Something went wrong while checking designation dependencies.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const confirmDeleteAction = async () => {
     if (!confirmDelete) return;
+    if (typeof window === 'undefined') return;
+
     try {
       const { error } = await supabase
         .from("tbldesignations")
@@ -162,8 +168,7 @@ const Designations = () => {
       });
 
       fetchDesignations();
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast({
         title: "Deletion Failed",
         description: "Unable to remove designation.",
@@ -180,34 +185,47 @@ const Designations = () => {
     return dept?.department_name || 'Unknown';
   };
 
-  // Filter & sort
+  // Filtering & sorting
   const filteredDesignations = designations
-    .filter(des => des.designation_title.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter(des => departmentFilter ? des.department_id === Number(departmentFilter) : true);
+    .filter(designation =>
+      designation.designation_title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(designation =>
+      departmentFilter ? designation.department_id === Number(departmentFilter) : true
+    );
 
   const sortedDesignations = [...filteredDesignations].sort((a, b) => {
     switch (sortOption) {
-      case 'name-asc': return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
-      case 'name-desc': return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
-      case 'id-asc': return a.designation_id - b.designation_id;
-      case 'id-desc': return b.designation_id - a.designation_id;
-      default: return 0;
+      case 'name-asc':
+        return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
+      case 'name-desc':
+        return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
+      case 'id-asc':
+        return a.designation_id - b.designation_id;
+      case 'id-desc':
+        return b.designation_id - a.designation_id;
+      default:
+        return 0;
     }
   });
 
   // Infinite scroll observer
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount(prev => Math.min(prev + 10, sortedDesignations.length));
+          setVisibleCount((prev) => Math.min(prev + 10, sortedDesignations.length));
         }
       },
       { threshold: 1 }
     );
 
     if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => { if (loaderRef.current) observer.unobserve(loaderRef.current); };
+
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
   }, [sortedDesignations.length]);
 
   const visibleDesignations = sortedDesignations.slice(0, visibleCount);
@@ -218,7 +236,6 @@ const Designations = () => {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
         <Card className="w-full border-0 shadow-none bg-transparent">
-          {/* Header */}
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <CardTitle className="text-2xl font-bold">
@@ -233,7 +250,10 @@ const Designations = () => {
                   <Input
                     placeholder="Search designation"
                     value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(10); }}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setVisibleCount(10);
+                    }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
@@ -278,7 +298,6 @@ const Designations = () => {
               </div>
             )}
 
-            {/* Table */}
             <div className="border rounded-lg overflow-hidden">
               <Table className="table-auto">
                 <TableHeader>
@@ -289,9 +308,8 @@ const Designations = () => {
                     <TableHead className="font-bold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
-                  {visibleDesignations.map(designation => (
+                  {visibleDesignations.map((designation) => (
                     <TableRow key={designation.designation_id}>
                       <TableCell className="font-medium">{designation.designation_title}</TableCell>
                       <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
@@ -342,7 +360,6 @@ const Designations = () => {
               </div>
             )}
 
-            {/* Infinite Scroll Loader */}
             {visibleCount < sortedDesignations.length && (
               <div ref={loaderRef} className="text-center py-4 text-gray-600 text-sm">
                 Loading more...
@@ -367,8 +384,7 @@ const Designations = () => {
         departments={departments}
       />
 
-      {/* Alert Dialog */}
-      <AlertDialog open={confirmDelete !== null} onOpenChange={() => setConfirmDelete(null)}>
+      <AlertDialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
