@@ -27,19 +27,38 @@ const NewPassword = () => {
   const { toast } = useToast();
 
   // Ensure Supabase session from the reset link
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get("access_token");
+ useEffect(() => {
+  // Prevent crash during SSR (Vercel build)
+  if (typeof window === "undefined") return;
 
-    if (!accessToken) {
-      toast({
-        title: "Invalid link",
-        description: "The reset link is missing or invalid.",
-        variant: "destructive",
-      });
-      navigate("/login", { replace: true });
-    }
-  }, []);
+  // Supabase password reset links use hash params, not query params
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get("access_token");
+  const type = params.get("type");
+
+  // If this is a password recovery link, set the session
+  if (type === "recovery" && accessToken) {
+    (async () => {
+      try {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: accessToken,
+        });
+      } catch (err) {
+        console.error("Error setting session:", err);
+      }
+    })();
+  } else {
+    toast({
+      title: "Invalid link",
+      description: "The reset link is missing or invalid.",
+      variant: "destructive",
+    });
+    navigate("/login", { replace: true });
+  }
+}, []);
+
 
   const handleUpdatePassword = async (e: FormEvent) => {
     e.preventDefault();
