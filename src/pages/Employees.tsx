@@ -124,13 +124,14 @@ const Employees = () => {
 
   const handleDelete = async (employeeId: number) => {
   toast({
-    title: "Are you sure?",
+    title: "Are you sure you want to remove this employee?",
     description: (
       <div className="flex justify-end gap-2 mt-2">
         <Button
           size="sm"
           variant="outline"
-          className="bg-red-600 text-white hover:bg-red-700"
+          className="bg-blue-600 text-white hover:bg-blue-700 text-white"
+          
           onClick={async () => {
             try {
               const { error } = await supabase
@@ -152,6 +153,7 @@ const Employees = () => {
           size="sm"
           variant="outline"
           className="bg-gray-300 text-black hover:bg-gray-400"
+          
         >
           Cancel
         </Button>
