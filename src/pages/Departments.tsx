@@ -444,7 +444,19 @@ const Departments = () => {
               ) : (
                 <p>No designations found.</p>
               )}
-            </div>
+            
+           <div className="flex justify-end pt-4">
+          <Button
+            className="bg-blue-900 text-white hover:bg-blue-700"
+            onClick={() => {
+              setEditingDepartment(viewingDepartment);
+              setViewingDepartment(null); // close view dialog
+            }}
+          >
+            <Edit className="h-4 w-4 mr-2" /> Edit Department
+          </Button>
+        </div>
+      </div>
           )}
         </DialogContent>
       </Dialog>
