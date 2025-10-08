@@ -27,7 +27,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-
 interface Designation {
   designation_id: number;
   designation_title: string;
@@ -62,6 +61,7 @@ const Designations = () => {
   const [loading, setLoading] = useState(true);
   const [editingDesignation, setEditingDesignation] = useState<Designation | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null); // ✅ added
   const { toast } = useToast();
   const [sortOption, setSortOption] = useState<SortOption>('id-desc');
 
@@ -72,7 +72,6 @@ const Designations = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const departmentFilter = params.get("department");
- const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -115,67 +114,66 @@ const Designations = () => {
     }
   };
 
-const handleDelete = async (designationId: number) => {
-  try {
-    // Check if any employees are linked to this designation
-    const { count, error: countError } = await supabase
-      .from("tblemployees")
-      .select("employee_id", { count: "exact", head: true })
-      .eq("designation_id", designationId);
+  const handleDelete = async (designationId: number) => {
+    try {
+      // Check if any employees are linked to this designation
+      const { count, error: countError } = await supabase
+        .from("tblemployees")
+        .select("employee_id", { count: "exact", head: true })
+        .eq("designation_id", designationId);
 
-    if (countError) throw countError;
+      if (countError) throw countError;
 
-    // Prevent deletion if employees exist
-    if (count && count > 0) {
+      // Prevent deletion if employees exist
+      if (count && count > 0) {
+        toast({
+          title: "Cannot delete",
+          description: `This designation has ${count} active employee(s). Reassign them first.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Open confirmation dialog
+      setConfirmDelete(designationId);
+    } catch (err) {
+      console.error(err);
       toast({
-        title: "Cannot delete",
-        description: `This designation has ${count} active employee(s). Reassign them first.`,
+        title: "Error",
+        description: "Something went wrong while checking designation dependencies.",
         variant: "destructive",
       });
-      return;
     }
+  };
 
-    // Open confirmation dialog
-    setConfirmDelete(designationId);
-  } catch (err) {
-    console.error(err);
-    toast({
-      title: "Error",
-      description: "Something went wrong while checking designation dependencies.",
-      variant: "destructive",
-    });
-  }
-};
+  // This function actually deletes after confirmation
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+    try {
+      const { error } = await supabase
+        .from("tbldesignations")
+        .delete()
+        .eq("designation_id", confirmDelete);
 
-// This function actually deletes after confirmation
-const confirmDeleteAction = async () => {
-  if (!confirmDelete) return;
-  try {
-    const { error } = await supabase
-      .from("tbldesignations")
-      .delete()
-      .eq("designation_id", confirmDelete);
+      if (error) throw error;
 
-    if (error) throw error;
+      toast({
+        title: "Deleted",
+        description: "Designation removed successfully",
+      });
 
-    toast({
-      title: "Deleted",
-      description: "Designation removed successfully",
-    });
-
-    fetchDesignations(); // Refresh the list
-  } catch (error) {
-    console.error(error);
-    toast({
-      title: "Deletion Failed",
-      description: "Unable to remove designation.",
-      variant: "destructive",
-    });
-  } finally {
-    setConfirmDelete(null);
-  }
-};
-
+      fetchDesignations(); // Refresh the list
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Deletion Failed",
+        description: "Unable to remove designation.",
+        variant: "destructive",
+      });
+    } finally {
+      setConfirmDelete(null);
+    }
+  };
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return 'Not Assigned';
@@ -384,25 +382,27 @@ const confirmDeleteAction = async () => {
         onSuccess={fetchDesignations}
         departments={departments}
       />
+
+      {/* Alert Dialog for delete confirmation */}
       <AlertDialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-      <AlertDialogDescription>
-        Are you sure you want to remove this designation? This action cannot be undone.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel>Cancel</AlertDialogCancel>
-      <AlertDialogAction
-        className="bg-red-600 text-white hover:bg-red-700"
-        onClick={confirmDeleteAction}
-      >
-        Delete
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this designation? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={confirmDeleteAction}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
