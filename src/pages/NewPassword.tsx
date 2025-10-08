@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,43 +18,22 @@ const NewPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // 🟢 Get current admin’s email from Supabase session
-  useEffect(() => {
-    const fetchSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user?.email) {
-        setAdminEmail(session.user.email);
-      } else {
-        toast({
-          title: "Not Authorized",
-          description: "No valid admin session found.",
-          variant: "destructive",
-        });
-        navigate("/login", { replace: true });
-      }
-    };
-
-    fetchSession();
-  }, [navigate, toast]);
-
-  // 🟢 Handle password update
+  // ----------------------
+  // Update password directly in tbladmins
+  // ----------------------
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
       toast({
         title: "Error",
-        description: "All fields are required.",
+        description: "All fields are required",
         variant: "destructive",
       });
       return;
@@ -63,16 +42,7 @@ const NewPassword = () => {
     if (password !== confirmPassword) {
       toast({
         title: "Error",
-        description: "Passwords do not match.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!adminEmail) {
-      toast({
-        title: "Error",
-        description: "Admin email not found. Please log in again.",
+        description: "Passwords do not match",
         variant: "destructive",
       });
       return;
@@ -81,11 +51,11 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // Update password in tbladmins for this specific admin
-      const { error } = await supabase
+      // Directly update the password in the table
+      const { data, error } = await supabase
         .from("tbladmins")
         .update({ password })
-        .eq("email", adminEmail); // match by email instead of ID
+        .eq("id", 1); // <-- Replace '1' with your admin's ID if needed
 
       if (error) throw error;
 
@@ -98,7 +68,7 @@ const NewPassword = () => {
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message || "Failed to update password.",
+        description: err.message || "Failed to update password",
         variant: "destructive",
       });
     } finally {
@@ -108,6 +78,8 @@ const NewPassword = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+      <h1 className="text-blue-700 text-3xl font-bold mb-8"></h1>
+
       <Card
         className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
@@ -121,6 +93,7 @@ const NewPassword = () => {
 
         <CardContent className="space-y-5 mt-4">
           <form onSubmit={handleUpdatePassword} className="space-y-4">
+            {/* Password Field with Eye Toggle */}
             <div className="relative">
               <Label htmlFor="password">New Password</Label>
               <Input
@@ -139,6 +112,7 @@ const NewPassword = () => {
               </span>
             </div>
 
+            {/* Confirm Password Field with Eye Toggle */}
             <div className="relative">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
