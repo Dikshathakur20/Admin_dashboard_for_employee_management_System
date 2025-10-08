@@ -101,7 +101,6 @@ const Designations = () => {
       setLoading(false);
     }
   };
-
   // ORIGINAL handleDelete
   const handleDelete = async (designationId: number) => {
     if (!confirm('Are you sure you want to remove this designation?')) return;
