@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,54 +18,37 @@ const NewPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // ✅ Safe useEffect that won't break during Vercel SSR build
+  // 🟢 Get current admin’s email from Supabase session
   useEffect(() => {
-    // Ensure client-side only
-    if (typeof window === "undefined") return;
+    const fetchSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    const handleResetSession = async () => {
-      try {
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get("access_token");
-        const type = params.get("type");
-
-        if (type === "recovery" && accessToken) {
-          await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: accessToken,
-          });
-        } else {
-          toast({
-            title: "Invalid or expired link",
-            description: "Please request a new password reset link.",
-            variant: "destructive",
-          });
-          // Delay navigate so it only happens after hydration
-          setTimeout(() => navigate("/login", { replace: true }), 200);
-        }
-      } catch (err) {
-        console.error("Error during session setup:", err);
+      if (session?.user?.email) {
+        setAdminEmail(session.user.email);
+      } else {
         toast({
-          title: "Error",
-          description: "Failed to verify reset link.",
+          title: "Not Authorized",
+          description: "No valid admin session found.",
           variant: "destructive",
         });
+        navigate("/login", { replace: true });
       }
     };
 
-    // Delay execution until client is ready
-    setTimeout(handleResetSession, 0);
+    fetchSession();
   }, [navigate, toast]);
 
-  // ✅ Password update handler
-  const handleUpdatePassword = async (e: FormEvent) => {
+  // 🟢 Handle password update
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
@@ -86,15 +69,31 @@ const NewPassword = () => {
       return;
     }
 
+    if (!adminEmail) {
+      toast({
+        title: "Error",
+        description: "Admin email not found. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      // Update password in tbladmins for this specific admin
+      const { error } = await supabase
+        .from("tbladmins")
+        .update({ password })
+        .eq("email", adminEmail); // match by email instead of ID
+
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Your password has been updated successfully!",
+        description: "Password updated successfully!",
       });
+
       navigate("/login", { replace: true });
     } catch (err: any) {
       toast({
@@ -114,17 +113,14 @@ const NewPassword = () => {
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
       >
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800">
-            Reset Password
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-800">New Password</CardTitle>
           <CardDescription className="text-gray-600 mt-1">
-            Enter and confirm your new password below.
+            Enter your new password below to complete the reset process.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-5 mt-4">
           <form onSubmit={handleUpdatePassword} className="space-y-4">
-            {/* Password */}
             <div className="relative">
               <Label htmlFor="password">New Password</Label>
               <Input
@@ -143,7 +139,6 @@ const NewPassword = () => {
               </span>
             </div>
 
-            {/* Confirm Password */}
             <div className="relative">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -167,11 +162,7 @@ const NewPassword = () => {
               className="w-full bg-[#001F7A] text-white"
               disabled={loading}
             >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Reset Password"
-              )}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
             </Button>
           </form>
         </CardContent>
