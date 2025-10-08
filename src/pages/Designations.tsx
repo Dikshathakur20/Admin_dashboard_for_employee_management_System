@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useLogin } from '@/contexts/LoginContext';
@@ -61,11 +63,11 @@ const Designations = () => {
   const [loading, setLoading] = useState(true);
   const [editingDesignation, setEditingDesignation] = useState<Designation | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null); // ✅ added
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const { toast } = useToast();
   const [sortOption, setSortOption] = useState<SortOption>('id-desc');
 
-  // Infinite scroll states
+  // Infinite scroll
   const [visibleCount, setVisibleCount] = useState(10);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,7 +77,7 @@ const Designations = () => {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Fetch data on mount
+  // Fetch data
   useEffect(() => {
     fetchDesignations();
   }, []);
@@ -84,9 +86,9 @@ const Designations = () => {
     setLoading(true);
     try {
       const [designationsResult, departmentsResult, employeesResult] = await Promise.all([
-        supabase.from('tbldesignations').select('*'),
-        supabase.from('tbldepartments').select('*').order('department_name'),
-        supabase.from('tblemployees').select('employee_id, designation_id')
+        supabase.from<Designation>('tbldesignations').select('*'),
+        supabase.from<Department>('tbldepartments').select('*').order('department_name'),
+        supabase.from<Employee>('tblemployees').select('employee_id, designation_id')
       ]);
 
       if (designationsResult.error) throw designationsResult.error;
@@ -116,15 +118,14 @@ const Designations = () => {
 
   const handleDelete = async (designationId: number) => {
     try {
-      // Check if any employees are linked to this designation
+      // Check employees
       const { count, error: countError } = await supabase
-        .from("tblemployees")
+        .from<Employee>("tblemployees")
         .select("employee_id", { count: "exact", head: true })
         .eq("designation_id", designationId);
 
       if (countError) throw countError;
 
-      // Prevent deletion if employees exist
       if (count && count > 0) {
         toast({
           title: "Cannot delete",
@@ -134,7 +135,6 @@ const Designations = () => {
         return;
       }
 
-      // Open confirmation dialog
       setConfirmDelete(designationId);
     } catch (err) {
       console.error(err);
@@ -146,7 +146,6 @@ const Designations = () => {
     }
   };
 
-  // This function actually deletes after confirmation
   const confirmDeleteAction = async () => {
     if (!confirmDelete) return;
     try {
@@ -162,7 +161,7 @@ const Designations = () => {
         description: "Designation removed successfully",
       });
 
-      fetchDesignations(); // Refresh the list
+      fetchDesignations();
     } catch (error) {
       console.error(error);
       toast({
@@ -181,27 +180,18 @@ const Designations = () => {
     return dept?.department_name || 'Unknown';
   };
 
-  // Filtering & sorting
+  // Filter & sort
   const filteredDesignations = designations
-    .filter(designation =>
-      designation.designation_title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(designation =>
-      departmentFilter ? designation.department_id === Number(departmentFilter) : true
-    );
+    .filter(des => des.designation_title.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(des => departmentFilter ? des.department_id === Number(departmentFilter) : true);
 
   const sortedDesignations = [...filteredDesignations].sort((a, b) => {
     switch (sortOption) {
-      case 'name-asc':
-        return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
-      case 'name-desc':
-        return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
-      case 'id-asc':
-        return a.designation_id - b.designation_id;
-      case 'id-desc':
-        return b.designation_id - a.designation_id;
-      default:
-        return 0;
+      case 'name-asc': return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
+      case 'name-desc': return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
+      case 'id-asc': return a.designation_id - b.designation_id;
+      case 'id-desc': return b.designation_id - a.designation_id;
+      default: return 0;
     }
   });
 
@@ -210,17 +200,14 @@ const Designations = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 10, sortedDesignations.length));
+          setVisibleCount(prev => Math.min(prev + 10, sortedDesignations.length));
         }
       },
       { threshold: 1 }
     );
 
     if (loaderRef.current) observer.observe(loaderRef.current);
-
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
+    return () => { if (loaderRef.current) observer.unobserve(loaderRef.current); };
   }, [sortedDesignations.length]);
 
   const visibleDesignations = sortedDesignations.slice(0, visibleCount);
@@ -246,10 +233,7 @@ const Designations = () => {
                   <Input
                     placeholder="Search designation"
                     value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setVisibleCount(10);
-                    }}
+                    onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(10); }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
@@ -307,7 +291,7 @@ const Designations = () => {
                 </TableHeader>
 
                 <TableBody>
-                  {visibleDesignations.map((designation) => (
+                  {visibleDesignations.map(designation => (
                     <TableRow key={designation.designation_id}>
                       <TableCell className="font-medium">{designation.designation_title}</TableCell>
                       <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
@@ -383,8 +367,8 @@ const Designations = () => {
         departments={departments}
       />
 
-      {/* Alert Dialog for delete confirmation */}
-      <AlertDialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+      {/* Alert Dialog */}
+      <AlertDialog open={confirmDelete !== null} onOpenChange={() => setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
