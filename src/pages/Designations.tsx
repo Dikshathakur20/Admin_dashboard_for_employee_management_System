@@ -106,7 +106,8 @@ const Designations = () => {
       }));
 
       setDesignations(designationsWithCount);
-    } catch (err) {
+    } ;
+    catch (err) {
       if (typeof window !== 'undefined') {
         toast({
           title: "Data Loading Issue",
@@ -139,7 +140,8 @@ const Designations = () => {
       }
 
       setConfirmDelete(designationId);
-    } catch (err) {
+    };
+    catch (err) {
       if (typeof window !== 'undefined') {
         toast({
           title: "Error",
@@ -168,7 +170,8 @@ const Designations = () => {
       });
 
       fetchDesignations();
-    } catch (err) {
+    }; 
+    catch (err) {
       toast({
         title: "Deletion Failed",
         description: "Unable to remove designation.",
