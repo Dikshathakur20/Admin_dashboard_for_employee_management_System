@@ -55,7 +55,7 @@ const NewPassword = () => {
       const { data, error } = await supabase
         .from("tbladmins")
         .update({ password })
-        .eq("id", 1); // <-- Replace '1' with your admin's ID if needed
+        .eq("id", Number(userId)); // <-- Replace '1' with your admin's ID if needed
 
       if (error) throw error;
 
