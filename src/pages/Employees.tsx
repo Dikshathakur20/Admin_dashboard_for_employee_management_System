@@ -123,17 +123,43 @@ const Employees = () => {
   };
 
   const handleDelete = async (employeeId: number) => {
-    if (!confirm("Are you sure you want to remove this employee?")) return;
-    try {
-      const { error } = await supabase.from("tblemployees").delete().eq("employee_id", employeeId);
-      if (error) throw error;
-      toast({ title: "Success", description: "Employee removed successfully" });
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Removal Issue", description: "Unable to remove employee" });
-    }
-  };
+  toast({
+    title: "Are you sure?",
+    description: (
+      <div className="flex justify-end gap-2 mt-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="bg-red-600 text-white hover:bg-red-700"
+          onClick={async () => {
+            try {
+              const { error } = await supabase
+                .from("tblemployees")
+                .delete()
+                .eq("employee_id", employeeId);
+              if (error) throw error;
+              toast({ title: "Success", description: "Employee removed successfully" });
+              fetchData();
+            } catch (error) {
+              console.error(error);
+              toast({ title: "Removal Issue", description: "Unable to remove employee" });
+            }
+          }}
+        >
+          Confirm
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="bg-gray-300 text-black hover:bg-gray-400"
+        >
+          Cancel
+        </Button>
+      </div>
+    ),
+  });
+};
+
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return "Not Assigned";
