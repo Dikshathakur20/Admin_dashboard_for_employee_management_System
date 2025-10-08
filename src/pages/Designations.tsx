@@ -103,48 +103,80 @@ const Designations = () => {
     }
   };
 
-  const handleDelete = async (designationId: number) => {
-    try {
-      const { count, error: countError } = await supabase
-        .from("tblemployees")
-        .select("employee_id", { count: "exact", head: true })
-        .eq("designation_id", designationId);
+const handleDelete = async (designationId: number) => {
+  try {
+    const { count, error: countError } = await supabase
+      .from("tblemployees")
+      .select("employee_id", { count: "exact", head: true })
+      .eq("designation_id", designationId);
 
-      if (countError) throw countError;
+    if (countError) throw countError;
 
-      if (count && count > 0) {
-        toast({
-          title: "Cannot delete",
-          description: `This designation has ${count} active employee(s). Reassign them first.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!confirm("Are you sure you want to remove this designation?")) return;
-
-      const { error } = await supabase
-        .from("tbldesignations")
-        .delete()
-        .eq("designation_id", designationId);
-
-      if (error) throw error;
-
+    if (count && count > 0) {
       toast({
-        title: "Success",
-        description: "Designation removed successfully",
-      });
-
-      fetchDesignations();
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Error",
-        description: "Something went wrong while deleting designation.",
+        title: "Cannot delete",
+        description: `This designation has ${count} active employee(s). Reassign them first.`,
         variant: "destructive",
       });
+      return;
     }
-  };
+
+    // ✅ Toast-based confirmation instead of confirm()
+    toast({
+      title: "Are you sure?",
+      description: (
+        <div className="flex justify-end gap-2 mt-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-red-600 text-white hover:bg-red-700"
+            onClick={async () => {
+              try {
+                const { error } = await supabase
+                  .from("tbldesignations")
+                  .delete()
+                  .eq("designation_id", designationId);
+
+                if (error) throw error;
+
+                toast({
+                  title: "Deleted",
+                  description: "Designation removed successfully",
+                });
+
+                fetchDesignations(); // refresh list
+              } catch (error) {
+                console.error(error);
+                toast({
+                  title: "Deletion Failed",
+                  description: "Unable to remove designation",
+                  variant: "destructive",
+                });
+              }
+            }}
+          >
+            Confirm
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-gray-300 text-black hover:bg-gray-400"
+          >
+            Cancel
+          </Button>
+        </div>
+      ),
+    });
+  } catch (err) {
+    console.error(err);
+    toast({
+      title: "Error",
+      description: "Something went wrong while deleting designation.",
+      variant: "destructive",
+    });
+  }
+};
+
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return 'Not Assigned';
