@@ -16,16 +16,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface Designation {
   designation_id: number;
@@ -109,36 +99,20 @@ const Designations = () => {
   };
 
   // ORIGINAL handleDelete
-  const handleDelete = (designationId: number) => {
-    setConfirmDelete(designationId);
-  };
-
-  const confirmDeleteAction = async () => {
-    if (!confirmDelete) return;
+   const handleDelete = async (designationId: number) => {
+    if (!confirm('Are you sure you want to remove this designation?')) return;
     try {
       const { error } = await supabase
-        .from("tbldesignations")
+        .from('tbldesignations')
         .delete()
-        .eq("designation_id", confirmDelete);
+        .eq('designation_id', designationId);
 
       if (error) throw error;
 
-      toast({
-        title: "Deleted",
-        description: "Designation removed successfully",
-      });
-
+      toast({ title: "Success", description: "Designation removed successfully" });
       fetchDesignations();
-    } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
-      console.error(error);
-      toast({
-        title: "Deletion Failed",
-        description: error.message || "Unable to remove designation.",
-        variant: "destructive",
-      });
-    } finally {
-      setConfirmDelete(null);
+    } catch {
+      toast({ title: "Removal Issue", description: "Unable to remove designation", variant: "default" });
     }
   };
 
@@ -301,22 +275,7 @@ const Designations = () => {
         departments={departments}
       />
 
-      <AlertDialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove this designation? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 text-white hover:bg-red-700" onClick={confirmDeleteAction}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      
     </div>
   );
 };
