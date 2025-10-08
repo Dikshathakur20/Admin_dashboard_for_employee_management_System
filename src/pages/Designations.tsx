@@ -31,14 +31,7 @@ interface Department {
 
 interface Employee {
   employee_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  hire_date: string;
-  salary: number | null;
-  department_id: number | null;
   designation_id: number | null;
-  file_data?: string | null;
 }
 
 type SortOption = 'name-asc' | 'name-desc' | 'id-asc' | 'id-desc';
@@ -61,47 +54,47 @@ const Designations = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const departmentFilter = params.get("department");
+  const departmentId = departmentFilter ? Number(departmentFilter) : null;
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Fetch data on mount
-  useEffect(() => {
-    fetchDesignations();
-  }, []);
-
+  // Fetch data
   const fetchDesignations = async () => {
     setLoading(true);
     try {
-      const [designationsResult, departmentsResult, employeesResult] = await Promise.all([
-        supabase.from('tbldesignations').select('*'),
-        supabase.from('tbldepartments').select('*').order('department_name'),
-        supabase.from('tblemployees').select('employee_id, designation_id')
+      const [desRes, deptRes, empRes] = await Promise.all([
+        supabase.from<Designation>('tbldesignations').select('*'),
+        supabase.from<Department>('tbldepartments').select('*').order('department_name'),
+        supabase.from<Employee>('tblemployees').select('employee_id, designation_id')
       ]);
 
-      if (designationsResult.error) throw designationsResult.error;
-      if (departmentsResult.error) throw departmentsResult.error;
-      if (employeesResult.error) throw employeesResult.error;
+      if (desRes.error) throw desRes.error;
+      if (deptRes.error) throw deptRes.error;
+      if (empRes.error) throw empRes.error;
 
-      setDepartments(departmentsResult.data || []);
+      setDepartments(deptRes.data || []);
 
-      const designationsWithCount = (designationsResult.data || []).map(des => ({
+      const desWithCount: Designation[] = (desRes.data || []).map(des => ({
         ...des,
-        total_employees: employeesResult.data?.filter(
-          (e: Employee) => e.designation_id === des.designation_id
-        ).length || 0
+        total_employees: empRes.data?.filter(e => e.designation_id === des.designation_id).length || 0
       }));
 
-      setDesignations(designationsWithCount);
-    } catch {
+      setDesignations(desWithCount);
+    } catch (err) {
+      console.error(err);
       toast({
         title: "Data Loading Issue",
         description: "Unable to fetch designation information",
-        variant: "default"
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDesignations();
+  }, []);
 
   const handleDelete = async (designationId: number) => {
     try {
@@ -121,7 +114,7 @@ const Designations = () => {
         return;
       }
 
-      if (!confirm("Are you sure you want to remove this designation?")) return;
+      if (!window.confirm("Are you sure you want to remove this designation?")) return;
 
       const { error } = await supabase
         .from("tbldesignations")
@@ -146,51 +139,44 @@ const Designations = () => {
     }
   };
 
-  const getDepartmentName = (departmentId: number | null) => {
-    if (!departmentId) return 'Not Assigned';
-    const dept = departments.find(d => d.department_id === departmentId);
+  const getDepartmentName = (deptId: number | null) => {
+    if (!deptId) return 'Not Assigned';
+    const dept = departments.find(d => d.department_id === deptId);
     return dept?.department_name || 'Unknown';
   };
 
   // Filtering & sorting
   const filteredDesignations = designations
-    .filter(designation =>
-      designation.designation_title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(designation =>
-      departmentFilter ? designation.department_id === Number(departmentFilter) : true
-    );
+    .filter(d => d.designation_title.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(d => departmentId ? d.department_id === departmentId : true);
 
   const sortedDesignations = [...filteredDesignations].sort((a, b) => {
     switch (sortOption) {
-      case 'name-asc':
-        return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
-      case 'name-desc':
-        return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
-      case 'id-asc':
-        return a.designation_id - b.designation_id;
-      case 'id-desc':
-        return b.designation_id - a.designation_id;
-      default:
-        return 0;
+      case 'name-asc': return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
+      case 'name-desc': return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
+      case 'id-asc': return a.designation_id - b.designation_id;
+      case 'id-desc': return b.designation_id - a.designation_id;
+      default: return 0;
     }
   });
 
   // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 10, sortedDesignations.length));
+          setVisibleCount(prev => Math.min(prev + 10, sortedDesignations.length));
         }
       },
       { threshold: 1 }
     );
 
-    if (loaderRef.current) observer.observe(loaderRef.current);
+    const currentLoader = loaderRef.current;
+    if (currentLoader) observer.observe(currentLoader);
 
     return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
+      if (currentLoader) observer.unobserve(currentLoader);
+      observer.disconnect();
     };
   }, [sortedDesignations.length]);
 
@@ -202,12 +188,11 @@ const Designations = () => {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
         <Card className="w-full border-0 shadow-none bg-transparent">
-          {/* Header */}
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <CardTitle className="text-2xl font-bold">
-                {departmentFilter
-                  ? `Designation : ${getDepartmentName(Number(departmentFilter))} Department`
+                {departmentId
+                  ? `Designation : ${getDepartmentName(departmentId)} Department`
                   : "Designations"}
               </CardTitle>
 
@@ -217,27 +202,20 @@ const Designations = () => {
                   <Input
                     placeholder="Search designation"
                     value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setVisibleCount(10);
-                    }}
+                    onChange={e => { setSearchTerm(e.target.value); setVisibleCount(10); }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-2" title="Add designation">
-                  <Button
-                    onClick={() => setShowNewDialog(true)}
-                    className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add
+                  <Button onClick={() => setShowNewDialog(true)} className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
+                    <Plus className="h-4 w-4 mr-2" /> Add
                   </Button>
+
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
-                        Sort
-                        <ChevronDown className="ml-2 h-4 w-4" />
+                        Sort <ChevronDown className="ml-2 h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
@@ -253,7 +231,7 @@ const Designations = () => {
           </CardHeader>
 
           <CardContent className="px-0">
-            {departmentFilter && (
+            {departmentId && (
               <div className="mb-4">
                 <Button
                   onClick={() => window.location.href = "/designations"}
@@ -265,7 +243,6 @@ const Designations = () => {
               </div>
             )}
 
-            {/* Table */}
             <div className="border rounded-lg overflow-hidden">
               <Table className="table-auto">
                 <TableHeader>
@@ -278,7 +255,7 @@ const Designations = () => {
                 </TableHeader>
 
                 <TableBody>
-                  {visibleDesignations.map((designation) => (
+                  {visibleDesignations.map(designation => (
                     <TableRow key={designation.designation_id}>
                       <TableCell className="font-medium">{designation.designation_title}</TableCell>
                       <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
@@ -329,7 +306,6 @@ const Designations = () => {
               </div>
             )}
 
-            {/* Infinite Scroll Loader */}
             {visibleCount < sortedDesignations.length && (
               <div ref={loaderRef} className="text-center py-4 text-gray-600 text-sm">
                 Loading more...
