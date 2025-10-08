@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Navigate, useLocation, Link } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useLogin } from '@/contexts/LoginContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,18 +44,22 @@ const Designations = () => {
   const [loading, setLoading] = useState(true);
   const [editingDesignation, setEditingDesignation] = useState<Designation | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
-  const { toast } = useToast();
   const [sortOption, setSortOption] = useState<SortOption>('id-desc');
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
 
   const [visibleCount, setVisibleCount] = useState(10);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const departmentFilter = params.get("department");
+  const { toast } = useToast();
 
   if (!user) return <Navigate to="/login" replace />;
+
+  // Fetch department filter from URL safely on client
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    setDepartmentFilter(params.get('department'));
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -99,7 +103,7 @@ const Designations = () => {
   };
 
   // ORIGINAL handleDelete
-   const handleDelete = async (designationId: number) => {
+  const handleDelete = async (designationId: number) => {
     if (!confirm('Are you sure you want to remove this designation?')) return;
     try {
       const { error } = await supabase
@@ -136,6 +140,7 @@ const Designations = () => {
     }
   });
 
+  // Infinite scroll observer
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const observer = new IntersectionObserver(
@@ -274,8 +279,6 @@ const Designations = () => {
         onSuccess={fetchDesignations}
         departments={departments}
       />
-
-      
     </div>
   );
 };
