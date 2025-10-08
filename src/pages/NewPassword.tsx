@@ -23,6 +23,7 @@ const NewPassword = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const params = new URLSearchParams(window.location.search);
   const userId = params.get("user_id");
 
   // ----------------------
