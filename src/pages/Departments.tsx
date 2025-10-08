@@ -428,10 +428,6 @@ const Departments = () => {
                 {viewingDepartment.department_name}
               </p>
               <p>
-                <span className="font-semibold">Location:</span>{" "}
-                {viewingDepartment.location || "-"}
-              </p>
-              <p>
                 <span className="font-semibold">Total Designations:</span>{" "}
                 {departmentDesignations.length}
               </p>
