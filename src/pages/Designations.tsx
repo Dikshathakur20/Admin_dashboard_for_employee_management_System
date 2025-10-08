@@ -168,7 +168,7 @@ const Designations = () => {
       });
 
       fetchDesignations();
-    } catch {
+    } catch (err) {
       toast({
         title: "Deletion Failed",
         description: "Unable to remove designation.",
