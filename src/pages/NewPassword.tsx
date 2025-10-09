@@ -182,7 +182,7 @@ const NewPassword = () => {
               </span>
             </div>
 
-            <Button type="submit" className="w-full bg-[#001F7A] text-white" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#001F7A] text-white" disabled={!session || loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
             </Button>
           </form>
