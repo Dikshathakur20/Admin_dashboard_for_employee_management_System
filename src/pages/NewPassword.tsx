@@ -20,39 +20,32 @@ const NewPassword = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const [tokenChecked, setTokenChecked] = useState(false);
+ const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [paramsLoaded, setParamsLoaded] = useState(false);
+ // Supabase automatically includes this
 
-  const accessToken = searchParams.get("access_token");
-  const type = searchParams.get("type");
+  useEffect(() => {
+  const token = searchParams.get("access_token");
+  setAccessToken(token);
+  setParamsLoaded(true); // URL params are now loaded
+}, [searchParams]);
 
-  // Wait for the URL to have a valid recovery token
- useEffect(() => {
-  const initSession = async () => {
-    if (accessToken && type === "recovery") {
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: accessToken, // Supabase requires both, but recovery links only give access_token
-      });
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Invalid or expired reset link.",
-          variant: "destructive",
-        });
-        navigate("/login", { replace: true });
-      } else {
-        setTokenChecked(true);
-      }
-    }
-  };
+  useEffect(() => {
+  if (accessToken === null) return; // wait until URL params are available
 
-  initSession();
-}, [accessToken, type, navigate, toast]);
+  if (!accessToken) {
+    toast({
+      title: "Error",
+      description: "Invalid or expired reset link.",
+      variant: "destructive",
+    });
+    navigate("/login", { replace: true });
+  }
+}, [accessToken, navigate, toast]);
 
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -71,7 +64,7 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // Supabase automatically reads the access_token from the URL
+      // Supabase automatically picks up access_token from the URL for password recovery
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) throw error;
@@ -79,11 +72,7 @@ const NewPassword = () => {
       toast({ title: "Success", description: "Password updated successfully!" });
       navigate("/login", { replace: true });
     } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to update password",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: err.message || "Failed to update password", variant: "destructive" });
     } finally {
       setLoading(false);
     }
