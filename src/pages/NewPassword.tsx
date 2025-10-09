@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,48 +22,45 @@ const NewPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [paramsLoaded, setParamsLoaded] = useState(false);
 
-  // ✅ FIX: Extract tokens safely and validate them before using
+  // ✅ Read and verify tokens directly from hash fragment
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
-    const access_token = searchParams.get("access_token") || hashParams.get("access_token");
-    const refresh_token = searchParams.get("refresh_token") || hashParams.get("refresh_token");
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
 
-    // ✅ Validate token structure before proceeding
-    const isValidToken = (token: string | null) =>
-      token && token.split(".").length === 3; // JWT must have 3 parts
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
 
-    if (isValidToken(access_token) && isValidToken(refresh_token)) {
-      (async () => {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: access_token!,
-          refresh_token: refresh_token!,
-        });
-
-        if (error) {
-          toast({
-            title: "Error",
-            description: "Session setup failed: " + error.message,
-            variant: "destructive",
-          });
-          navigate("/login", { replace: true });
-        } else {
-          setAccessToken(access_token!);
-          setParamsLoaded(true);
-        }
-      })();
-    } else {
+    if (!access_token || !refresh_token) {
       toast({
         title: "Error",
         description: "Invalid or expired reset link.",
         variant: "destructive",
       });
       navigate("/login", { replace: true });
+      return;
     }
-  }, [searchParams, navigate, toast]);
+
+    // ✅ Set session correctly before allowing password update
+    (async () => {
+      const { error } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Session could not be created. Please try again.",
+          variant: "destructive",
+        });
+        navigate("/login", { replace: true });
+      } else {
+        setAccessToken(access_token);
+      }
+    })();
+  }, [navigate, toast]);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +68,7 @@ const NewPassword = () => {
     if (!password || !confirmPassword) {
       toast({
         title: "Error",
-        description: "All fields are required",
+        description: "All fields are required.",
         variant: "destructive",
       });
       return;
@@ -80,7 +77,7 @@ const NewPassword = () => {
     if (password !== confirmPassword) {
       toast({
         title: "Error",
-        description: "Passwords do not match",
+        description: "Passwords do not match.",
         variant: "destructive",
       });
       return;
@@ -98,9 +95,7 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // ✅ Update the actual Supabase Auth password
       const { error } = await supabase.auth.updateUser({ password });
-
       if (error) throw error;
 
       toast({
@@ -112,7 +107,7 @@ const NewPassword = () => {
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message || "Failed to update password",
+        description: err.message || "Failed to update password.",
         variant: "destructive",
       });
     } finally {
