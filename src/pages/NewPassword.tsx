@@ -57,20 +57,23 @@ const NewPassword = () => {
   // Optional: log the session for debugging
   // -------------------------
  useEffect(() => {
-  const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-    console.log("Auth event:", event);
-    console.log("Session after TEMP_TOKEN exchange:", session);
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        console.log("Auth event:", event);
+        console.log("Session after TEMP_TOKEN exchange:", currentSession);
 
-    if (event === "PASSWORD_RECOVERY" && session) {
-      console.log("Session is ready! JWT:", session.access_token);
-      // Now you can safely allow password update
-    }
-  });
+        // PASSWORD_RECOVERY event indicates TEMP_TOKEN was exchanged for a JWT
+        if (event === "PASSWORD_RECOVERY" && currentSession) {
+          console.log("Session is ready! JWT:", currentSession.access_token);
+          setSession(currentSession);
+        }
+      }
+    );
 
-  return () => {
-    listener?.subscription.unsubscribe();
-  };
-}, []);
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
 
 
   // -------------------------
