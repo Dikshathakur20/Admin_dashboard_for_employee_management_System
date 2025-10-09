@@ -57,15 +57,19 @@ const NewPassword = () => {
   // Optional: log the session for debugging
   // -------------------------
  useEffect(() => {
-  const checkSession = async () => {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session) {
-      console.log("No active session");
-    } else {
-      console.log("JWT:", session.session.access_token);
+  const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    console.log("Auth event:", event);
+    console.log("Session after TEMP_TOKEN exchange:", session);
+
+    if (event === "PASSWORD_RECOVERY" && session) {
+      console.log("Session is ready! JWT:", session.access_token);
+      // Now you can safely allow password update
     }
+  });
+
+  return () => {
+    listener?.subscription.unsubscribe();
   };
-  checkSession();
 }, []);
 
 
