@@ -47,36 +47,59 @@ const NewPassword = () => {
   }
 }, [accessToken, navigate, toast]);
 
+ const handleUpdatePassword = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  if (!password || !confirmPassword) {
+    toast({ title: "Error", description: "All fields are required", variant: "destructive" });
+    return;
+  }
 
-    if (!password || !confirmPassword) {
-      toast({ title: "Error", description: "All fields are required", variant: "destructive" });
-      return;
-    }
+  if (password !== confirmPassword) {
+    toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
-      return;
-    }
+  if (!accessToken) {
+    toast({ title: "Error", description: "Invalid or expired link.", variant: "destructive" });
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      // Supabase automatically picks up access_token from the URL for password recovery
-      const { error } = await supabase.auth.updateUser({ password });
+  try {
+    // ✅ Set the session first using the access token from URL
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: accessToken,
+    });
 
-      if (error) throw error;
+    if (sessionError) throw sessionError;
 
-      toast({ title: "Success", description: "Password updated successfully!" });
-      navigate("/login", { replace: true });
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to update password", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
+    // ✅ Now safely update the actual auth password
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) throw error;
+
+    toast({
+      title: "Success",
+      description: "Password updated successfully!",
+    });
+
+    // ✅ Redirect to login
+    navigate("/login", { replace: true });
+  } catch (err: any) {
+    toast({
+      title: "Error",
+      description: err.message || "Failed to update password",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+  
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
