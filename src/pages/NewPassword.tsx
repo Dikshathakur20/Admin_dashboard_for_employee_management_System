@@ -20,11 +20,19 @@ const NewPassword = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token"); // Supabase automatically includes this
+ const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [paramsLoaded, setParamsLoaded] = useState(false);
+ // Supabase automatically includes this
+
+  useEffect(() => {
+  const token = searchParams.get("access_token");
+  setAccessToken(token);
+  setParamsLoaded(true); // URL params are now loaded
+}, [searchParams]);
+
 
   useEffect(() => {
   if (accessToken === null) return; // wait until URL params are available
