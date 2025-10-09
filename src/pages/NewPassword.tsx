@@ -23,83 +23,102 @@ const NewPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
- const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [paramsLoaded, setParamsLoaded] = useState(false);
- // Supabase automatically includes this
 
+  // ✅ FIX: Extract tokens safely and validate them before using
   useEffect(() => {
-  const token = searchParams.get("access_token");
-  setAccessToken(token);
-  setParamsLoaded(true); // URL params are now loaded
-}, [searchParams]);
+    const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
+    const access_token = searchParams.get("access_token") || hashParams.get("access_token");
+    const refresh_token = searchParams.get("refresh_token") || hashParams.get("refresh_token");
 
+    // ✅ Validate token structure before proceeding
+    const isValidToken = (token: string | null) =>
+      token && token.split(".").length === 3; // JWT must have 3 parts
 
-  useEffect(() => {
-  if (accessToken === null) return; // wait until URL params are available
+    if (isValidToken(access_token) && isValidToken(refresh_token)) {
+      (async () => {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: access_token!,
+          refresh_token: refresh_token!,
+        });
 
-  if (!accessToken) {
-    toast({
-      title: "Error",
-      description: "Invalid or expired reset link.",
-      variant: "destructive",
-    });
-    navigate("/login", { replace: true });
-  }
-}, [accessToken, navigate, toast]);
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Session setup failed: " + error.message,
+            variant: "destructive",
+          });
+          navigate("/login", { replace: true });
+        } else {
+          setAccessToken(access_token!);
+          setParamsLoaded(true);
+        }
+      })();
+    } else {
+      toast({
+        title: "Error",
+        description: "Invalid or expired reset link.",
+        variant: "destructive",
+      });
+      navigate("/login", { replace: true });
+    }
+  }, [searchParams, navigate, toast]);
 
- const handleUpdatePassword = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (!password || !confirmPassword) {
-    toast({ title: "Error", description: "All fields are required", variant: "destructive" });
-    return;
-  }
+    if (!password || !confirmPassword) {
+      toast({
+        title: "Error",
+        description: "All fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  if (password !== confirmPassword) {
-    toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
-    return;
-  }
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  if (!accessToken) {
-    toast({ title: "Error", description: "Invalid or expired link.", variant: "destructive" });
-    return;
-  }
+    if (!accessToken) {
+      toast({
+        title: "Error",
+        description: "Invalid or expired link.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    // ✅ Set the session first using the access token from URL
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: accessToken,
-    });
+    try {
+      // ✅ Update the actual Supabase Auth password
+      const { error } = await supabase.auth.updateUser({ password });
 
-    if (sessionError) throw sessionError;
+      if (error) throw error;
 
-    // ✅ Now safely update the actual auth password
-    const { error } = await supabase.auth.updateUser({ password });
+      toast({
+        title: "Success",
+        description: "Password updated successfully!",
+      });
 
-    if (error) throw error;
-
-    toast({
-      title: "Success",
-      description: "Password updated successfully!",
-    });
-
-    // ✅ Redirect to login
-    navigate("/login", { replace: true });
-  } catch (err: any) {
-    toast({
-      title: "Error",
-      description: err.message || "Failed to update password",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-  
+      navigate("/login", { replace: true });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update password",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
@@ -108,7 +127,9 @@ const NewPassword = () => {
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
       >
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800">New Password</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-800">
+            New Password
+          </CardTitle>
           <CardDescription className="text-gray-600 mt-1">
             Enter your new password below to complete the reset process.
           </CardDescription>
@@ -152,7 +173,11 @@ const NewPassword = () => {
               </span>
             </div>
 
-            <Button type="submit" className="w-full bg-[#001F7A] text-white" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-[#001F7A] text-white"
+              disabled={loading}
+            >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
             </Button>
           </form>
