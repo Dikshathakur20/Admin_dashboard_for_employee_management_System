@@ -20,33 +20,30 @@ const NewPassword = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
- const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [paramsLoaded, setParamsLoaded] = useState(false);
- // Supabase automatically includes this
+  const [tokenChecked, setTokenChecked] = useState(false);
 
+  const accessToken = searchParams.get("access_token");
+  const type = searchParams.get("type");
+
+  // Wait for the URL to have a valid recovery token
   useEffect(() => {
-  const token = searchParams.get("access_token");
-  setAccessToken(token);
-  setParamsLoaded(true); // URL params are now loaded
-}, [searchParams]);
-
-
-  useEffect(() => {
-  if (accessToken === null) return; // wait until URL params are available
-
-  if (!accessToken) {
-    toast({
-      title: "Error",
-      description: "Invalid or expired reset link.",
-      variant: "destructive",
-    });
-    navigate("/login", { replace: true });
-  }
-}, [accessToken, navigate, toast]);
-
+    if (!tokenChecked) {
+      if (!accessToken || type !== "recovery") {
+        toast({
+          title: "Error",
+          description: "Invalid or expired reset link.",
+          variant: "destructive",
+        });
+        navigate("/login", { replace: true });
+      } else {
+        setTokenChecked(true);
+      }
+    }
+  }, [accessToken, type, navigate, toast, tokenChecked]);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +61,7 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // Supabase automatically picks up access_token from the URL for password recovery
+      // Supabase automatically reads the access_token from the URL
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) throw error;
@@ -72,7 +69,11 @@ const NewPassword = () => {
       toast({ title: "Success", description: "Password updated successfully!" });
       navigate("/login", { replace: true });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to update password", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update password",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
