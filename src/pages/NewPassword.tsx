@@ -1,195 +1,156 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const NewPassword = () => {
+export default function NewPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [sessionReady, setSessionReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [paramsLoaded, setParamsLoaded] = useState(false);
-  const [session, setSession] = useState<any>(null);
-
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
 
-  // -------------------------
-  // 1️⃣ Parse token from URL
-  // -------------------------
+  // 1️⃣ Exchange the access token from the URL hash for a session
   useEffect(() => {
-    const token = searchParams.get("access_token");
-    setAccessToken(token);
-    setParamsLoaded(true);
-  }, [searchParams]);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const access_token = hashParams.get("access_token");
+    const refresh_token = hashParams.get("refresh_token");
+    const type = hashParams.get("type");
 
-  // -------------------------
-  // 2️⃣ Redirect if token missing/invalid
-  // -------------------------
-  useEffect(() => {
-    if (accessToken === null) return; // wait until URL params are loaded
-
-    if (!accessToken) {
+    if (type === "recovery" && access_token && refresh_token) {
+      // Exchange token for a real session
+      supabase.auth
+        .setSession({
+          access_token,
+          refresh_token,
+        })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("Session error:", error);
+            toast({
+              title: "Invalid Link",
+              description: "Reset link is invalid or expired.",
+              variant: "destructive",
+            });
+            navigate("/login");
+          } else {
+            console.log("Session restored:", data);
+            setSessionReady(true);
+          }
+        });
+    } else {
       toast({
         title: "Error",
-        description: "Invalid or expired reset link.",
+        description: "Invalid or expired password reset link.",
         variant: "destructive",
       });
-      navigate("/login", { replace: true });
+      navigate("/login");
     }
-  }, [accessToken, navigate, toast]);
+  }, [navigate, toast]);
 
-  // -------------------------
-  // 3️⃣ Listen for auth events (TEMP_TOKEN → JWT)
-  // -------------------------
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log("Auth event:", event);
-        console.log("Session after TEMP_TOKEN exchange:", currentSession);
-
-        // PASSWORD_RECOVERY event indicates TEMP_TOKEN is now a real JWT
-        if (event === "PASSWORD_RECOVERY" && currentSession) {
-          console.log("Session is ready! JWT:", currentSession.access_token);
-          setSession(currentSession);
-        }
-      }
-    );
-
-    return () => listener?.subscription.unsubscribe();
-  }, []);
-
-  // -------------------------
-  // Handle password update
-  // -------------------------
-  const handleUpdatePassword = async (e: React.FormEvent) => {
+  // 2️⃣ Update password
+  const handlePasswordReset = async (e) => {
     e.preventDefault();
-
-    if (!password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "All fields are required",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (password !== confirmPassword) {
       toast({
         title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!session) {
-      toast({
-        title: "Error",
-        description: "Waiting for valid session. Please try again in a moment.",
+        description: "Passwords do not match.",
         variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
 
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
-
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
       toast({
         title: "Success",
         description: "Password updated successfully!",
       });
-
       navigate("/login", { replace: true });
-    } catch (err: any) {
-      console.error("Error updating password:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to update password",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
-      <Card
-        className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
-        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-      >
+      <Card className="w-full max-w-md shadow-xl rounded-3xl border border-gray-100">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800">New Password</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-800">
+            Reset Password
+          </CardTitle>
           <CardDescription className="text-gray-600 mt-1">
-            Enter your new password below to complete the reset process.
+            Enter your new password to complete the reset.
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-5 mt-4">
-          <form onSubmit={handleUpdatePassword} className="space-y-4">
+        <CardContent>
+          <form onSubmit={handlePasswordReset} className="space-y-4 mt-4">
             <div className="relative">
-              <Label htmlFor="password">New Password</Label>
+              <Label>New Password</Label>
               <Input
-                id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <span
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="absolute right-3 top-9 cursor-pointer text-gray-600"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </span>
             </div>
 
             <div className="relative">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label>Confirm Password</Label>
               <Input
-                id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
               <span
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="absolute right-3 top-9 cursor-pointer text-gray-600"
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </span>
             </div>
 
-            <Button type="submit" className="w-full bg-[#001F7A] text-white" disabled={!session || loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
+            <Button
+              type="submit"
+              className="w-full bg-[#001F7A] text-white"
+              disabled={!sessionReady || loading}
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reset Password"}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default NewPassword;
+}
