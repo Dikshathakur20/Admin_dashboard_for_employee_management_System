@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,56 +20,51 @@ const NewPassword = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const accessToken = searchParams.get("access_token"); // token from reset link
 
-  // ----------------------
-  // Update password directly in tbladmins
-  // ----------------------
+  useEffect(() => {
+    if (!accessToken) {
+      toast({
+        title: "Error",
+        description: "Invalid or expired reset link.",
+        variant: "destructive",
+      });
+      navigate("/login", { replace: true });
+    }
+  }, [accessToken]);
+
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "All fields are required",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "All fields are required", variant: "destructive" });
       return;
     }
 
     if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
       return;
     }
 
     setLoading(true);
 
     try {
-      // Directly update the password in the table
-      const { data, error } = await supabase
-        .from("tbladmins")
-        .update({ password })
-        .eq("id",7); // 
+      // Update the password using the access token for logged-out user
+      const { error } = await supabase.auth.updateUser(
+        { password },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Password updated successfully!",
-      });
-
+      toast({ title: "Success", description: "Password updated successfully!" });
       navigate("/login", { replace: true });
     } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to update password",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: err.message || "Failed to update password", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -77,8 +72,6 @@ const NewPassword = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
-      <h1 className="text-blue-700 text-3xl font-bold mb-8"></h1>
-
       <Card
         className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
@@ -92,7 +85,6 @@ const NewPassword = () => {
 
         <CardContent className="space-y-5 mt-4">
           <form onSubmit={handleUpdatePassword} className="space-y-4">
-            {/* Password Field with Eye Toggle */}
             <div className="relative">
               <Label htmlFor="password">New Password</Label>
               <Input
@@ -111,7 +103,6 @@ const NewPassword = () => {
               </span>
             </div>
 
-            {/* Confirm Password Field with Eye Toggle */}
             <div className="relative">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -130,11 +121,7 @@ const NewPassword = () => {
               </span>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-[#001F7A] text-white"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full bg-[#001F7A] text-white" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset Password"}
             </Button>
           </form>
