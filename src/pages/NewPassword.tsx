@@ -20,8 +20,7 @@ const NewPassword = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [adminEmail, setAdminEmail] = useState("");
-
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -56,7 +55,7 @@ const NewPassword = () => {
       const { data, error } = await supabase
         .from("tbladmins")
         .update({ password })
-        .eq("email",adminEmail); // 
+        .eq("Id",7); // 
       if (error) throw error;
 
       toast({
