@@ -27,15 +27,18 @@ const NewPassword = () => {
   const accessToken = searchParams.get("access_token"); // Supabase automatically includes this
 
   useEffect(() => {
-    if (!accessToken) {
-      toast({
-        title: "Error",
-        description: "Invalid or expired reset link.",
-        variant: "destructive",
-      });
-      navigate("/login", { replace: true });
-    }
-  }, [accessToken, navigate, toast]);
+  if (accessToken === null) return; // wait until URL params are available
+
+  if (!accessToken) {
+    toast({
+      title: "Error",
+      description: "Invalid or expired reset link.",
+      variant: "destructive",
+    });
+    navigate("/login", { replace: true });
+  }
+}, [accessToken, navigate, toast]);
+
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
