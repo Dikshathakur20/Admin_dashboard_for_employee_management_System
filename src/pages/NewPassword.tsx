@@ -39,7 +39,7 @@ const NewPassword = () => {
   }, [searchParams]);
 
   // -------------------------
-  // 2️⃣ Redirect if token is missing/invalid
+  // 2️⃣ Redirect if token missing/invalid
   // -------------------------
   useEffect(() => {
     if (accessToken === null) return; // wait until URL params are loaded
@@ -55,15 +55,15 @@ const NewPassword = () => {
   }, [accessToken, navigate, toast]);
 
   // -------------------------
-  // 3️⃣ Listen for auth events & TEMP_TOKEN → JWT exchange
+  // 3️⃣ Listen for auth events (TEMP_TOKEN → JWT)
   // -------------------------
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log("Auth event:", event);
         console.log("Session after TEMP_TOKEN exchange:", currentSession);
 
-        // PASSWORD_RECOVERY event indicates TEMP_TOKEN was exchanged for a JWT
+        // PASSWORD_RECOVERY event indicates TEMP_TOKEN is now a real JWT
         if (event === "PASSWORD_RECOVERY" && currentSession) {
           console.log("Session is ready! JWT:", currentSession.access_token);
           setSession(currentSession);
@@ -71,9 +71,7 @@ const NewPassword = () => {
       }
     );
 
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
+    return () => listener?.subscription.unsubscribe();
   }, []);
 
   // -------------------------
@@ -100,10 +98,10 @@ const NewPassword = () => {
       return;
     }
 
-    if (!accessToken) {
+    if (!session) {
       toast({
         title: "Error",
-        description: "Invalid or expired reset link.",
+        description: "Waiting for valid session. Please try again in a moment.",
         variant: "destructive",
       });
       return;
@@ -112,20 +110,8 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // ✅ Exchange TEMP_TOKEN for a proper JWT session
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: accessToken,
-        });
-
-      if (sessionError) throw sessionError;
-      console.log("Exchanged TEMP_TOKEN for JWT:", sessionData.session.access_token);
-      setSession(sessionData.session);
-
-      // ✅ Now update the password safely
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
 
       toast({
         title: "Success",
