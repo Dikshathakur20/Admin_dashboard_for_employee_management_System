@@ -24,7 +24,7 @@ const NewPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token"); // token from reset link
+  const accessToken = searchParams.get("access_token"); // Supabase automatically includes this
 
   useEffect(() => {
     if (!accessToken) {
@@ -35,7 +35,7 @@ const NewPassword = () => {
       });
       navigate("/login", { replace: true });
     }
-  }, [accessToken]);
+  }, [accessToken, navigate, toast]);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,11 +53,8 @@ const NewPassword = () => {
     setLoading(true);
 
     try {
-      // Update the password using the access token for logged-out user
-      const { error } = await supabase.auth.updateUser(
-        { password },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      // Supabase automatically picks up access_token from the URL for password recovery
+      const { error } = await supabase.auth.updateUser({ password });
 
       if (error) throw error;
 
