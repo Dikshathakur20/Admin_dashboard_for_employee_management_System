@@ -56,16 +56,18 @@ const NewPassword = () => {
   // -------------------------
   // Optional: log the session for debugging
   // -------------------------
-  useEffect(() => {
-    if (!paramsLoaded) return;
-
-    const session = supabase.auth.session();
-    if (session) {
-      console.log("Session exists. JWT ready:", session.access_token);
+ useEffect(() => {
+  const checkSession = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) {
+      console.log("No active session");
     } else {
-      console.log("No active session yet. TEMP_TOKEN might not be exchanged.");
+      console.log("JWT:", session.session.access_token);
     }
-  }, [paramsLoaded]);
+  };
+  checkSession();
+}, []);
+
 
   // -------------------------
   // Handle password update
