@@ -55,7 +55,7 @@ const NewPassword = () => {
       const { data, error } = await supabase
         .from("tbladmins")
         .update({ password })
-        .eq("Id",7); // 
+        .eq("id",7); // 
       if (error) throw error;
 
       toast({
