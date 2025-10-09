@@ -30,9 +30,15 @@ const NewPassword = () => {
   const type = searchParams.get("type");
 
   // Wait for the URL to have a valid recovery token
-  useEffect(() => {
-    if (!tokenChecked) {
-      if (!accessToken || type !== "recovery") {
+ useEffect(() => {
+  const initSession = async () => {
+    if (accessToken && type === "recovery") {
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: accessToken, // Supabase requires both, but recovery links only give access_token
+      });
+
+      if (error) {
         toast({
           title: "Error",
           description: "Invalid or expired reset link.",
@@ -43,7 +49,11 @@ const NewPassword = () => {
         setTokenChecked(true);
       }
     }
-  }, [accessToken, type, navigate, toast, tokenChecked]);
+  };
+
+  initSession();
+}, [accessToken, type, navigate, toast]);
+
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
