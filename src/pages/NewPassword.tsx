@@ -66,9 +66,7 @@ export default function NewPassword() {
 
     // Only need access_token (no refresh_token)
     if (type === "recovery" && access_token) {
-      supabase.auth
-  .exchangeCodeForSession(access_token)
-  .then(({ data, error }) => {
+          supabase.auth.setSession({ access_token }).then(({ data, error }) => {
     if (error) {
       console.error("Session error:", error);
       toast({
