@@ -21,6 +21,7 @@ export default function NewPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [tokenValid, setTokenValid] = useState(false);
 
   const navigate = useNavigate();
@@ -28,18 +29,20 @@ export default function NewPassword() {
   const [searchParams] = useSearchParams();
 
   // -------------------------
-  // 1️⃣ Hook: Extract token from URL
+  // 1️⃣ Hook: Extract tokens from URL
   // -------------------------
   useEffect(() => {
-    const token = searchParams.get("access_token");
-    setAccessToken(token);
+    const access_token = searchParams.get("access_token");
+    const refresh_token = searchParams.get("refresh_token"); // optional, if you send it
+    setAccessToken(access_token);
+    setRefreshToken(refresh_token);
   }, [searchParams]);
 
   // -------------------------
   // 2️⃣ Hook: Validate token presence
   // -------------------------
   useEffect(() => {
-    if (accessToken === null) return; // wait until token is extracted
+    if (accessToken === null) return; // wait until extracted
 
     if (!accessToken) {
       toast({
@@ -49,12 +52,12 @@ export default function NewPassword() {
       });
       navigate("/login", { replace: true });
     } else {
-      setTokenValid(true); // token exists, allow user to reset
+      setTokenValid(true);
     }
   }, [accessToken, navigate, toast]);
 
   // -------------------------
-  // Handle password reset
+  // Handle password reset with refresh token
   // -------------------------
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,26 +82,33 @@ export default function NewPassword() {
 
     setLoading(true);
 
-    // ✅ Use recovery token directly
-    const { error } = await supabase.auth.updateUser(
-      { password },
-      { accessToken } // send token from URL
-    );
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+    try {
+      // ✅ Exchange access token for session
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || "", // fallback if you don’t send it
       });
-    } else {
+
+      if (sessionError) throw sessionError;
+
+      // ✅ Now update password with active session
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+
+      if (updateError) throw updateError;
+
       toast({
         title: "Success",
         description: "Password updated successfully! Please log in.",
       });
       navigate("/login", { replace: true });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
