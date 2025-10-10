@@ -15,18 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function NewPassword() {
-  // -------------------------
-  // State variables
-  // -------------------------
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [sessionReady, setSessionReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [paramsLoaded, setParamsLoaded] = useState(false);
+  const [tokenValid, setTokenValid] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -38,14 +33,13 @@ export default function NewPassword() {
   useEffect(() => {
     const token = searchParams.get("access_token");
     setAccessToken(token);
-    setParamsLoaded(true);
   }, [searchParams]);
 
   // -------------------------
-  // 2️⃣ Validate token presence
+  // 2️⃣ Hook: Validate token presence
   // -------------------------
   useEffect(() => {
-    if (accessToken === null) return; // wait until URL params are loaded
+    if (accessToken === null) return; // wait until token is extracted
 
     if (!accessToken) {
       toast({
@@ -54,36 +48,10 @@ export default function NewPassword() {
         variant: "destructive",
       });
       navigate("/login", { replace: true });
+    } else {
+      setTokenValid(true); // token exists, allow user to reset
     }
   }, [accessToken, navigate, toast]);
-
-
-    // -------------------------
-    // 3️⃣ Create temporary session with access_token
-    // -------------------------
-    // -------------------------
-// 3️⃣ Create temporary session with access_token
-// -------------------------
-useEffect(() => {
-  if (!accessToken) return; // wait until token is loaded
-
-  supabase.auth
-    .setSession({ access_token: accessToken })
-    .then(({ data, error }) => {
-      if (error) {
-        console.error("Session error:", error);
-        toast({
-          title: "Invalid Link",
-          description: "Password reset token is invalid or expired.",
-          variant: "destructive",
-        });
-        navigate("/login", { replace: true });
-      } else {
-        console.log("✅ Session created successfully:", data);
-        setSessionReady(true);
-      }
-    });
-}, [accessToken, navigate, toast]); // ✅ correctly inside useEffect
 
   // -------------------------
   // Handle password reset
@@ -100,8 +68,23 @@ useEffect(() => {
       return;
     }
 
+    if (!accessToken) {
+      toast({
+        title: "Error",
+        description: "Token is missing, cannot reset password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+
+    // ✅ Use recovery token directly
+    const { error } = await supabase.auth.updateUser(
+      { password },
+      { accessToken } // send token from URL
+    );
+
     setLoading(false);
 
     if (error) {
@@ -113,15 +96,12 @@ useEffect(() => {
     } else {
       toast({
         title: "Success",
-        description: "Password updated successfully!",
+        description: "Password updated successfully! Please log in.",
       });
       navigate("/login", { replace: true });
     }
   };
 
-  // -------------------------
-  // JSX
-  // -------------------------
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
       <Card className="w-full max-w-md shadow-xl rounded-3xl border border-gray-100">
@@ -135,7 +115,11 @@ useEffect(() => {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handlePasswordReset} className="space-y-4 mt-4">
+          <form
+            onSubmit={handlePasswordReset}
+            className="space-y-4 mt-4"
+            disabled={!tokenValid}
+          >
             <div className="relative">
               <Label>New Password</Label>
               <Input
@@ -171,7 +155,7 @@ useEffect(() => {
             <Button
               type="submit"
               className="w-full bg-[#001F7A] text-white"
-              disabled={!sessionReady || loading}
+              disabled={!tokenValid || loading}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reset Password"}
             </Button>
