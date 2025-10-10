@@ -131,13 +131,6 @@ export default function NewPassword() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <img
-              src="images/6123bc56-fe6c-4d47-a531-d13782c5f5c0.png"
-              alt="Anthem Infotech"
-              className="h-16"
-            />
-          </div>
           <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
           <CardDescription className="text-center">
             {!isSubmitted ? "Create a new password for your account" : "Your password has been reset successfully"}
@@ -166,7 +159,7 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={6} /> : <Eye size={6} />}
                   </button>
                 </div>
                 {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
@@ -191,7 +184,7 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showConfirmPassword ? <EyeOff size={6} /> : <Eye size={6} />}
                   </button>
                 </div>
                 {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
