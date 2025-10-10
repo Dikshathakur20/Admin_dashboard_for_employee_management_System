@@ -67,21 +67,22 @@ export default function NewPassword() {
     // Only need access_token (no refresh_token)
     if (type === "recovery" && access_token) {
       supabase.auth
-        .setSession({ access_token })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("Session error:", error);
-            toast({
-              title: "Invalid Link",
-              description: "Reset link is invalid or expired.",
-              variant: "destructive",
-            });
-            navigate("/login");
-          } else {
-            console.log("✅ Session restored successfully:", data);
-            setSessionReady(true);
-          }
-        });
+  .exchangeCodeForSession(access_token)
+  .then(({ data, error }) => {
+    if (error) {
+      console.error("Session error:", error);
+      toast({
+        title: "Invalid Link",
+        description: "Reset link is invalid or expired.",
+        variant: "destructive",
+      });
+      navigate("/login");
+    } else {
+      console.log("✅ Session restored successfully:", data);
+      setSessionReady(true);
+    }
+  });
+
     }
   }, [navigate, toast]);
 
