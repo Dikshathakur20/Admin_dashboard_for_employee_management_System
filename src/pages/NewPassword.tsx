@@ -61,22 +61,29 @@ export default function NewPassword() {
     // -------------------------
     // 3️⃣ Create temporary session with access_token
     // -------------------------
-    supabase.auth
-      .setSession({ access_token: accessToken })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Session error:", error);
-          toast({
-            title: "Invalid Link",
-            description: "Password reset token is invalid or expired.",
-            variant: "destructive",
-          });
-          navigate("/login");
-        } else {
-          setSessionReady(true);
-        }
-      });
-  }, [accessToken, paramsLoaded, navigate, toast]);
+    // -------------------------
+// 3️⃣ Create temporary session with access_token
+// -------------------------
+useEffect(() => {
+  if (!accessToken) return; // wait until token is loaded
+
+  supabase.auth
+    .setSession({ access_token: accessToken })
+    .then(({ data, error }) => {
+      if (error) {
+        console.error("Session error:", error);
+        toast({
+          title: "Invalid Link",
+          description: "Password reset token is invalid or expired.",
+          variant: "destructive",
+        });
+        navigate("/login", { replace: true });
+      } else {
+        console.log("✅ Session created successfully:", data);
+        setSessionReady(true);
+      }
+    });
+}, [accessToken, navigate, toast]); // ✅ correctly inside useEffect
 
   // -------------------------
   // Handle password reset
