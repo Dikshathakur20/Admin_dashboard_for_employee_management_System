@@ -24,6 +24,7 @@ export default function NewPassword() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [paramsLoaded, setParamsLoaded] = useState(false);
 
@@ -32,60 +33,58 @@ export default function NewPassword() {
   const [searchParams] = useSearchParams();
 
   // -------------------------
-  // 1️⃣ Extract token from URL
+  // 1️⃣ Hook: Extract token from URL
   // -------------------------
   useEffect(() => {
-    const token = searchParams.get("access_token");
+    // Prefer hash fragment (Supabase default)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const tokenFromHash = hashParams.get("access_token");
+
+    // Fallback to query param if necessary
+    const tokenFromQuery = searchParams.get("access_token");
+
+    const token = tokenFromHash || tokenFromQuery;
     setAccessToken(token);
     setParamsLoaded(true);
   }, [searchParams]);
 
   // -------------------------
-  // 2️⃣ Validate token presence
+  // 2️⃣ Hook: Validate token presence
   // -------------------------
   useEffect(() => {
-    if (accessToken === null) return; // wait until URL params are loaded
-
+    if (!paramsLoaded) return; // wait until URL params are loaded
     if (!accessToken) {
       toast({
         title: "Error",
-        description: "Invalid or expired reset link.",
+        description: "Invalid or expired password reset link.",
         variant: "destructive",
       });
       navigate("/login", { replace: true });
+      return;
     }
-  }, [accessToken, navigate, toast]);
 
-  // -------------------------
-  // 3️⃣ Exchange the recovery token for a valid session
-  // -------------------------
-  useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const access_token = hashParams.get("access_token");
-    const type = hashParams.get("type");
-
-    // Only need access_token (no refresh_token)
-    if (type === "recovery" && access_token) {
-          supabase.auth.setSession({ access_token }).then(({ data, error }) => {
-    if (error) {
-      console.error("Session error:", error);
-      toast({
-        title: "Invalid Link",
-        description: "Reset link is invalid or expired.",
-        variant: "destructive",
+    // -------------------------
+    // 3️⃣ Create temporary session with access_token
+    // -------------------------
+    supabase.auth
+      .setSession({ access_token: accessToken })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Session error:", error);
+          toast({
+            title: "Invalid Link",
+            description: "Password reset token is invalid or expired.",
+            variant: "destructive",
+          });
+          navigate("/login");
+        } else {
+          setSessionReady(true);
+        }
       });
-      navigate("/login");
-    } else {
-      console.log("✅ Session restored successfully:", data);
-      setSessionReady(true);
-    }
-  });
-
-    }
-  }, [navigate, toast]);
+  }, [accessToken, paramsLoaded, navigate, toast]);
 
   // -------------------------
-  // 4️⃣ Handle password reset
+  // Handle password reset
   // -------------------------
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,11 +171,7 @@ export default function NewPassword() {
               className="w-full bg-[#001F7A] text-white"
               
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Reset Password"
-              )}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reset Password"}
             </Button>
           </form>
         </CardContent>
