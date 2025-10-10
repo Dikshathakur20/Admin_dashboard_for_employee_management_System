@@ -169,7 +169,11 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
+<<<<<<< HEAD
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+=======
+                    {showPassword ? <EyeOff size={6} /> : <Eye size={6} />}
+>>>>>>> 5deb47e17efbc1b88bfc848702a1ce41b2ff5e68
                   </button>
                 </div>
                 {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
@@ -194,7 +198,11 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
+<<<<<<< HEAD
                     {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+=======
+                    {showConfirmPassword ? <EyeOff size={6} /> : <Eye size={6} />}
+>>>>>>> 5deb47e17efbc1b88bfc848702a1ce41b2ff5e68
                   </button>
                 </div>
                 {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
