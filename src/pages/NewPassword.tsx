@@ -36,32 +36,27 @@ export default function NewPassword() {
   // 1️⃣ Hook: Extract token from URL
   // -------------------------
   useEffect(() => {
-    // Prefer hash fragment (Supabase default)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const tokenFromHash = hashParams.get("access_token");
-
-    // Fallback to query param if necessary
-    const tokenFromQuery = searchParams.get("access_token");
-
-    const token = tokenFromHash || tokenFromQuery;
+    const token = searchParams.get("access_token");
     setAccessToken(token);
     setParamsLoaded(true);
   }, [searchParams]);
 
   // -------------------------
-  // 2️⃣ Hook: Validate token presence
+  // 2️⃣ Validate token presence
   // -------------------------
   useEffect(() => {
-    if (!paramsLoaded) return; // wait until URL params are loaded
+    if (accessToken === null) return; // wait until URL params are loaded
+
     if (!accessToken) {
       toast({
         title: "Error",
-        description: "Invalid or expired password reset link.",
+        description: "Invalid or expired reset link.",
         variant: "destructive",
       });
       navigate("/login", { replace: true });
-      return;
     }
+  }, [accessToken, navigate, toast]);
+
 
     // -------------------------
     // 3️⃣ Create temporary session with access_token
@@ -169,7 +164,7 @@ export default function NewPassword() {
             <Button
               type="submit"
               className="w-full bg-[#001F7A] text-white"
-              
+              disabled={!sessionReady || loading}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reset Password"}
             </Button>
