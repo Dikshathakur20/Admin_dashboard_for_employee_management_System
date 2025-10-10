@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,25 +15,58 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function NewPassword() {
+  // -------------------------
+  // State variables
+  // -------------------------
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [sessionReady, setSessionReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [accessToken, setAccessToken] = useState(null);
+  const [paramsLoaded, setParamsLoaded] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
-  // 1️⃣ Exchange the access token from the URL hash for a session
+  // -------------------------
+  // 1️⃣ Extract token from URL (your first custom hook logic)
+  // -------------------------
   useEffect(() => {
+    const token = searchParams.get("access_token");
+    setAccessToken(token);
+    setParamsLoaded(true); // URL params are now loaded
+  }, [searchParams]);
+
+  // -------------------------
+  // 2️⃣ Validate token presence (your second hook logic)
+  // -------------------------
+  useEffect(() => {
+    if (accessToken === null) return; // wait until URL params are loaded
+
+    if (!accessToken) {
+      toast({
+        title: "Error",
+        description: "Invalid or expired reset link.",
+        variant: "destructive",
+      });
+      navigate("/login", { replace: true });
+    }
+  }, [accessToken, navigate, toast]);
+
+  // -------------------------
+  // 3️⃣ Exchange the recovery token for a real session (Supabase)
+  // -------------------------
+  useEffect(() => {
+    // use hash params (for Supabase recovery link)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const access_token = hashParams.get("access_token");
     const refresh_token = hashParams.get("refresh_token");
     const type = hashParams.get("type");
 
     if (type === "recovery" && access_token && refresh_token) {
-      // Exchange token for a real session
       supabase.auth
         .setSession({
           access_token,
@@ -49,21 +82,16 @@ export default function NewPassword() {
             });
             navigate("/login");
           } else {
-            console.log("Session restored:", data);
+            console.log("✅ Session restored successfully:", data);
             setSessionReady(true);
           }
         });
-    } else {
-      toast({
-        title: "Error",
-        description: "Invalid or expired password reset link.",
-        variant: "destructive",
-      });
-      navigate("/login");
     }
   }, [navigate, toast]);
 
-  // 2️⃣ Update password
+  // -------------------------
+  // 4️⃣ Handle password reset
+  // -------------------------
   const handlePasswordReset = async (e) => {
     e.preventDefault();
 
@@ -95,6 +123,9 @@ export default function NewPassword() {
     }
   };
 
+  // -------------------------
+  // JSX
+  // -------------------------
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
       <Card className="w-full max-w-md shadow-xl rounded-3xl border border-gray-100">
@@ -146,7 +177,11 @@ export default function NewPassword() {
               className="w-full bg-[#001F7A] text-white"
               disabled={!sessionReady || loading}
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reset Password"}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Reset Password"
+              )}
             </Button>
           </form>
         </CardContent>
