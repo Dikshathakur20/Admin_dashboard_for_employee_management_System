@@ -24,7 +24,7 @@ export default function NewPassword() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [accessToken, setAccessToken] = useState(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [paramsLoaded, setParamsLoaded] = useState(false);
 
   const navigate = useNavigate();
@@ -32,16 +32,16 @@ export default function NewPassword() {
   const [searchParams] = useSearchParams();
 
   // -------------------------
-  // 1️⃣ Extract token from URL (your first custom hook logic)
+  // 1️⃣ Extract token from URL
   // -------------------------
   useEffect(() => {
     const token = searchParams.get("access_token");
     setAccessToken(token);
-    setParamsLoaded(true); // URL params are now loaded
+    setParamsLoaded(true);
   }, [searchParams]);
 
   // -------------------------
-  // 2️⃣ Validate token presence (your second hook logic)
+  // 2️⃣ Validate token presence
   // -------------------------
   useEffect(() => {
     if (accessToken === null) return; // wait until URL params are loaded
@@ -57,21 +57,17 @@ export default function NewPassword() {
   }, [accessToken, navigate, toast]);
 
   // -------------------------
-  // 3️⃣ Exchange the recovery token for a real session (Supabase)
+  // 3️⃣ Exchange the recovery token for a valid session
   // -------------------------
   useEffect(() => {
-    // use hash params (for Supabase recovery link)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const access_token = hashParams.get("access_token");
-    const refresh_token = hashParams.get("refresh_token");
     const type = hashParams.get("type");
 
-    if (type === "recovery" && access_token && refresh_token) {
+    // Only need access_token (no refresh_token)
+    if (type === "recovery" && access_token) {
       supabase.auth
-        .setSession({
-          access_token,
-          refresh_token,
-        })
+        .setSession({ access_token })
         .then(({ data, error }) => {
           if (error) {
             console.error("Session error:", error);
@@ -92,7 +88,7 @@ export default function NewPassword() {
   // -------------------------
   // 4️⃣ Handle password reset
   // -------------------------
-  const handlePasswordReset = async (e) => {
+  const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
