@@ -75,7 +75,7 @@ const Login = () => {
 
       // If email exists, send reset password email
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: 'https://admin-dashboard-for-employee-manage.vercel.app/new-password'
+        redirectTo: 'http://localhost:8080//new-password'
       });
 
       if (error) throw error;

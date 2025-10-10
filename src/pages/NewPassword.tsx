@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 export default function NewPassword() {
   const [searchParams] = useSearchParams();
@@ -51,7 +57,7 @@ export default function NewPassword() {
   }, [accessToken, navigate, toast]);
 
   // -------------------------
-  // Form validation
+  // Validate Form
   // -------------------------
   const validateForm = () => {
     const newErrors: { password?: string; confirmPassword?: string } = {};
@@ -66,20 +72,22 @@ export default function NewPassword() {
   };
 
   // -------------------------
-  // Handle password reset
+  // Handle Password Reset
   // -------------------------
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    console.log("✅ handleSubmit triggered");
+    alert("Hello from handleSubmit!");
+
+    // Uncomment below once you're ready for Supabase logic:
+    /*
     if (!validateForm()) return;
     if (!accessToken) return;
 
     setLoading(true);
     try {
-      // Update password using Supabase recovery token
-      const { error } = await supabase.auth.updateUser(
-        { password },
-        { accessToken }
-      );
+      const { error } = await supabase.auth.updateUser({ password }, { accessToken });
       if (error) throw error;
 
       setIsSubmitted(true);
@@ -96,6 +104,7 @@ export default function NewPassword() {
     } finally {
       setLoading(false);
     }
+    */
   };
 
   // -------------------------
@@ -131,13 +140,6 @@ export default function NewPassword() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <img
-              src="images/6123bc56-fe6c-4d47-a531-d13782c5f5c0.png"
-              alt="Anthem Infotech"
-              className="h-16"
-            />
-          </div>
           <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
           <CardDescription className="text-center">
             {!isSubmitted ? "Create a new password for your account" : "Your password has been reset successfully"}
@@ -146,7 +148,8 @@ export default function NewPassword() {
 
         <CardContent>
           {!isSubmitted ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            // ✅ Form fixed to properly capture submit
+            <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password">New Password</Label>
                 <div className="relative">
@@ -166,7 +169,7 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
                 {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
@@ -191,21 +194,26 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
                 {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
               </div>
 
-              <Button type="submit" className="w-full bg-anthem-purple hover:bg-anthem-darkPurple" disabled={loading}>
+              {/* ✅ FIX: Replace shadcn Button with native <button> inside form */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-anthem-purple hover:bg-anthem-darkPurple text-white py-2 rounded flex justify-center items-center"
+              >
                 {loading ? (
-                  <span className="flex items-center justify-center">
+                  <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" /> Resetting password...
-                  </span>
+                  </>
                 ) : (
                   "Reset Password"
                 )}
-              </Button>
+              </button>
             </form>
           ) : (
             <div className="text-center py-4">
