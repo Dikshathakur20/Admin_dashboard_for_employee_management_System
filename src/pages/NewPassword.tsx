@@ -170,7 +170,7 @@ export default function NewPassword() {
             <Button
               type="submit"
               className="w-full bg-[#001F7A] text-white"
-              disabled={!sessionReady || loading}
+              
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
