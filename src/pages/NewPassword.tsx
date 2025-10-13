@@ -1,261 +1,151 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+// src/pages/NewPassword.tsx
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-export default function NewPassword() {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [tokenValid, setTokenValid] = useState(false);
+export default function NewPassword(): JSX.Element {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const tokenOrEmail = searchParams.get("access_token") || "";
+
+  const [email, setEmail] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
   const [loading, setLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  // -------------------------
-  // Extract access_token from URL hash
-  // -------------------------
+  // Extract email from access_token
   useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const tokenFromHash = new URLSearchParams(hash).get("access_token");
-    setAccessToken(tokenFromHash);
-  }, []);
-
-  // -------------------------
-  // Validate token presence
-  // -------------------------
-  useEffect(() => {
-    if (accessToken === null) return;
-
-    if (!accessToken) {
-      toast({
-        title: "Error",
-        description: "Invalid or expired reset link.",
-        variant: "destructive",
-      });
-      navigate("/login", { replace: true });
-    } else {
-      setTokenValid(true);
+    if (!tokenOrEmail) {
+      setError("No access token provided.");
+      return;
     }
-  }, [accessToken, navigate, toast]);
+    if (!tokenOrEmail.includes("@")) {
+      setError("Invalid email format in access token.");
+      return;
+    }
+    setEmail(tokenOrEmail);
+  }, [tokenOrEmail]);
 
-  // -------------------------
-  // Validate form fields
-  // -------------------------
-  const validateForm = () => {
-    const newErrors: { password?: string; confirmPassword?: string } = {};
-    if (!password) newErrors.password = "Password is required";
-    else if (password.length < 8)
-      newErrors.password = "Password must be at least 8 characters";
-
-    if (!confirmPassword) newErrors.confirmPassword = "Please confirm your password";
-    else if (password !== confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Validate password inputs
+  const validate = () => {
+    if (!password || !confirmPassword) {
+      setError("Please fill both fields.");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return false;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return false;
+    }
+    return true;
   };
 
-  // -------------------------
-  // Handle password reset
-  // -------------------------
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("hello");
-    console.log("Access Token:", accessToken);
-    console.log("Password:", password);
-    console.log("Confirm Password:", confirmPassword);
-    if (!validateForm()) return;
-    if (!accessToken) return;
+    setError(null);
+    setSuccess(null);
+
+    if (!validate() || !email) return;
 
     setLoading(true);
     try {
-      // 1️⃣ Establish a temporary session using the recovery token
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: accessToken, // required temporarily for SDK
-      });
-      if (sessionError) throw sessionError;
+      const response = await fetch(
+        "https://xwipkmjonfsgrtdacggo.supabase.co/functions/v1/quick-service",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
-      // 2️⃣ Update password now that session exists
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
+      const data = await response.json();
 
-      // 3️⃣ Success
-      setIsSubmitted(true);
-      toast({
-        title: "Success",
-        description: "Password has been reset successfully! You can now log in.",
-      });
-    } catch (error: any) {
-      console.log("Password reset error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to reset password",
-        variant: "destructive",
-      });
+      if (!response.ok) throw new Error(data.error || "Failed to update password");
+
+      setSuccess(data.message || `Password successfully updated for ${email}`);
+      setPassword("");
+      setConfirmPassword("");
+
+      // Redirect to login after 2 seconds
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  // -------------------------
-  // Render invalid token
-  // -------------------------
-  if (!tokenValid) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">Invalid or Missing Token</CardTitle>
-            <CardDescription className="text-center">
-              The password reset link is invalid or has expired.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button variant="link" asChild className="w-full">
-              <Link to="/forgot-password" className="flex items-center justify-center">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to forgot password
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
-  // -------------------------
-  // Render reset form
-  // -------------------------
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
-          <CardDescription className="text-center">
-            {!isSubmitted ? "Create a new password for your account" : "Your password has been reset successfully"}
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow p-6">
+        <h1 className="text-2xl font-semibold mb-3 text-center">Set a New Password</h1>
 
-        <CardContent>
-          {!isSubmitted ? (
-            // ✅ Form fixed to properly capture submit
-            <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="********"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    aria-invalid={!!errors.password}
-                    className="pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                    tabIndex={-1}
-                  >
-
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-
-                    {showPassword ? <EyeOff size={6} /> : <Eye size={6} />}
-
-                  </button>
-                </div>
-                {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="********"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    aria-invalid={!!errors.confirmPassword}
-                    className="pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                    tabIndex={-1}
-                  >
-
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-
-                    {showConfirmPassword ? <EyeOff size={6} /> : <Eye size={6} />}
-
-                  </button>
-                </div>
-                {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
-              </div>
-
-              {/* ✅ FIX: Replace shadcn Button with native <button> inside form */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-anthem-purple hover:bg-anthem-darkPurple text-white py-2 rounded flex justify-center items-center"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" /> Resetting password...
-                  </>
-                ) : (
-                  "Reset Password"
-                )}
-              </button>
-            </form>
-          ) : (
-            <div className="text-center py-4">
-              <p className="mb-4">Your password has been reset successfully.</p>
-              <Button variant="default" className="mt-4 bg-anthem-purple hover:bg-anthem-darkPurple" asChild>
-                <Link to="/login">Go to Login</Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-
-        {!isSubmitted && (
-          <CardFooter>
-            <Button variant="link" asChild className="w-full">
-              <Link to="/login" className="flex items-center justify-center">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to login
-              </Link>
-            </Button>
-          </CardFooter>
+        {email && (
+          <p className="text-sm text-gray-600 text-center mb-4">
+            Changing password for <span className="font-medium">{email}</span>
+          </p>
         )}
-      </Card>
+
+        {error && (
+          <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-3 text-sm text-center">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-50 text-green-700 px-3 py-2 rounded mb-3 text-sm text-center">
+            {success}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* New Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-300 focus:outline-none"
+                placeholder="Enter new password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-2 text-sm text-gray-500"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-300 focus:outline-none"
+              placeholder="Confirm new password"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !email}
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium disabled:opacity-60"
+          >
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
-            <CardTitle className="text-2xl font-bold text-
-
