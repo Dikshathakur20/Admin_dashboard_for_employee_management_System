@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function NewPassword() {
-  const [searchParams] = useSearchParams();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [tokenValid, setTokenValid] = useState(false);
   const [password, setPassword] = useState("");
@@ -31,12 +30,13 @@ export default function NewPassword() {
   const { toast } = useToast();
 
   // -------------------------
-  // Extract access_token from URL
+  // Extract access_token from URL hash
   // -------------------------
   useEffect(() => {
-    const token = searchParams.get("access_token");
-    setAccessToken(token);
-  }, [searchParams]);
+    const hash = window.location.hash.substring(1);
+    const tokenFromHash = new URLSearchParams(hash).get("access_token");
+    setAccessToken(tokenFromHash);
+  }, []);
 
   // -------------------------
   // Validate token presence
@@ -57,45 +57,55 @@ export default function NewPassword() {
   }, [accessToken, navigate, toast]);
 
   // -------------------------
-  // Validate Form
+  // Validate form fields
   // -------------------------
   const validateForm = () => {
     const newErrors: { password?: string; confirmPassword?: string } = {};
     if (!password) newErrors.password = "Password is required";
-    else if (password.length < 8) newErrors.password = "Password must be at least 8 characters";
+    else if (password.length < 8)
+      newErrors.password = "Password must be at least 8 characters";
 
     if (!confirmPassword) newErrors.confirmPassword = "Please confirm your password";
-    else if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
+    else if (password !== confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   // -------------------------
-  // Handle Password Reset
+  // Handle password reset
   // -------------------------
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log("✅ handleSubmit triggered");
-    alert("Hello from handleSubmit!");
-
-    // Uncomment below once you're ready for Supabase logic:
-    /*
+    alert("hello");
+    console.log("Access Token:", accessToken);
+    console.log("Password:", password);
+    console.log("Confirm Password:", confirmPassword);
     if (!validateForm()) return;
     if (!accessToken) return;
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password }, { accessToken });
-      if (error) throw error;
+      // 1️⃣ Establish a temporary session using the recovery token
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: accessToken, // required temporarily for SDK
+      });
+      if (sessionError) throw sessionError;
 
+      // 2️⃣ Update password now that session exists
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+
+      // 3️⃣ Success
       setIsSubmitted(true);
       toast({
         title: "Success",
         description: "Password has been reset successfully! You can now log in.",
       });
     } catch (error: any) {
+      console.log("Password reset error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to reset password",
@@ -104,11 +114,10 @@ export default function NewPassword() {
     } finally {
       setLoading(false);
     }
-    */
   };
 
   // -------------------------
-  // Render invalid token screen
+  // Render invalid token
   // -------------------------
   if (!tokenValid) {
     return (
@@ -169,11 +178,11 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
-<<<<<<< HEAD
+
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-=======
+
                     {showPassword ? <EyeOff size={6} /> : <Eye size={6} />}
->>>>>>> 5deb47e17efbc1b88bfc848702a1ce41b2ff5e68
+
                   </button>
                 </div>
                 {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
@@ -198,11 +207,11 @@ export default function NewPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
                     tabIndex={-1}
                   >
-<<<<<<< HEAD
+
                     {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-=======
+
                     {showConfirmPassword ? <EyeOff size={6} /> : <Eye size={6} />}
->>>>>>> 5deb47e17efbc1b88bfc848702a1ce41b2ff5e68
+
                   </button>
                 </div>
                 {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
@@ -247,3 +256,6 @@ export default function NewPassword() {
     </div>
   );
 }
+
+            <CardTitle className="text-2xl font-bold text-
+
