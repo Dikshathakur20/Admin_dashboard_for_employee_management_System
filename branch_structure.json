@@ -1,0 +1,21 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "forgot-password-feature",
+    "git-checkout--b-forgot-password-feature",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "forgot-password-feature": "main",
+    "git-checkout--b-forgot-password-feature": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "forgot-password-feature",
+    "git-checkout--b-forgot-password-feature",
+    "origin"
+  ]
+}
