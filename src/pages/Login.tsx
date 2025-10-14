@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -169,7 +170,26 @@ const Login = () => {
               <Label>Email</Label>
               <Input type="email" value={emailOrUsername} onChange={(e) => setEmailOrUsername(e.target.value)} required />
               <Label>Password</Label>
-              <Input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
+              
+
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10" // add padding-right to avoid overlap with the icon
+                  placeholder="Enter your password"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               <div className="flex items-center justify-center mt-6">
                 <Button type="submit" disabled={loading} className="w-64 bg-[#001F7A] text-white">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}
@@ -184,7 +204,25 @@ const Login = () => {
               <Label>Email</Label>
               <Input type="email" value={emailOrUsername} onChange={(e) => setEmailOrUsername(e.target.value)} required />
               <Label>Password</Label>
-              <Input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pr-10" // add padding-right to avoid overlap with the icon
+                      placeholder="Enter your password"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+
               <div className="flex items-center justify-center mt-6">
                 <Button type="submit" disabled={loading} className="w-64 bg-[#001F7A] text-white">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
