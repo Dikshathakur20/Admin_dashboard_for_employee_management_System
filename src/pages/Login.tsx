@@ -155,7 +155,27 @@ const Login = () => {
           {showReset ? (
             <form onSubmit={handleResetPassword}>
               <Label>Email</Label>
-              <Input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} required />
+              
+
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10" // add padding-right to avoid overlap with the icon
+                  placeholder="Enter your password"
+                />
+              
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={10} /> : <Eye size={10} />}
+                </button>
+              </div>
+
               <div className="flex items-center justify-center mt-4">
                 <Button type="submit" disabled={loading} className="w-64 bg-[#001F7A] text-white">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Email'}
@@ -187,7 +207,7 @@ const Login = () => {
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={10} /> : <Eye size={10} />}
                 </button>
               </div>
               <div className="flex items-center justify-center mt-6">
@@ -219,7 +239,7 @@ const Login = () => {
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      {showPassword ? <EyeOff size={10} /> : <Eye size={10} />}
                     </button>
                   </div>
 
