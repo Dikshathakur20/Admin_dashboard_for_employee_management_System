@@ -1,48 +1,38 @@
-// src/contexts/LoginContext.tsx
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface AdminUser {
+  id: string;
+  email: string;
+  user_name: string;
+  role: string;
+}
+
 interface LoginContextType {
-  user: User | null;
-  session: Session | null;
+  user: AdminUser | null;
   loading: boolean;
-  signUp: (email: string, password: string, userName: string) => Promise<{ error: any; needsConfirmation?: boolean; message?: string }>;
+  signUp: (email: string, password: string, userName: string) => Promise<{ error: any; message?: string }>;
   login: (emailOrUsername: string, password: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
 }
 
 const LoginContext = createContext<LoginContextType | undefined>(undefined);
 
-// Hook for accessing login context
 export const useLogin = () => {
   const context = useContext(LoginContext);
   if (!context) throw new Error('useLogin must be used within a LoginProvider');
   return context;
 };
 
-// Provider
 export const LoginProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Load user from localStorage on mount
   useEffect(() => {
-    // Listen to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    const storedUser = localStorage.getItem('admin_session');
+    if (storedUser) setUser(JSON.parse(storedUser));
+    setLoading(false);
   }, []);
 
   // ------------------------
@@ -50,93 +40,63 @@ export const LoginProvider = ({ children }: { children: ReactNode }) => {
   // ------------------------
   const signUp = async (email: string, password: string, userName: string) => {
     try {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return { error: { message: 'Please enter a valid email address' } };
-      }
-
-      const redirectUrl = `${window.location.origin}/login`; // redirect to login after confirmation
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error } = await supabase.from('tbladmins').insert({
         email: email.trim().toLowerCase(),
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: { user_name: userName },
-        },
+        password, // hash in production!
+        user_name: userName,
+        role: 'admin',
       });
 
-      if (authError) return { error: authError };
-
-      // Optional: insert admin record
-      if (authData.user) {
-        try {
-          await supabase.from('tbladmins').insert({
-            email: email.trim().toLowerCase(),
-            password, // hash in production!
-            user_name: userName,
-          });
-        } catch (err: any) {
-          if (!err.message?.includes('duplicate')) console.warn('Admin record creation warning:', err);
-        }
-      }
-
-      if (authData.user && !authData.session) {
-        return { error: null, needsConfirmation: true, message: '✅ Signup successful! Check your email to login.' };
-      }
-
-      if (authData.user && authData.session) {
-        setUser(authData.user); // user is logged in immediately
-        return { error: null, message: '🎉 Account created and logged in successfully!' };
-      }
-
-      return { error: null, message: 'Account setup completed!' };
-    } catch (error: any) {
-      return { error: { message: error.message || 'Unexpected error during signup' } };
+      return { error };
+    } catch (err: any) {
+      return { error: { message: err.message || 'Signup failed' } };
     }
   };
 
   // ------------------------
-  // Login (Sign In)
+  // Login
   // ------------------------
   const login = async (emailOrUsername: string, password: string) => {
     try {
-      let email = emailOrUsername.trim();
+      let query = supabase.from('tbladmins').select('id, email, user_name, password, role');
 
-      // If username is provided instead of email
-      if (!email.includes('@')) {
-        const { data: adminData, error: adminError } = await supabase
-          .from('tbladmins')
-          .select('email')
-          .eq('user_name', email)
-          .single();
+      if (emailOrUsername.includes('@')) {
+        query = query.eq('email', emailOrUsername.toLowerCase());
+      } else {
+        query = query.eq('user_name', emailOrUsername);
+      }
 
-        if (adminError || !adminData) {
-          return { error: { message: 'Username not found. Use your email or correct username.' } };
-        }
-        email = adminData.email;
-      } else email = email.toLowerCase();
+      const { data: adminData, error } = await query.maybeSingle();
+      if (error || !adminData) return { error: { message: 'Admin not found' } };
+      if (adminData.password !== password) return { error: { message: 'Incorrect password' } };
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return { error };
+      // ✅ Update context and localStorage
+      const adminUser: AdminUser = {
+        id: adminData.id,
+        email: adminData.email,
+        user_name: adminData.user_name,
+        role: adminData.role,
+      };
+      setUser(adminUser);
+      localStorage.setItem('admin_session', JSON.stringify(adminUser));
 
-      setUser(data.user ?? null);
-      setSession(data.session ?? null);
       return { error: null };
-    } catch (error: any) {
-      return { error: { message: error.message || 'Unexpected error during login' } };
+    } catch (err: any) {
+      return { error: { message: err.message || 'Login failed' } };
     }
   };
 
   // ------------------------
-  // Logout (Sign Out)
+  // Logout
   // ------------------------
   const logout = async () => {
     setUser(null);
-    setSession(null);
-    await supabase.auth.signOut();
+    localStorage.removeItem('admin_session');
   };
 
-  const value: LoginContextType = { user, session, loading, signUp, login, logout };
-
-  return <LoginContext.Provider value={value}>{children}</LoginContext.Provider>;
+  return (
+    <LoginContext.Provider value={{ user, loading, signUp, login, logout }}>
+      {children}
+    </LoginContext.Provider>
+  );
 };
