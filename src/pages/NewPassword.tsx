@@ -131,7 +131,7 @@ export default function NewPassword(): JSX.Element {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-2 text-sm text-gray-500"
+                className="absolute right-3 top-1.5 px-3 py-1 text-base font-medium text-gray-600 hover:text-gray-800 transition"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
