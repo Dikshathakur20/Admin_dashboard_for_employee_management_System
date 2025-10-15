@@ -29,200 +29,193 @@ interface Department {
   department_name: string;
 }
 
-interface Employee {
-  employee_id: number;
-  designation_id: number | null;
-}
-
-type SortOption = 'name-asc' | 'name-desc' | 'id-asc' | 'id-desc';
-
 const Designations = () => {
   const { user } = useLogin();
+  const { toast } = useToast();
+
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectionLoading, setSelectionLoading] = useState(false);
   const [editingDesignation, setEditingDesignation] = useState<Designation | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const { toast } = useToast();
-  const [sortOption, setSortOption] = useState<SortOption>('id-desc');
+  const [sortOption, setSortOption] = useState<'id-asc' | 'id-desc' | 'name-asc' | 'name-desc'>('id-desc');
 
-  // Infinite scroll states
-  const [visibleCount, setVisibleCount] = useState(10);
+  // Infinite scroll
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const pageSize = 10;
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const departmentFilter = params.get("department");
+  const departmentFilter = params.get('department');
   const departmentId = departmentFilter ? Number(departmentFilter) : null;
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Fetch data
-  const fetchDesignations = async () => {
+  // Fetch designations
+  const fetchDesignations = async (pageNum = 1) => {
     setLoading(true);
     try {
-      const [desRes, deptRes, empRes] = await Promise.all([
-        supabase.from<Designation>('tbldesignations').select('*'),
-        supabase.from<Department>('tbldepartments').select('*').order('department_name'),
-        supabase.from<Employee>('tblemployees').select('employee_id, designation_id')
-      ]);
+      const from = (pageNum - 1) * pageSize;
+      const to = pageNum * pageSize - 1;
 
-      if (desRes.error) throw desRes.error;
-      if (deptRes.error) throw deptRes.error;
-      if (empRes.error) throw empRes.error;
+      const { data: desData, error: desError } = await supabase
+        .from('tbldesignations')
+        .select('*')
+        .range(from, to)
+        .order('designation_id', { ascending: sortOption.includes('asc') });
 
-      setDepartments(deptRes.data || []);
+      if (desError) throw desError;
 
-      const desWithCount: Designation[] = (desRes.data || []).map(des => ({
-        ...des,
-        total_employees: empRes.data?.filter(e => e.designation_id === des.designation_id).length || 0
+      const deptIds = desData.map(d => d.department_id).filter(Boolean) as number[];
+
+      const { data: deptData } = await supabase
+        .from('tbldepartments')
+        .select('*')
+        .in('department_id', deptIds);
+
+      const { data: empData } = await supabase
+        .from('tblemployees')
+        .select('employee_id, designation_id')
+        .in('designation_id', desData.map(d => d.designation_id));
+
+      const enriched = desData.map(d => ({
+        ...d,
+        total_employees: empData?.filter(e => e.designation_id === d.designation_id).length || 0,
       }));
 
-      setDesignations(desWithCount);
+      setDepartments(deptData || []);
+      setDesignations(prev => pageNum === 1 ? enriched : [...prev, ...enriched]);
+      if (enriched.length < pageSize) setHasMore(false);
     } catch (err) {
       console.error(err);
       toast({
-        title: "Data Loading Issue",
-        description: "Unable to fetch designation information",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Unable to fetch designations',
+        variant: 'destructive',
       });
+      setHasMore(false);
     } finally {
       setLoading(false);
+      setSelectionLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDesignations();
-  }, []);
-
-  const handleDelete = async (designationId: number) => {
-    try {
-      const { count, error: countError } = await supabase
-        .from("tblemployees")
-        .select("employee_id", { count: "exact", head: true })
-        .eq("designation_id", designationId);
-
-      if (countError) throw countError;
-
-      if (count && count > 0) {
-        toast({
-          title: "Cannot delete",
-          description: `This designation has ${count} active employee(s). Reassign them first.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!window.confirm("Are you sure you want to remove this designation?")) return;
-
-      const { error } = await supabase
-        .from("tbldesignations")
-        .delete()
-        .eq("designation_id", designationId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Designation removed successfully",
-      });
-
-      fetchDesignations();
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Error",
-        description: "Something went wrong while deleting designation.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getDepartmentName = (deptId: number | null) => {
-    if (!deptId) return 'Not Assigned';
-    const dept = departments.find(d => d.department_id === deptId);
-    return dept?.department_name || 'Unknown';
-  };
-
-  // Filtering & sorting
-  const filteredDesignations = designations
-    .filter(d => d.designation_title.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter(d => departmentId ? d.department_id === departmentId : true);
-
-  const sortedDesignations = [...filteredDesignations].sort((a, b) => {
-    switch (sortOption) {
-      case 'name-asc': return a.designation_title.toLowerCase().localeCompare(b.designation_title.toLowerCase());
-      case 'name-desc': return b.designation_title.toLowerCase().localeCompare(a.designation_title.toLowerCase());
-      case 'id-asc': return a.designation_id - b.designation_id;
-      case 'id-desc': return b.designation_id - a.designation_id;
-      default: return 0;
-    }
-  });
+    fetchDesignations(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount(prev => Math.min(prev + 10, sortedDesignations.length));
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          setPage(prev => prev + 1);
         }
       },
       { threshold: 1 }
     );
-
-    const currentLoader = loaderRef.current;
-    if (currentLoader) observer.observe(currentLoader);
-
+    if (loaderRef.current) observer.observe(loaderRef.current);
     return () => {
-      if (currentLoader) observer.unobserve(currentLoader);
-      observer.disconnect();
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
     };
-  }, [sortedDesignations.length]);
+  }, [hasMore, loading]);
 
-  const visibleDesignations = sortedDesignations.slice(0, visibleCount);
+  const handleDelete = async (id: number) => {
+    try {
+      const { count } = await supabase
+        .from('tblemployees')
+        .select('employee_id', { count: 'exact', head: true })
+        .eq('designation_id', id);
 
-  if (loading) return <div className="flex justify-center p-8">Loading designations...</div>;
+      if (count && count > 0) {
+        toast({
+          title: 'Cannot delete',
+          description: `This designation has ${count} active employee(s). Reassign them first.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!confirm('Are you sure you want to delete this designation?')) return;
+
+      const { error } = await supabase
+        .from('tbldesignations')
+        .delete()
+        .eq('designation_id', id);
+
+      if (error) throw error;
+
+      toast({ title: 'Deleted', description: 'Designation removed successfully.' });
+
+      setDesignations([]);
+      setPage(1);
+      setHasMore(true);
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Error',
+        description: 'Something went wrong while deleting designation.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const filtered = designations
+    .filter(d => d.designation_title.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(d => departmentId ? d.department_id === departmentId : true);
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortOption === 'id-asc') return a.designation_id - b.designation_id;
+    if (sortOption === 'id-desc') return b.designation_id - a.designation_id;
+    if (sortOption === 'name-asc') return a.designation_title.localeCompare(b.designation_title);
+    if (sortOption === 'name-desc') return b.designation_title.localeCompare(a.designation_title);
+    return 0;
+  });
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-2">
-        <Card className="w-full border-0 shadow-none bg-transparent">
+    <div className="min-h-screen flex flex-col bg-background">
+      <main className="container mx-auto px-4 py-2 flex-1 flex flex-col">
+        <Card className="w-full border-0 shadow-none bg-transparent flex-1 flex flex-col">
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <CardTitle className="text-2xl font-bold">
-                {departmentId
-                  ? `Designation : ${getDepartmentName(departmentId)} Department`
-                  : "Designations"}
+                {departmentId ? `Designations : ${departments.find(d => d.department_id === departmentId)?.department_name}` : 'Designations'}
               </CardTitle>
-
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
                   <Input
                     placeholder="Search designation"
                     value={searchTerm}
-                    onChange={e => { setSearchTerm(e.target.value); setVisibleCount(10); }}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setSelectionLoading(true);
+                      setPage(1);
+                      setHasMore(true);
+                    }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
-
-                <div className="flex items-center gap-2" title="Add designation">
+                <div className="flex items-center gap-2">
                   <Button onClick={() => setShowNewDialog(true)} className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
                     <Plus className="h-4 w-4 mr-2" /> Add
                   </Button>
-
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
+                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
                         Sort <ChevronDown className="ml-2 h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
-                      <DropdownMenuItem onClick={() => setSortOption("name-asc")}>Name A - Z</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("name-desc")}>Name Z - A</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-asc")}>Old → New</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOption("id-desc")}>New → Old</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption('name-asc')}>Name A - Z</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption('name-desc')}>Name Z - A</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption('id-asc')}>Old → New</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOption('id-desc')}>New → Old</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -230,87 +223,61 @@ const Designations = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="px-0">
-            {departmentId && (
-              <div className="mb-4">
-                <Button
-                  onClick={() => window.location.href = "/designations"}
-                  title="Restore Designation"
-                  className="bg-blue-600 text-white hover:bg-blue-800"
-                >
-                  All designations
-                </Button>
+          <CardContent className="px-0 flex-1 flex flex-col overflow-hidden relative">
+            {selectionLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50">
+                Loading...
               </div>
             )}
-
-            <div className="border rounded-lg overflow-hidden">
-              <Table className="table-auto">
+            <div className="border rounded-lg overflow-auto flex-1">
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="font-bold">Designation</TableHead>
                     <TableHead className="font-bold">Department</TableHead>
                     <TableHead className="font-bold text-center">Active Employees</TableHead>
-                    <TableHead className="font-bold text-center">Actions</TableHead>
+                    <TableHead className="font-bold text-end">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
-                  {visibleDesignations.map(designation => (
-                    <TableRow key={designation.designation_id}>
-                      <TableCell className="font-medium">{designation.designation_title}</TableCell>
-                      <TableCell>{getDepartmentName(designation.department_id)}</TableCell>
+                  {sorted.map(d => (
+                    <TableRow key={d.designation_id}>
+                      <TableCell>{d.designation_title}</TableCell>
+                      <TableCell>{departments.find(dep => dep.department_id === d.department_id)?.department_name || 'Not Assigned'}</TableCell>
                       <TableCell className="text-center">
-                        {designation.total_employees && designation.total_employees > 0 ? (
-                          <Link
-                            to={`/employees?designation=${designation.designation_id}`}
-                            className="text-gray-900 hover:text-blue-900 hover:underline transition-colors duration-200"
-                          >
-                            {designation.total_employees}
+                        {d.total_employees! > 0 ? (
+                          <Link to={`/employees?designation=${d.designation_id}`} className="text-gray-900 hover:text-blue-900 hover:underline">
+                            {d.total_employees}
                           </Link>
-                        ) : (
-                          <span>0</span>
-                        )}
+                        ) : <span>0</span>}
                       </TableCell>
-
-                      <TableCell>
-                        <div className="flex justify-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            title="Edit"
-                            className="bg-blue-900 text-white hover:bg-blue-700"
-                            onClick={() => setEditingDesignation(designation)}
-                          >
+                      <TableCell className="text-center">
+                        <div className="flex justify-end space-x-3">
+                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700" onClick={() => setEditingDesignation(d)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            title="Delete"
-                            className="bg-blue-900 text-white hover:bg-blue-700"
-                            onClick={() => handleDelete(designation.designation_id)}
-                          >
+                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700" onClick={() => handleDelete(d.designation_id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {!loading && sorted.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-3 text-muted-foreground">
+                        {searchTerm ? 'No designations match your search.' : 'No designations found.'}
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
 
-            {visibleDesignations.length === 0 && (
-              <div className="text-center p-8 text-muted-foreground">
-                {searchTerm ? 'No designations found matching your search.' : 'No designations found.'}
-              </div>
-            )}
-
-            {visibleCount < sortedDesignations.length && (
-              <div ref={loaderRef} className="text-center py-4 text-gray-600 text-sm">
-                Loading more...
-              </div>
-            )}
+            {/* Footer loader */}
+            <div ref={loaderRef} className="sticky bottom-0 bg-background py-2 text-center text-sm text-gray-600">
+              {loading ? 'Loading more designations...' : hasMore ? 'Scroll down to load more' : 'No more designations'}
+            </div>
           </CardContent>
         </Card>
       </main>
@@ -319,15 +286,22 @@ const Designations = () => {
         designation={editingDesignation}
         open={!!editingDesignation}
         onOpenChange={(open) => !open && setEditingDesignation(null)}
-        onSuccess={fetchDesignations}
+        onSuccess={() => {
+          setDesignations([]);
+          setPage(1);
+          setHasMore(true);
+        }}
         departments={departments}
       />
-
       <NewDesignationDialog
         open={showNewDialog}
         onOpenChange={setShowNewDialog}
-        onSuccess={fetchDesignations}
-        departments={departments}
+        onSuccess={() => {
+          setDesignations([]);
+          setPage(1);
+          setHasMore(true);
+        }}
+        departmets={departments}
       />
     </div>
   );
