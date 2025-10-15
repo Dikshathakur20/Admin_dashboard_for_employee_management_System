@@ -156,148 +156,191 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200"
+      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200
+    resize  /* allows resizing */
+    overflow-auto "
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
         <DialogHeader>
           <DialogTitle>Add New Employee</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          {/* First & Last Name */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-             <Input
-  id="firstName"
-  value={firstName}
-  maxLength={25}
-  className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-  onChange={e => {
-    if (/^[A-Za-z\s]*$/.test(e.target.value)) {
-      setFirstName(capitalizeWords(e.target.value));
-    }
-  }}
-  required
-/>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-  id="lastName"
-  value={lastName}
-  maxLength={25}
-  className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-  onChange={e => {
-    if (/^[A-Za-z\s]*$/.test(e.target.value)) {
-      setLastName(capitalizeWords(e.target.value));
-    }
-  }}
-  required
-/>
-            </div>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-2 px-2 py-2">
+  {/* First & Last Name */}
+  <div className="grid grid-cols-2 gap-2">
+    <div>
+      <Label htmlFor="firstName" className="text-sm">First Name</Label>
+      <Input
+        id="firstName"
+        value={firstName}
+        maxLength={25}
+        className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+        onChange={e => {
+          if (/^[A-Za-z\s]*$/.test(e.target.value)) {
+            setFirstName(capitalizeWords(e.target.value));
+          }
+        }}
+        required
+      />
+    </div>
+    <div>
+      <Label htmlFor="lastName" className="text-sm">Last Name</Label>
+      <Input
+        id="lastName"
+        value={lastName}
+        maxLength={25}
+        className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+        onChange={e => {
+          if (/^[A-Za-z\s]*$/.test(e.target.value)) {
+            setLastName(capitalizeWords(e.target.value));
+          }
+        }}
+        required
+      />
+    </div>
+  </div>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-              onChange={e => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
-              onPaste={e => e.preventDefault()}
-              required
-            />
-            {emailExists && <p className="text-sm text-orange-600">{emailExists}</p>}
-          </div>
+  {/* Email */}
+  <div>
+    <Label htmlFor="email" className="text-sm">Email</Label>
+    <Input
+      id="email"
+      type="email"
+      value={email}
+      className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+      onChange={e => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
+      onPaste={e => e.preventDefault()}
+      required
+    />
+    {emailExists && <p className="text-xs text-orange-600 mt-0.5">{emailExists}</p>}
+  </div>
 
-          {/* Hire Date */}
-          <div className="space-y-2">
-            <Label htmlFor="hireDate">Hire Date</Label>
-            <Input
-              id="hireDate"
-              type="date"
-              value={hireDate}
-               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-              onChange={e => setHireDate(e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-              min="2000-01-01"
-              required
-            />
-          </div>
+  {/* Hire Date */}
+  <div>
+    <Label htmlFor="hireDate" className="text-sm">Hire Date</Label>
+    <Input
+      id="hireDate"
+      type="date"
+      value={hireDate}
+      className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+      onChange={e => setHireDate(e.target.value)}
+      max={new Date().toISOString().split("T")[0]}
+      min="2000-01-01"
+      required
+    />
+  </div>
 
-          {/* Salary */}
-          <div className="space-y-2">
-            <Label htmlFor="salary">Salary</Label>
-            <Input
-              id="salary"
-              type="number"
-              step="0.01"
-              value={salary}
-               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-              placeholder="Enter salary (max 10,000,000)"
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
-                else if (e.target.value === '') setSalary('');
-              }}
-              required
-            />
-          </div>
+  {/* Salary */}
+  <div>
+    <Label htmlFor="salary" className="text-sm">Salary</Label>
+    <Input
+      id="salary"
+      type="number"
+      step="0.01"
+      value={salary}
+      placeholder="Max ₹10,000,000"
+      className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+      onChange={(e) => {
+        const value = parseFloat(e.target.value);
+        if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
+        else if (e.target.value === '') setSalary('');
+      }}
+      required
+    />
+  </div>
 
-          {/* Department & Designation */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="department">Department *</Label>
-              <Select value={departmentId} onValueChange={(val) => { setDepartmentId(val); setDesignationId(''); }} required>
-                <SelectTrigger className= "w-full bg-blue-900 text-white hover:bg-blue-700">
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {departments.map(dept => (
-                    <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
-                      {dept.department_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+  {/* Department & Designation */}
+  <div className="grid grid-cols-2 gap-2">
+    <div>
+      <Label htmlFor="department" className="text-sm">Department *</Label>
+      <Select value={departmentId} onValueChange={(val) => { setDepartmentId(val); setDesignationId(''); }} required>
+        <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
+          <SelectValue placeholder="Select department" />
+        </SelectTrigger>
+        <SelectContent className="z-50 bg-white shadow-lg">
+          {departments.map(dept => (
+            <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
+              {dept.department_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="designation">Designation *</Label>
-              <Select value={designationId} onValueChange={setDesignationId} required disabled={!departmentId || filteredDesignations.length === 0}>
-                <SelectTrigger className= "w-full bg-blue-900 text-white hover:bg-blue-700">
-                  <SelectValue placeholder="Select designation" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {filteredDesignations.map(des => (
-                    <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
-                      {des.designation_title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+    <div>
+      <Label htmlFor="designation" className="text-sm">Designation *</Label>
+      <Select value={designationId} onValueChange={setDesignationId} required disabled={!departmentId || filteredDesignations.length === 0}>
+        <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
+          <SelectValue placeholder="Select designation" />
+        </SelectTrigger>
+        <SelectContent className="z-50 bg-white shadow-lg">
+          {filteredDesignations.map(des => (
+            <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
+              {des.designation_title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
 
-          {/* Profile Picture */}
-          <div className="space-y-2">
-            <Label htmlFor="profilePicture">Profile Picture</Label>
-            <Input id="profilePicture" type="file" accept="image/*" onChange={e => setProfilePicture(e.target.files?.[0] || null)} />
-          </div>
+  {/* Profile Picture */}
+ <div>
+  <Label htmlFor="profilePicture" className="text-sm">
+    Profile Picture
+  </Label>
 
-          <DialogFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50"   onClick={() => { onOpenChange(false); resetForm(); }} >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}  className="bg-blue-900 text-white hover:bg-blue-700">
-              
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Add
-            </Button>
-          </DialogFooter>
-        </form>
+  <div className="flex items-center gap-2">
+    <Input
+      id="profilePicture"
+      type="file"
+      accept="image/*"
+      className="h-9"
+      onChange={e => setProfilePicture(e.target.files?.[0] || null)}
+    />
+
+    {profilePicture && (
+      <button
+        type="button"
+        onClick={() => {
+          setProfilePicture(null);
+          // Clear file input value
+          document.getElementById("profilePicture").value = "";
+        }}
+        className="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+      >
+        Deselect
+      </button>
+    )}
+  </div>
+
+  {profilePicture && (
+    <p className="text-xs text-gray-500 mt-1">
+      Selected: {profilePicture.name}
+    </p>
+  )}
+</div>
+
+  {/* Buttons */}
+  <DialogFooter className="mt-2 flex justify-end gap-2">
+    <Button
+      type="button"
+      variant="outline"
+      className="h-9 bg-white text-blue-900 border border-blue-900 hover:bg-blue-50"
+      onClick={() => { onOpenChange(false); resetForm(); }}
+    >
+      Cancel
+    </Button>
+    <Button
+      type="submit"
+      disabled={loading}
+      className="h-9 bg-blue-900 text-white hover:bg-blue-700"
+    >
+      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      Add
+    </Button>
+  </DialogFooter>
+</form>
+
       </DialogContent>
     </Dialog>
   );
