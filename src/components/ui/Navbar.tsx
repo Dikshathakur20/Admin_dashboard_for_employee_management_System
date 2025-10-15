@@ -43,14 +43,14 @@ const Navbar: React.FC = () => {
           className="bg-card border-b"
           style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
         >
-          <div className="container mx-auto px-4 py-1 flex items-center justify-between">
+          <div className="w-full max-w-full  px-4 py-1 flex items-center justify-between">
             {/* Left: Logo + Links */}
             <div className="flex items-center space-x-6">
               {/* Logo (not clickable) */}
               <img
                 src="/logo.png"
                 alt="Company Logo"
-                className="h-10 w-auto"
+                className="h-12 w-auto"
               />
 
               {/* Navigation Links */}
