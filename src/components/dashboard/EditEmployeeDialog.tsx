@@ -154,176 +154,201 @@ export const EditEmployeeDialog = ({
   const filteredDesignations = designations.filter(
     (d) => d.department_id === Number(departmentId)
   );
+  const capitalizeWords = (str: string) => {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+};
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200"
+        className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200  
+          resize  /* allows resizing */
+    overflow-auto  /* allows scroll inside when smaller than content */
+        "
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
       >
         <DialogHeader>
           <DialogTitle>Edit Employee</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                maxLength={25}
-                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={e => /^[A-Za-z\s]*$/.test(e.target.value) && setFirstName(capitalizeWords(e.target.value))}
-                
-                onPaste={(e) => e.preventDefault()}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                value={lastName}
-                maxLength={25}
-                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={e => /^[A-Za-z\s]*$/.test(e.target.value) && setFirstName(capitalizeWords(e.target.value))
-                }
-                onPaste={(e) => e.preventDefault()}
-                required
-              />
-            </div>
-          </div>
+        <form onSubmit={handleSubmit} className="p-4 space-y-2">
+  <div className="grid grid-cols-2 gap-2">
+    <div>
+      <Label htmlFor="firstName">First Name</Label>
+      <Input
+  id="firstName"
+  value={firstName}
+  maxLength={25}
+  className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+  onChange={(e) => {
+    const value = e.target.value;
+    if (/^[A-Za-z\s]*$/.test(value)) {
+      setFirstName(capitalizeWords(value));
+    }
+  }}
+  onPaste={(e) => e.preventDefault()}
+  required
+/>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-              onChange={(e) => setEmail(e.target.value.toLowerCase())}
-              onPaste={(e) => e.preventDefault()}
-              required
-            />
-          </div>
+    </div>
+    <div>
+      <Label htmlFor="lastName">Last Name</Label>
+      <Input
+        id="lastName"
+        value={lastName}
+        maxLength={25}
+        className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+        onChange={e => /^[A-Za-z\s]*$/.test(e.target.value) && setLastName(capitalizeWords(e.target.value))}
+        onPaste={(e) => e.preventDefault()}
+        required
+      />
+    </div>
+  </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="hireDate">Hire Date</Label>
-            <Input
-              id="hireDate"
-              type="date"
-              value={hireDate}
-              className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-              onChange={(e) => setHireDate(e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-              min="2000-01-01"
-              required
-            />
-          </div>
+  <div>
+    <Label htmlFor="email">Email *</Label>
+    <Input
+      id="email"
+      type="email"
+      value={email}
+      className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+      onChange={(e) => setEmail(e.target.value.toLowerCase())}
+      onPaste={(e) => e.preventDefault()}
+      required
+    />
+  </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="salary">Salary</Label>
-            <Input
-              id="salary"
-              type="number"
-              step="0.01"
-              value={salary}
-              placeholder="Enter salary (max 10,000,000)"
-              required
-              className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
-                else if (e.target.value === '') setSalary('');
-              }}
-            />
-          </div>
+  <div>
+    <Label htmlFor="hireDate">Hire Date</Label>
+    <Input
+      id="hireDate"
+      type="date"
+      value={hireDate}
+      className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+      onChange={(e) => setHireDate(e.target.value)}
+      max={new Date().toISOString().split("T")[0]}
+      min="2000-01-01"
+      required
+    />
+  </div>
 
-          <div className="grid grid-cols-2 gap-4 relative z-10">
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Select
-                value={departmentId}
-                onValueChange={(val) => {
-                  setDepartmentId(val);
-                  if (!filteredDesignations.find(d => d.designation_id === parseInt(designationId || '0'))) {
-                    setDesignationId('');
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {departments.map((dept) => (
-                    <SelectItem
-                      key={dept.department_id}
-                      value={dept.department_id.toString()}
-                      className="hover:bg-blue-100 focus:bg-blue-200 cursor-pointer"
-                    >
-                      {dept.department_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+  <div>
+    <Label htmlFor="salary">Salary</Label>
+    <Input
+      id="salary"
+      type="number"
+      step="0.01"
+      value={salary}
+      placeholder="Enter salary (max 10,000,000)"
+      className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+      onChange={(e) => {
+        const value = parseFloat(e.target.value);
+        if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
+        else if (e.target.value === '') setSalary('');
+      }}
+    />
+  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="designation">Designation</Label>
-              <Select
-                value={designationId || ''}
-                onValueChange={setDesignationId}
-                disabled={!departmentId || filteredDesignations.length === 0}
-              >
-                <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
-                  <SelectValue placeholder="Select designation" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {filteredDesignations.map((des) => (
-                    <SelectItem
-                      key={des.designation_id}
-                      value={des.designation_id.toString()}
-                      className="hover:bg-blue-100 focus:bg-blue-200 cursor-pointer"
-                    >
-                      {des.designation_title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+  <div className="grid grid-cols-2 gap-2">
+    <div>
+      <Label htmlFor="department">Department</Label>
+      <Select
+        value={departmentId}
+        onValueChange={(val) => {
+          setDepartmentId(val);
+          if (!filteredDesignations.find(d => d.designation_id === parseInt(designationId || '0'))) {
+            setDesignationId('');
+          }
+        }}
+      >
+        <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+          <SelectValue placeholder="Select department" />
+        </SelectTrigger>
+        <SelectContent className="z-50 bg-white shadow-lg">
+          {departments.map((dept) => (
+            <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
+              {dept.department_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="profilePicture">Profile Picture</Label>
-            <Input
-              id="profilePicture"
-              type="file"
-              accept="image/*"
-              onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
-            />
-          </div>
+    <div>
+      <Label htmlFor="designation">Designation</Label>
+      <Select
+        value={designationId || ''}
+        onValueChange={setDesignationId}
+        disabled={!departmentId || filteredDesignations.length === 0}
+      >
+        <SelectTrigger className="w-full bg-blue-900 text-white hover:bg-blue-700">
+          <SelectValue placeholder="Select designation" />
+        </SelectTrigger>
+        <SelectContent className="z-50 bg-white shadow-lg">
+          {filteredDesignations.map((des) => (
+            <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
+              {des.designation_title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
 
-          <DialogFooter className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50"
-            >
-              Cancel
-            </Button>
+ <div>
+  <Label htmlFor="profilePicture" className="text-sm">
+    Profile Picture
+  </Label>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-900 text-white hover:bg-blue-700"
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Update Employee
-            </Button>
-          </DialogFooter>
-        </form>
+  <div className="flex items-center gap-2">
+    <Input
+      id="profilePicture"
+      type="file"
+      accept="image/*"
+      className="h-9"
+      onChange={e => setProfilePicture(e.target.files?.[0] || null)}
+    />
+
+    {profilePicture && (
+      <button
+        type="button"
+        onClick={() => {
+          setProfilePicture(null);
+          // Clear file input value
+          document.getElementById("profilePicture").value = "";
+        }}
+        className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Deselect
+      </button>
+    )}
+  </div>
+
+  {profilePicture && (
+    <p className="text-xs text-gray-500 mt-1">
+      Selected: {profilePicture.name}
+    </p>
+  )}
+</div>
+
+
+  <DialogFooter className="flex justify-end gap-2">
+    <Button type="button" variant="outline" className="bg-white text-blue-900 border border-blue-900 hover:bg-blue-50" onClick={() => onOpenChange(false)}>
+      Cancel
+    </Button>
+    <Button
+  type="submit"
+  disabled={loading}
+  className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+>
+  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+  Update Employee
+</Button>
+
+  </DialogFooter>
+</form>
+
       </DialogContent>
     </Dialog>
   );
