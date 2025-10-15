@@ -1,3 +1,4 @@
+// src/pages/Employees.tsx
 import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext";
@@ -72,7 +73,7 @@ const Employees = () => {
 
   const [sortOption, setSortOption] = useState<"name-asc" | "name-desc" | "id-asc" | "id-desc">("id-desc");
 
-  // 👇 Infinite Scroll States
+  // Infinite scroll
   const [visibleCount, setVisibleCount] = useState(10);
 
   if (!user) return <Navigate to="/login" replace />;
@@ -81,7 +82,6 @@ const Employees = () => {
     fetchData();
   }, []);
 
-  // Infinite scroll listener
   useEffect(() => {
     const handleScroll = () => {
       if (
@@ -123,45 +123,42 @@ const Employees = () => {
   };
 
   const handleDelete = async (employeeId: number) => {
-  toast({
-    title: "Are you sure you want to remove this employee?",
-    description: (
-      <div className="flex justify-end gap-2 mt-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="bg-blue-600 text-white hover:bg-blue-700 text-white"
-          
-          onClick={async () => {
-            try {
-              const { error } = await supabase
-                .from("tblemployees")
-                .delete()
-                .eq("employee_id", employeeId);
-              if (error) throw error;
-              toast({ title: "Success", description: "Employee removed successfully" });
-              fetchData();
-            } catch (error) {
-              console.error(error);
-              toast({ title: "Removal Issue", description: "Unable to remove employee" });
-            }
-          }}
-        >
-          Confirm
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="bg-gray-300 text-black hover:bg-gray-400"
-          
-        >
-          Cancel
-        </Button>
-      </div>
-    ),
-  });
-};
-
+    toast({
+      title: "Are you sure you want to remove this employee?",
+      description: (
+        <div className="flex justify-end gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-blue-600 text-white hover:bg-blue-700 text-white"
+            onClick={async () => {
+              try {
+                const { error } = await supabase
+                  .from("tblemployees")
+                  .delete()
+                  .eq("employee_id", employeeId);
+                if (error) throw error;
+                toast({ title: "Success", description: "Employee removed successfully" });
+                fetchData();
+              } catch (error) {
+                console.error(error);
+                toast({ title: "Removal Issue", description: "Unable to remove employee" });
+              }
+            }}
+          >
+            Confirm
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-gray-300 text-black hover:bg-gray-400"
+          >
+            Cancel
+          </Button>
+        </div>
+      ),
+    });
+  };
 
   const getDepartmentName = (departmentId: number | null) => {
     if (!departmentId) return "Not Assigned";
@@ -196,33 +193,29 @@ const Employees = () => {
 
   const handleNewEmployee = (newEmp: Employee) => setEmployees((prev) => [newEmp, ...prev]);
 
-  if (loading) return <div className="flex justify-center p-6">Loading employees...</div>;
-
-  const renderProfilePicture = (emp: Employee, size = 40) =>
-    emp.file_data ? (
-      <div className="rounded-full overflow-hidden border border-blue-900" style={{ width: size, height: size }}>
-        <img
-          src={emp.file_data}
-          alt={`${emp.first_name} ${emp.last_name}`}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-      </div>
-    ) : (
-      <div
-        className="rounded-full bg-gray-400 flex items-center justify-center text-white border border-blue-900"
-        style={{ width: size, height: size, fontSize: size * 0.4 }}
-      >
-        {emp.first_name[0]}
-        {emp.last_name[0]}
+  const renderProfilePicture = (emp?: Employee, size = 40) => {
+    if (!emp) return <div className="rounded-full bg-gray-200 h-8 w-8 mx-auto"></div>;
+    if (emp.file_data) {
+      return (
+        <div className="rounded-full overflow-hidden border border-blue-900" style={{ width: size, height: size }}>
+          <img src={emp.file_data} alt={`${emp.first_name} ${emp.last_name}`} className="w-full h-full object-cover" loading="lazy" />
+        </div>
+      );
+    }
+    const firstInitial = emp.first_name?.[0] || "";
+    const lastInitial = emp.last_name?.[0] || "";
+    return (
+      <div className="rounded-full bg-gray-400 flex items-center justify-center text-white border border-blue-900"
+        style={{ width: size, height: size, fontSize: size * 0.4 }}>
+        {firstInitial}{lastInitial}
       </div>
     );
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-2">
         <Card className="w-full border-0 shadow-none bg-transparent">
-          {/* Header */}
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <CardTitle className="text-2xl font-bold">
@@ -236,23 +229,16 @@ const Employees = () => {
                   "Employees"
                 )}
               </CardTitle>
-
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
-                {/* Search bar */}
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
                   <Input
                     placeholder="Search employee"
                     value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setVisibleCount(10); // reset visible count on search
-                    }}
+                    onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(10); }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
                 </div>
-
-                {/* Buttons */}
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={() => setShowNewDialog(true)}
@@ -269,11 +255,8 @@ const Employees = () => {
                         <ChevronDown className="ml-2 h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="bg-white"
-                      style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-                    >
+                    <DropdownMenuContent align="end" className="bg-white"
+                      style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
                       <DropdownMenuItem onClick={() => setSortOption("name-asc")}>Name A - Z</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSortOption("name-desc")}>Name Z - A</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSortOption("id-asc")}>Old → New</DropdownMenuItem>
@@ -285,9 +268,7 @@ const Employees = () => {
             </div>
           </CardHeader>
 
-          {/* Table */}
           <CardContent className="px-0">
-            {/* Restore Button */}
             {(departmentFilter || designationFilter) && (
               <div className="mb-4">
                 <Button
@@ -300,7 +281,14 @@ const Employees = () => {
               </div>
             )}
 
-            <div className="border rounded-2g overflow-hidden">
+            <div className="border rounded-2g overflow-hidden relative">
+              {/* Selection/loading overlay */}
+              {loading && (
+                <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center">
+                  <span className="text-gray-600 text-sm">Loading employees...</span>
+                </div>
+              )}
+
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -315,47 +303,40 @@ const Employees = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleEmployees.length > 0 ? (
-                    visibleEmployees.map((emp) => (
-                      <TableRow key={emp.employee_id}>
-                        <TableCell>{renderProfilePicture(emp, 36)}</TableCell>
-                        <TableCell className="font-medium">{emp.first_name} {emp.last_name}</TableCell>
-                        <TableCell>{emp.email}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{getDepartmentName(emp.department_id)}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{getDesignationTitle(emp.designation_id)}</Badge>
-                        </TableCell>
-                        <TableCell>{new Date(emp.hire_date).toLocaleDateString("en-GB")}</TableCell>
-                        <TableCell>
-                          {emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "Not Set"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
-                              title="View"
-                              onClick={() => setViewingEmployee(emp)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
-                              title="Delete"
-                              onClick={() => handleDelete(emp.employee_id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
+                  {visibleEmployees.map((emp) => (
+                    <TableRow key={emp.employee_id} className="hover:bg-gray-100 cursor-pointer select-none">
+                      <TableCell>{renderProfilePicture(emp, 36)}</TableCell>
+                      <TableCell>{emp.first_name} {emp.last_name}</TableCell>
+                      <TableCell>{emp.email}</TableCell>
+                      <TableCell><Badge variant="secondary">{getDepartmentName(emp.department_id)}</Badge></TableCell>
+                      <TableCell><Badge variant="secondary">{getDesignationTitle(emp.designation_id)}</Badge></TableCell>
+                      <TableCell>{new Date(emp.hire_date).toLocaleDateString("en-GB")}</TableCell>
+                      <TableCell>{emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "Not Set"}</TableCell>
+                      <TableCell>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
+                            onClick={() => setViewingEmployee(emp)}
+                            disabled={loading}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-blue-900 text-white hover:bg-blue-700 h-8 w-8 p-0"
+                            onClick={() => handleDelete(emp.employee_id)}
+                            disabled={loading}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!loading && visibleEmployees.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-3 text-muted-foreground">
                         {searchTerm ? "No employees found matching your search." : "No employees found."}
@@ -365,7 +346,7 @@ const Employees = () => {
                 </TableBody>
               </Table>
             </div>
-            {visibleEmployees.length < sortedEmployees.length && (
+            {visibleEmployees.length < sortedEmployees.length && !loading && (
               <div className="text-center py-4 text-sm text-gray-600">Loading more employees...</div>
             )}
           </CardContent>
@@ -423,20 +404,17 @@ const Employees = () => {
                   )}
                 </div>
                 <div className="mt-4">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
-                  title="Edit Employee"
-                  onClick={() => {
-                    setEditingEmployee(viewingEmployee);
-                    setViewingEmployee(null);
-                  }}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-blue-900 text-white hover:bg-blue-700 h-8 px-3"
+                    title="Edit Employee"
+                    onClick={() => { setEditingEmployee(viewingEmployee); setViewingEmployee(null); }}
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                </div>
               </div>
             </div>
           )}
