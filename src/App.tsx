@@ -18,12 +18,12 @@ import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Departments from "./pages/Departments";
 import Designations from "./pages/Designations";
-import ResetPassword from "./pages/ResetPassword";
 import NewPassword from "./pages/NewPassword";
 
 
 // ✅ Import the hook
 import { useFormNavigation } from "@/hooks/useFormNavigation";
+
 
 const queryClient = new QueryClient();
 
@@ -103,6 +103,7 @@ const AppRoutes = () => (
       <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
       <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
+      
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   </>
