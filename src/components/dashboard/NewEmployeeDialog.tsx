@@ -97,58 +97,72 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (emailExists) {
-      toast({ title: "Email Already Exists", description: emailExists });
-      return;
-    }
-    if (!departmentId || !designationId) {
-      toast({ title: "Missing Selection", description: "Please select both Department and Designation" });
-      return;
-    }
+  e.preventDefault(); // stops page reload on form submit
 
-    const salaryValue = salary ? parseFloat(salary) : 0;
-    if (salaryValue > 10000000) {
-      toast({ title: "Salary Limit Exceeded", description: "Salary cannot exceed ₹10,000,000" });
-      return;
-    }
+  // 1️⃣ Check if email already exists
+  if (emailExists) {
+    toast({ title: "Email Already Exists", description: emailExists });
+    return;
+  }
 
-    setLoading(true);
+  // 2️⃣ Check if department and designation are selected
+  if (!departmentId || !designationId) {
+    toast({
+      title: "Missing Selection",
+      description: "Please select both Department and Designation",
+    });
+    return;
+  }
 
-    try {
-      let fileData: string | null = null;
-      if (profilePicture) fileData = await toBase64(profilePicture);
+  // 3️⃣ Validate salary limit
+  const salaryValue = salary ? parseFloat(salary) : 0;
+  if (salaryValue > 10000000) {
+    toast({
+      title: "Salary Limit Exceeded",
+      description: "Salary cannot exceed ₹10,000,000",
+    });
+    return;
+  }
 
-      const employeeData: any = {
-        first_name: firstName,
-        last_name: lastName,
-        email: email.toLowerCase(),
-        hire_date: hireDate,
-        salary: salary ? parseFloat(salary) : null,
-        department_id: departmentId ? parseInt(departmentId) : null,
-        designation_id: designationId ? parseInt(designationId) : null,
-      };
-      if (fileData) employeeData.file_data = fileData;
+  // 4️⃣ Proceed to add employee (with optional profile picture)
+  setLoading(true);
 
-      const { data, error } = await supabase
-        .from('tblemployees')
-        .insert(employeeData)
-        .select()
-        .single();
-      if (error) throw error;
+  try {
+    let fileData: string | null = null;
+    if (profilePicture) fileData = await toBase64(profilePicture);
 
-      toast({ title: "Success", description: `Employee added successfully.` });
-      if (onEmployeeAdded && data) onEmployeeAdded(data);
+    const employeeData: any = {
+      first_name: firstName,
+      last_name: lastName,
+      email: email.toLowerCase(),
+      hire_date: hireDate,
+      salary: salary ? parseFloat(salary) : null,
+      department_id: departmentId ? parseInt(departmentId) : null,
+      designation_id: designationId ? parseInt(designationId) : null,
+    };
+    if (fileData) employeeData.file_data = fileData;
 
-      resetForm();
-      onOpenChange(false);
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Addition Issue", description: "Unable to add employee" });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { data, error } = await supabase
+      .from("tblemployees")
+      .insert(employeeData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    toast({ title: "Success", description: `Employee added successfully.` });
+    if (onEmployeeAdded && data) onEmployeeAdded(data);
+
+    resetForm();
+    onOpenChange(false);
+  } catch (error) {
+    console.error(error);
+    toast({ title: "Addition Issue", description: "Unable to add employee" });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const filteredDesignations = departmentId
     ? designations.filter(d => d.department_id === parseInt(departmentId))
@@ -284,12 +298,8 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
   </div>
 
   {/* Profile Picture */}
- <div>
-  <Label htmlFor="profilePicture" className="text-sm">
-    Profile Picture
-  </Label>
-
-  <div className="flex items-center gap-2">
+  <div>
+    <Label htmlFor="profilePicture" className="text-sm">Profile Picture</Label>
     <Input
       id="profilePicture"
       type="file"
@@ -297,28 +307,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
       className="h-9"
       onChange={e => setProfilePicture(e.target.files?.[0] || null)}
     />
-
-    {profilePicture && (
-      <button
-        type="button"
-        onClick={() => {
-          setProfilePicture(null);
-          // Clear file input value
-          document.getElementById("profilePicture").value = "";
-        }}
-        className="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-        Deselect
-      </button>
-    )}
   </div>
-
-  {profilePicture && (
-    <p className="text-xs text-gray-500 mt-1">
-      Selected: {profilePicture.name}
-    </p>
-  )}
-</div>
 
   {/* Buttons */}
   <DialogFooter className="mt-2 flex justify-end gap-2">
