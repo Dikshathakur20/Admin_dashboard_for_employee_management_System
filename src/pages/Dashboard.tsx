@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLogin } from "@/contexts/LoginContext";   // ✅ fixed import
 import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+
 
 const Dashboard = () => {
   const { user } = useLogin(); // ✅ correct hook
@@ -12,6 +14,9 @@ const Dashboard = () => {
   const [employeeCount, setEmployeeCount] = useState(0);
   const [departmentCount, setDepartmentCount] = useState(0);
   const [designationCount, setDesignationCount] = useState(0);
+  const [leaveCount, setLeaveCount] = useState(0);
+  const [taskCount, setTaskCount] = useState(0);
+
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -39,6 +44,61 @@ const Dashboard = () => {
     fetchCounts();
   }, []);
 
+  const [requestCount, setRequestCount] = useState(0);
+
+useEffect(() => {
+  const fetchCounts = async () => {
+    try {
+      const { count: reqCount } = await supabase
+        .from("tblpasswordresets")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "Pending");
+
+      setRequestCount(reqCount || 0);
+      // existing counts...
+    } catch (error) {
+      console.error("Error fetching counts:", error);
+    }
+  };
+
+  fetchCounts();
+}, []);
+
+useEffect(() => {
+    const fetchLeaveRequests = async () => {
+      try {
+        const { count: leaveReqCount } = await supabase
+          .from("tblleaverequests")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "Pending");
+
+        setLeaveCount(leaveReqCount || 0);
+      } catch (error) {
+        console.error("Error fetching leave requests:", error);
+      }
+    };
+
+    fetchLeaveRequests();
+  }, []);
+  useEffect(() => {
+  const fetchPendingTasks = async () => {
+    try {
+      const { count } = await supabase
+        .from("tblemployeetasks")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "Pending");
+
+      setTaskCount(count || 0);
+    } catch (error) {
+      console.error("Error fetching task count:", error);
+    }
+  };
+
+  fetchPendingTasks();
+}, []);
+
+
+
   // 🔐 protect dashboard
   if (!user) return <Navigate to="/login" replace />;
 
@@ -61,11 +121,37 @@ const Dashboard = () => {
       subtitle: "Available positions",
       route: "/designations",
     },
+      {
+    title: "Reset Desk",
+    count: requestCount,
+    subtitle: "Pending reset requests",
+    route: "/requests",
+  },
+    {
+      title: "Leave Desk",
+      count: leaveCount,
+      subtitle: "Pending leave tickets",
+      route: "/approve-leave",
+    },
+    {
+  title: "Task Board", // ✅ NEW
+  count: taskCount,
+  subtitle: "Pending employee tasks",
+  route: "/tasks-status",
+  
+},
+
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4">
       <h1 className="text-2xl font-bold mb-6 text-[#001F7A]">Dashboard</h1>
+         <Button
+          onClick={() => navigate("/notification")}
+          className="bg-blue-900 hover:bg-blue-800 text-white shadow-none"
+        >
+          Notifications
+        </Button>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {cards.map((card) => (
