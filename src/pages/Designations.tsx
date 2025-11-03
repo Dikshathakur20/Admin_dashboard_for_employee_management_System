@@ -134,7 +134,7 @@ const Designations = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <main className="container mx-auto px-4 py-2 flex-1 flex flex-col">
+      <main className="px-4 py-2">
         <Card className="w-full border-0 shadow-none bg-transparent flex-1 flex flex-col">
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -229,7 +229,7 @@ const Designations = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
-                    Row per page: {rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
+                    Entries : {rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="bg-white" style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
