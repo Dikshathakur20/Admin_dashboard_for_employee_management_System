@@ -1,15 +1,23 @@
 // src/components/ui/Navbar.tsx
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { LogOut, Users, Building, Briefcase, Home } from "lucide-react";
+import {
+  LogOut,
+  Users,
+  Building,
+  Briefcase,
+  Home,
+  Key,
+  CalendarCheck,
+  ClipboardList,
+  Bell,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLogin } from '@/contexts/LoginContext';
-
-
+import { useLogin } from "@/contexts/LoginContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Navbar: React.FC = () => {
-  const { logout } =useLogin();
+  const { logout } = useLogin();
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
@@ -20,10 +28,12 @@ const Navbar: React.FC = () => {
     "/employees",
     "/departments",
     "/designations",
-    "/view-employees",
+    "/requests",
+    "/approve-leave",
+    "/tasks-status",
+    
   ];
 
-  // Hide Navbar on non-management routes
   if (!managementRoutes.includes(location.pathname)) return null;
 
   const handleSignOut = async () => {
@@ -40,61 +50,118 @@ const Navbar: React.FC = () => {
     <>
       {isOpen && (
         <nav
-          className="bg-card border-b"
+          className="bg-card border-b shadow-sm"
           style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
         >
-          <div className="w-full max-w-full  px-4 py-1 flex items-center justify-between">
+          <div className="w-full px-6 py-2 flex items-center justify-between gap-8">
+
             {/* Left: Logo + Links */}
             <div className="flex items-center space-x-6">
-              {/* Logo (not clickable) */}
-              <img
-                src="/logo.png"
-                alt="Company Logo"
-                className="h-12 w-auto"
-              />
+              {/* Logo */}
+              <img src="/logo.png" alt="Company Logo" className="h-12 w-auto" />
 
               {/* Navigation Links */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 mr-6">
+                {/* Dashboard */}
                 <Link
                   to="/dashboard"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${location.pathname === "/dashboard" 
-                    ? "bg-[#001F7A] text-white" 
-                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
+                    ${
+                      location.pathname === "/dashboard"
+                        ? "bg-[#001F7A] text-white"
+                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <Home className="h-4 w-4" />
                   <span>Home</span>
                 </Link>
+
+                {/* Employees */}
                 <Link
                   to="/employees"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${location.pathname === "/employees" 
-                    ? "bg-[#001F7A] text-white" 
-                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
+                    ${
+                      location.pathname === "/employees"
+                        ? "bg-[#001F7A] text-white"
+                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <Users className="h-4 w-4" />
                   <span>Manage Employees</span>
                 </Link>
+
+                {/* Departments */}
                 <Link
                   to="/departments"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${location.pathname === "/departments" 
-                    ? "bg-[#001F7A] text-white" 
-                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
+                    ${
+                      location.pathname === "/departments"
+                        ? "bg-[#001F7A] text-white"
+                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <Building className="h-4 w-4" />
                   <span>Manage Departments</span>
                 </Link>
+
+                {/* Designations */}
                 <Link
                   to="/designations"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${location.pathname === "/designations" 
-                    ? "bg-[#001F7A] text-white" 
-                    : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"}`}
+                    ${
+                      location.pathname === "/designations"
+                        ? "bg-[#001F7A] text-white"
+                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <Briefcase className="h-4 w-4" />
                   <span>Manage Designations</span>
                 </Link>
+
+                {/* Reset Desk */}
+                <Link
+                  to="/requests"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                    ${
+                      location.pathname === "/requests"
+                        ? "bg-[#001F7A] text-white"
+                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                    }`}
+                >
+                  <Key className="h-4 w-4" />
+                  <span>Reset Desk</span>
+                </Link>
+
+                {/* Leave Desk */}
+                <Link
+                  to="/approve-leave"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                    ${
+                      location.pathname === "/approve-leave"
+                        ? "bg-[#001F7A] text-white"
+                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                    }`}
+                >
+                  <CalendarCheck className="h-4 w-4" />
+                  <span>Leave Desk</span>
+                </Link>
+
+                {/* ✅ TaskBoard */}
+                <Link
+                  to="/tasks-status"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                    ${
+                      location.pathname === "/tasks-status"
+                        ? "bg-[#001F7A] text-white"
+                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                    }`}
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  <span>TaskBoard</span>
+                </Link>
+
+                {/* ✅ Notifications */}
+                
               </div>
             </div>
 
