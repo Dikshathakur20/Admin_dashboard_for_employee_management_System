@@ -1,119 +1,313 @@
 // src/App.tsx
 import { useEffect, useRef } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { LoginProvider, useLogin } from "@/contexts/LoginContext"; // updated
+
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
+import EmployeeNavbar from "@/components/ui/EmployeeNavbar";
 
-
-
-// ✅ Import pages
-import Index from "./pages/Index";
-import Login from "./pages/Login"; // renamed page
-import Dashboard from "./pages/Dashboard";
-import Employees from "./pages/Employees";
-import Departments from "./pages/Departments";
-import Designations from "./pages/Designations";
-import NewPassword from "./pages/NewPassword";
-
-
-// ✅ Import the hook
+import { LoginProvider, useLogin } from "@/contexts/LoginContext";
 import { useFormNavigation } from "@/hooks/useFormNavigation";
 
+// ✅ Admin Pages
+import Index from "@/pages/Index";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import Employees from "@/pages/Employees";
+import Departments from "@/pages/Departments";
+import Designations from "@/pages/Designations";
+import NewPassword from "@/pages/NewPassword";
+import Role from "@/pages/Role";
+import Requests from "@/pages/Request";
+import ApproveLeave from "@/pages/ApproveLeave";
+import AssignTask from "@/pages/EmployeeActions/AssignTask";
+import TasksStatus from "@/pages/TasksStatus"; 
+import EmployeeDocument from "@/pages/EmployeeDocument";
+import Notification from  "@/pages/Notification";
 
-const queryClient = new QueryClient();
-
-// ----------------------
-// Protected Route
-// ----------------------
+// ✅ Employee Pages
+import EmployeeLogin from "@/pages/Employee-Login";
+import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
+import ResetPasswords from "@/pages/employee/ResetPaswwords";
+import MyProfile from "@/pages/employee/MyProfile";
+import ApplyLeave  from "@/pages/employee/ApplyLeave";
+import TaskStatus from "./pages/employee/TaskStatus";
+import UploadDocument from "./pages/employee/UploadDocument";
+// ----------------------------------------------------
+// 🔒 ADMIN PROTECTED ROUTE
+// ----------------------------------------------------
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { user, loading } = useLogin(); // updated
+  const { user, loading } = useLogin();
   if (loading) return null;
   return user ? children : <Navigate to="/login" replace />;
 };
 
-// ----------------------
-// Force fresh-tab login
-// ----------------------
-const ForceFreshTab = () => {
-  const { logout } = useLogin(); // updated
-
-  useEffect(() => {
-    if (!sessionStorage.getItem("tabInitialized")) {
-      logout().catch(console.error);
-      sessionStorage.setItem("tabInitialized", "true");
-    }
-  }, [logout]);
-
-  return null;
+// ----------------------------------------------------
+// 👷 EMPLOYEE PROTECTED ROUTE
+// ----------------------------------------------------
+const EmployeeProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const employee = JSON.parse(localStorage.getItem("employee") || "null");
+  if (!employee) return <Navigate to="/employee/login" replace />;
+  return children;
 };
 
-// ----------------------
-// Inactivity Handler
-// ----------------------
-const InactivityHandler = ({ children }: { children: React.ReactNode }) => {
-  const { logout } = useLogin(); // updated
+// ----------------------------------------------------
+// 💤 ADMIN INACTIVITY HANDLER
+// ----------------------------------------------------
+const AdminInactivityHandler = ({ children }: { children: React.ReactNode }) => {
+  const { logout } = useLogin();
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLogout = () => {
-  logout(); // ✅ call the context logout
-  navigate("/login", { replace: true });
-};
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   const resetTimer = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(logout, 5 * 60 * 1000); // 5 minutes
+    timerRef.current = setTimeout(handleLogout, 5 * 60 * 1000); // 5 min
   };
 
   useEffect(() => {
-    const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
-    const handleVisibilityChange = () => resetTimer();
-
-    activityEvents.forEach((e) => window.addEventListener(e, resetTimer));
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    resetTimer(); // start initially
-
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, resetTimer));
+    resetTimer();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      activityEvents.forEach((e) => window.removeEventListener(e, resetTimer));
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
     };
   }, []);
 
   return <>{children}</>;
 };
 
-// ----------------------
-// App Routes
-// ----------------------
+// ----------------------------------------------------
+// 💤 EMPLOYEE INACTIVITY HANDLER
+// ----------------------------------------------------
+const EmployeeInactivityHandler = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const navigate = useNavigate();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogout = () => {
+    localStorage.removeItem("employee");
+    navigate("/employee/login", { replace: true });
+  };
+
+  const resetTimer = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(handleLogout, 5 * 60 * 1000); // 5 min
+  };
+
+  useEffect(() => {
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, resetTimer));
+    resetTimer();
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+    };
+  }, []);
+
+  return <>{children}</>;
+};
+
+// ----------------------------------------------------
+// 🌐 APP ROUTES
+// ----------------------------------------------------
 const AppRoutes = () => (
-  <>
-    <ForceFreshTab />
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/new-password/" element={<NewPassword />} /> 
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
-      <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
-      <Route path="/designations" element={<ProtectedRoute><Designations /></ProtectedRoute>} />
-      
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  </>
+  <Routes>
+    {/* Public Routes */}
+    <Route path="/" element={<Index />} />
+    <Route path="/role" element={<Role />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/new-password" element={<NewPassword />} />
+
+    {/* Admin Routes */}
+    <Route
+      path="/dashboard"
+      element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/employees"
+      element={
+        <ProtectedRoute>
+          <Employees />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/departments"
+      element={
+        <ProtectedRoute>
+          <Departments />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/designations"
+      element={
+        <ProtectedRoute>
+          <Designations />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/requests"
+      element={
+        <ProtectedRoute>
+          <Requests />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+  path="/approve-leave"
+  element={
+    <ProtectedRoute>
+      <ApproveLeave />
+    </ProtectedRoute>
+  }
+/>
+ <Route
+  path="/employee-document/:id"
+  element={
+    <ProtectedRoute>
+      <EmployeeDocument />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/employee-action/assign-task"
+  element={
+    <ProtectedRoute>
+      <AssignTask />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/tasks-status"
+  element={
+    <ProtectedRoute>
+      <TasksStatus />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/notification"
+  element={
+    <ProtectedRoute>
+      <Notification />
+    </ProtectedRoute>
+  }
+/>
+
+    {/* Employee Routes */}
+    <Route path="/employee/login" element={<EmployeeLogin />} />
+    <Route
+      path="/employee/dashboard"
+      element={
+        <EmployeeProtectedRoute>
+          <EmployeeInactivityHandler>
+            <EmployeeDashboard />
+          </EmployeeInactivityHandler>
+        </EmployeeProtectedRoute>
+      }
+    />
+    <Route
+  path="/employee/my-profile"
+  element={
+    <EmployeeProtectedRoute>
+      <EmployeeInactivityHandler>
+        <MyProfile />
+      </EmployeeInactivityHandler>
+    </EmployeeProtectedRoute>
+  }
+/>
+<Route
+  path="/employee/apply-leave"
+  element={
+    <EmployeeProtectedRoute>
+      <EmployeeInactivityHandler>
+        <ApplyLeave />
+      </EmployeeInactivityHandler>
+    </EmployeeProtectedRoute>
+  }
+/>
+<Route
+  path="/employee/task-status"
+  element={
+    <EmployeeProtectedRoute>
+      <EmployeeInactivityHandler>
+        <TaskStatus />
+      </EmployeeInactivityHandler>
+    </EmployeeProtectedRoute>
+  }
+/>
+<Route
+  path="/employee/upload-document"
+  element={
+    <EmployeeProtectedRoute>
+      <EmployeeInactivityHandler>
+        <UploadDocument />
+      </EmployeeInactivityHandler>
+    </EmployeeProtectedRoute>
+  }
+/>
+
+    <Route path="/employee/reset-password" element={<ResetPasswords />} />
+
+    {/* Fallback */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
 );
 
-// ----------------------
-// Main App
-// ----------------------
+// ----------------------------------------------------
+// 🌟 MAIN APP (with dynamic Navbars)
+// ----------------------------------------------------
+const queryClient = new QueryClient();
+
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+ const isEmployeeRoute = /^\/employee(\/|$)/i.test(location.pathname);
+  useEffect(() => {
+    console.log("Current Path:", location.pathname);
+    console.log("Is Employee Route?", isEmployeeRoute);
+  }, [location]);
+
+ 
+
+
+  return (
+    <>
+      {isEmployeeRoute ? <EmployeeNavbar /> : <Navbar />}
+      {children}
+      <Footer />
+    </>
+  );
+};
+
+
 const App = () => {
-  // ✅ Enable global form navigation
   useFormNavigation();
 
   return (
@@ -123,11 +317,11 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <InactivityHandler>
-              <Navbar />
-              <AppRoutes />
-              <Footer />
-            </InactivityHandler>
+            <AdminInactivityHandler>
+              <Layout>
+                <AppRoutes />
+              </Layout>
+            </AdminInactivityHandler>
           </BrowserRouter>
         </TooltipProvider>
       </LoginProvider>
