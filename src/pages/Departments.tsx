@@ -188,7 +188,7 @@ const Departments = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <main className="container mx-auto px-4 py-2 flex-1 flex flex-col">
+      <main className="px-4 py-2">
         <Card className="w-full border-0 shadow-none bg-transparent flex-1 flex flex-col">
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -287,7 +287,15 @@ const Departments = () => {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          <Button
+                           <Button
+                              size="sm"
+                              className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
+                              title="Edit"
+                              onClick={() => setEditingDepartment(d)}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
                             size="sm"
                             className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
                             title="Delete"
@@ -316,7 +324,7 @@ const Departments = () => {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                     <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">Row per page:{rowsPerPage}
+                     <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">Entries :{rowsPerPage}
                               <ChevronDown className="ml-2 h-4 w-4" /> 
                             </Button>
                   </DropdownMenuTrigger>
