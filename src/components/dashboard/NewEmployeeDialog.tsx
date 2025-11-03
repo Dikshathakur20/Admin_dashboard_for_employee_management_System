@@ -33,6 +33,11 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
   const [salary, setSalary] = useState('');
   const [departmentId, setDepartmentId] = useState<string>('');
   const [designationId, setDesignationId] = useState<string>('');
+  const [phone, setPhone] = useState('');
+  const [employmentType, setEmploymentType] = useState('');
+  const [status, setStatus] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [address, setAddress] = useState('');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,9 +45,7 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const { toast } = useToast();
 
-  // Capitalize first letter of each word
   const capitalizeWords = (val: string) => val.replace(/\b\w/g, c => c.toUpperCase());
-
   const toBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -92,77 +95,85 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
     setSalary('');
     setDepartmentId('');
     setDesignationId('');
+    setPhone('');
+    setEmploymentType('');
+    setStatus('');
+    setDateOfBirth('');
+    setAddress('');
     setEmailExists('');
     setProfilePicture(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault(); // stops page reload on form submit
+    e.preventDefault();
 
-  // 1️⃣ Check if email already exists
-  if (emailExists) {
-    toast({ title: "Email Already Exists", description: emailExists });
-    return;
-  }
+    if (emailExists) {
+      toast({ title: "Email Already Exists", description: emailExists });
+      return;
+    }
+    if (!departmentId || !designationId) {
+      toast({ title: "Missing Selection", description: "Please select both Department and Designation" });
+      return;
+    }
 
-  // 2️⃣ Check if department and designation are selected
-  if (!departmentId || !designationId) {
-    toast({
-      title: "Missing Selection",
-      description: "Please select both Department and Designation",
-    });
-    return;
-  }
+    const salaryValue = salary ? parseFloat(salary) : 0;
+    if (salaryValue > 10000000) {
+      toast({ title: "Salary Limit Exceeded", description: "Salary cannot exceed ₹10,000,000" });
+      return;
+    }
 
-  // 3️⃣ Validate salary limit
-  const salaryValue = salary ? parseFloat(salary) : 0;
-  if (salaryValue > 10000000) {
-    toast({
-      title: "Salary Limit Exceeded",
-      description: "Salary cannot exceed ₹10,000,000",
-    });
-    return;
-  }
+    if (phone && !/^\d{7,15}$/.test(phone)) {
+      toast({ title: "Invalid Phone", description: "Phone must be 7-15 digits" });
+      return;
+    }
 
-  // 4️⃣ Proceed to add employee (with optional profile picture)
-  setLoading(true);
+    if (address && address.length > 250) {
+      toast({ title: "Address Too Long", description: "Address cannot exceed 250 characters" });
+      return;
+    }
 
-  try {
-    let fileData: string | null = null;
-    if (profilePicture) fileData = await toBase64(profilePicture);
+    setLoading(true);
 
-    const employeeData: any = {
-      first_name: firstName,
-      last_name: lastName,
-      email: email.toLowerCase(),
-      hire_date: hireDate,
-      salary: salary ? parseFloat(salary) : null,
-      department_id: departmentId ? parseInt(departmentId) : null,
-      designation_id: designationId ? parseInt(designationId) : null,
-    };
-    if (fileData) employeeData.file_data = fileData;
+    try {
+      let fileData: string | null = null;
+      if (profilePicture) fileData = await toBase64(profilePicture);
 
-    const { data, error } = await supabase
-      .from("tblemployees")
-      .insert(employeeData)
-      .select()
-      .single();
+      const employeeData: any = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email.toLowerCase(),
+        hire_date: hireDate,
+        salary: salary ? parseFloat(salary) : null,
+        department_id: departmentId ? parseInt(departmentId) : null,
+        designation_id: designationId ? parseInt(designationId) : null,
+        phone: phone || null,
+        employment_type: employmentType || null,
+        status: status || null,
+        date_of_birth: dateOfBirth || null,
+        address: address || null,
+      };
+      if (fileData) employeeData.file_data = fileData;
 
-    if (error) throw error;
+      const { data, error } = await supabase
+        .from("tblemployees")
+        .insert(employeeData)
+        .select()
+        .single();
 
-    toast({ title: "Success", description: `Employee added successfully.` });
-    if (onEmployeeAdded && data) onEmployeeAdded(data);
+      if (error) throw error;
 
-    resetForm();
-    onOpenChange(false);
-  } catch (error) {
-    console.error(error);
-    toast({ title: "Addition Issue", description: "Unable to add employee" });
-  } finally {
-    setLoading(false);
-  }
-};
+      toast({ title: "Success", description: `Employee added successfully.` });
+      if (onEmployeeAdded && data) onEmployeeAdded(data);
 
+      resetForm();
+      onOpenChange(false);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Addition Issue", description: "Unable to add employee" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredDesignations = departmentId
     ? designations.filter(d => d.department_id === parseInt(departmentId))
@@ -170,166 +181,218 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] bg-white text-black rounded-xl shadow-lg border border-gray-200
-    resize  /* allows resizing */
-    overflow-auto "
-        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+      <DialogContent
+        className="w-full max-w-[90vw] sm:max-w-md md:max-w-lg lg:max-w-xl bg-white text-black rounded-xl shadow-lg border border-gray-200 overflow-auto"
+        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+      >
         <DialogHeader>
           <DialogTitle>Add New Employee</DialogTitle>
         </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-2 px-2 py-2">
-  {/* First & Last Name */}
-  <div className="grid grid-cols-2 gap-2">
-    <div>
-      <Label htmlFor="firstName" className="text-sm">First Name</Label>
-      <Input
-        id="firstName"
-        value={firstName}
-        maxLength={25}
-        className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-        onChange={e => {
-          if (/^[A-Za-z\s]*$/.test(e.target.value)) {
-            setFirstName(capitalizeWords(e.target.value));
-          }
-        }}
-        required
-      />
-    </div>
-    <div>
-      <Label htmlFor="lastName" className="text-sm">Last Name</Label>
-      <Input
-        id="lastName"
-        value={lastName}
-        maxLength={25}
-        className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-        onChange={e => {
-          if (/^[A-Za-z\s]*$/.test(e.target.value)) {
-            setLastName(capitalizeWords(e.target.value));
-          }
-        }}
-        required
-      />
-    </div>
-  </div>
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-auto">
+          {/* First & Last Name */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="firstName" className="text-sm">First Name</Label>
+              <Input
+                id="firstName"
+                value={firstName}
+                maxLength={25}
+                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => { if (/^[A-Za-z\s]*$/.test(e.target.value)) setFirstName(capitalizeWords(e.target.value)); }}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName" className="text-sm">Last Name</Label>
+              <Input
+                id="lastName"
+                value={lastName}
+                maxLength={25}
+                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => { if (/^[A-Za-z\s]*$/.test(e.target.value)) setLastName(capitalizeWords(e.target.value)); }}
+                required
+              />
+            </div>
+          </div>
 
-  {/* Email */}
-  <div>
-    <Label htmlFor="email" className="text-sm">Email</Label>
-    <Input
-      id="email"
-      type="email"
-      value={email}
-      className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-      onChange={e => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
-      onPaste={e => e.preventDefault()}
-      required
-    />
-    {emailExists && <p className="text-xs text-orange-600 mt-0.5">{emailExists}</p>}
-  </div>
+          {/* Email */}
+          <div>
+            <Label htmlFor="email" className="text-sm">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+              onChange={e => { setEmail(e.target.value.toLowerCase()); checkEmailExists(e.target.value); }}
+              onPaste={e => e.preventDefault()}
+              required
+            />
+            {emailExists && <p className="text-xs text-orange-600 mt-0.5">{emailExists}</p>}
+          </div>
 
-  {/* Hire Date */}
-  <div>
-    <Label htmlFor="hireDate" className="text-sm">Hire Date</Label>
-    <Input
-      id="hireDate"
-      type="date"
-      value={hireDate}
-      className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-      onChange={e => setHireDate(e.target.value)}
-      max={new Date().toISOString().split("T")[0]}
-      min="2000-01-01"
-      required
-    />
-  </div>
+          {/* Hire Date & Salary */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="hireDate" className="text-sm">Hire Date</Label>
+              <Input
+                id="hireDate"
+                type="date"
+                value={hireDate}
+                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => setHireDate(e.target.value)}
+                max={new Date().toISOString().split("T")[0]}
+                min="2000-01-01"
+                required
+              />
+            </div>
+             <div>
+              <Label htmlFor="dateOfBirth" className="text-sm">Date of Birth</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={dateOfBirth}
+                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => setDateOfBirth(e.target.value)}
+                max={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+          </div>
 
-  {/* Salary */}
-  <div>
-    <Label htmlFor="salary" className="text-sm">Salary</Label>
-    <Input
-      id="salary"
-      type="number"
-      step="0.01"
-      value={salary}
-      placeholder="Max ₹10,000,000"
-      className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-      onChange={(e) => {
-        const value = parseFloat(e.target.value);
-        if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
-        else if (e.target.value === '') setSalary('');
-      }}
-      required
-    />
-  </div>
+          {/* Phone & Date of Birth */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="phone" className="text-sm">Phone</Label>
+              <Input
+                id="phone"
+                type="text"
+                value={phone}
+                placeholder="Enter phone number"
+                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                maxLength={15}
+              />
+            </div>
+            <div>
+              <Label htmlFor="salary" className="text-sm">Salary</Label>
+              <Input
+                id="salary"
+                type="number"
+                step="0.01"
+                value={salary}
+                placeholder="Max ₹10,000,000"
+                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+                onChange={e => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
+                  else if (e.target.value === '') setSalary('');
+                }}
+                required
+              />
+            </div>
+          </div>
 
-  {/* Department & Designation */}
-  <div className="grid grid-cols-2 gap-2">
-    <div>
-      <Label htmlFor="department" className="text-sm">Department *</Label>
-      <Select value={departmentId} onValueChange={(val) => { setDepartmentId(val); setDesignationId(''); }} required>
-        <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
-          <SelectValue placeholder="Select department" />
-        </SelectTrigger>
-        <SelectContent className="z-50 bg-white shadow-lg">
-          {departments.map(dept => (
-            <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
-              {dept.department_name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+          {/* Address */}
+          <div>
+            <Label htmlFor="address" className="text-sm">Address</Label>
+            <Input
+              id="address"
+              type="text"
+              value={address}
+              placeholder="Enter address"
+              className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+              onChange={e => setAddress(e.target.value)}
+              maxLength={250}
+            />
+          </div>
 
-    <div>
-      <Label htmlFor="designation" className="text-sm">Designation *</Label>
-      <Select value={designationId} onValueChange={setDesignationId} required disabled={!departmentId || filteredDesignations.length === 0}>
-        <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
-          <SelectValue placeholder="Select designation" />
-        </SelectTrigger>
-        <SelectContent className="z-50 bg-white shadow-lg">
-          {filteredDesignations.map(des => (
-            <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
-              {des.designation_title}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  </div>
+          {/* Employment Type & Status */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="employmentType" className="text-sm">Employment Type</Label>
+              <Select value={employmentType} onValueChange={setEmploymentType}>
+                <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-white shadow-lg">
+                  {['Full-Time', 'Part-Time', 'Contract', 'Intern'].map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="status" className="text-sm">Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-white shadow-lg">
+                  {['Active',  'Resigned', 'Terminated'].map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-  {/* Profile Picture */}
-  <div>
-    <Label htmlFor="profilePicture" className="text-sm">Profile Picture</Label>
-    <Input
-      id="profilePicture"
-      type="file"
-      accept="image/*"
-      className="h-9"
-      onChange={e => setProfilePicture(e.target.files?.[0] || null)}
-    />
-  </div>
+          
 
-  {/* Buttons */}
-  <DialogFooter className="mt-2 flex justify-end gap-2">
-    <Button
-      type="button"
-      variant="outline"
-      className="h-9 bg-white text-blue-900 border border-blue-900 hover:bg-blue-50"
-      onClick={() => { onOpenChange(false); resetForm(); }}
-    >
-      Cancel
-    </Button>
-    <Button
-      type="submit"
-      disabled={loading}
-      className="h-9 bg-blue-900 text-white hover:bg-blue-700"
-    >
-      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      Add
-    </Button>
-  </DialogFooter>
-</form>
+          {/* Department & Designation */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="department" className="text-sm">Department *</Label>
+              <Select value={departmentId} onValueChange={val => { setDepartmentId(val); setDesignationId(''); }} required>
+                <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-white shadow-lg">
+                  {departments.map(dept => (
+                    <SelectItem key={dept.department_id} value={dept.department_id.toString()}>
+                      {dept.department_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="designation" className="text-sm">Designation *</Label>
+              <Select value={designationId} onValueChange={setDesignationId} required disabled={!departmentId || filteredDesignations.length === 0}>
+                <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
+                  <SelectValue placeholder="Select designation" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-white shadow-lg">
+                  {filteredDesignations.map(des => (
+                    <SelectItem key={des.designation_id} value={des.designation_id.toString()}>
+                      {des.designation_title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
+          {/* Profile Picture */}
+          <div>
+            <Label htmlFor="profilePicture" className="text-sm">Profile Picture</Label>
+            <Input
+              id="profilePicture"
+              type="file"
+              accept="image/*"
+              className="h-9"
+              onChange={e => setProfilePicture(e.target.files?.[0] || null)}
+            />
+          </div>
+
+          {/* Buttons */}
+          <DialogFooter className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="h-9 bg-white text-blue-900 border border-blue-900 hover:bg-blue-50" onClick={() => { onOpenChange(false); resetForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={loading} className="h-9 bg-blue-900 text-white hover:bg-blue-700">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
