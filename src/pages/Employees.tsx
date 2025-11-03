@@ -4,7 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Edit, Trash2, Eye, ChevronDown } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, ChevronDown,ClipboardList,FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -31,6 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 interface Employee {
   employee_id: number;
@@ -42,6 +43,14 @@ interface Employee {
   department_id: number | null;
   designation_id: number | null;
   file_data?: string | null;
+
+  // New fields
+  phone?: string | null;
+  employee_code?: string | null;
+  employment_type?: string | null;
+  status?: string | null;
+  date_of_birth?: string | null;
+  address?: string | null;
 }
 
 interface Department {
@@ -72,7 +81,6 @@ const Employees = () => {
   const { toast } = useToast();
 
   const [sortOption, setSortOption] = useState<"name-asc" | "name-desc" | "id-asc" | "id-desc">("id-desc");
-
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
@@ -217,12 +225,11 @@ const Employees = () => {
       </div>
     );
   };
-
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-2">
+      <main className=" px-4 py-2">
         <Card className="w-full border-0 shadow-none bg-transparent">
-
           {/* Header: Add / Search / Sort */}
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -280,8 +287,8 @@ const Employees = () => {
             </div>
           </CardHeader>
 
-          {/* Table */}
-          <CardContent className="px-0">
+         {/* Table */}
+<CardContent className="px-0">
   <div className="border rounded-2xl overflow-hidden relative">
     {loading && (
       <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center">
@@ -295,57 +302,89 @@ const Employees = () => {
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
       >
         <TableRow>
-          <TableHead className="font-bold">Profile Picture</TableHead>
-          <TableHead className="font-bold">Name</TableHead>
-          <TableHead className="font-bold">Email</TableHead>
-          <TableHead className="font-bold">Department</TableHead>
-          <TableHead className="font-bold">Designation</TableHead>
-          <TableHead className="font-bold">Hire Date</TableHead>
-          <TableHead className="font-bold">Salary</TableHead>
-          <TableHead className="font-bold text-end">Actions</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Profile</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Name</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Email</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Phone</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Code</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">EmployeeType</TableHead>
+          <TableHead className="px-4 py-1 text-left text-sm font-semibold min-w-[120px]">Department</TableHead>
+          <TableHead className="px-4 py-1 text-left text-sm font-semibold min-w-[140px]">Designation</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Hire Date</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Salary</TableHead>
+          <TableHead className="px-12 py-0 text-right text-sm font-semibold">Actions</TableHead>
         </TableRow>
       </TableHeader>
+
       <TableBody>
         {visibleEmployees.map((emp) => (
-          <TableRow
-            key={emp.employee_id}
-            className="hover:bg-gray-100 cursor-pointer select-none h-10"
-          >
-            <TableCell className="py-1">{renderProfilePicture(emp, 32)}</TableCell>
-            <TableCell className="py-1 text-sm">{emp.first_name} {emp.last_name}</TableCell>
-            <TableCell className="py-1 text-sm">{emp.email}</TableCell>
-            <TableCell className="py-1 text-sm">
-              <Badge variant="secondary">{getDepartmentName(emp.department_id)}</Badge>
+          <TableRow key={emp.employee_id} className="hover:bg-gray-100 cursor-pointer select-none h-10">
+            <TableCell className="px-2 py-1">{renderProfilePicture(emp, 32)}</TableCell>
+            <TableCell className="px-2 py-1 text-sm">{emp.first_name} {emp.last_name}</TableCell>
+            <TableCell className="px-2 py-1 text-sm">{emp.email}</TableCell>
+            <TableCell className="px-2 py-1 text-sm">{emp.phone || "-"}</TableCell>
+            <TableCell className="px-2 py-1 text-sm">{emp.employee_code || "-"}</TableCell>
+            <TableCell className="px-2 py-1 text-sm">{emp.employment_type || "-"}</TableCell>
+            <TableCell className="px-2 py-1 text-sm">
+            <Badge variant="secondary" className="px-2 py-0 text-xs font-medium leading-tight min-h-[22px]">{getDepartmentName(emp.department_id)}</Badge>
             </TableCell>
-            <TableCell className="py-1 text-sm">
-              <Badge variant="secondary">{getDesignationTitle(emp.designation_id)}</Badge>
+            <TableCell className="px-2 py-1 text-sm">
+            <Badge variant="secondary" className="px-2 py-0 text-xs font-medium leading-tight min-h-[22px]">{getDesignationTitle(emp.designation_id)}</Badge>
             </TableCell>
-            <TableCell className="py-1 text-sm">
+            <TableCell className="px-2 py-1 text-sm">
               {new Date(emp.hire_date).toLocaleDateString("en-GB")}
             </TableCell>
-            <TableCell className="py-1 text-sm">
-              {emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "Not Set"}
+            <TableCell className="px-2 py-1 text-sm">
+              {emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "-"}
             </TableCell>
-            <TableCell className="py-1 text-sm">
-              <div className="flex justify-end space-x-1">
+            <TableCell className="px-2 py-1 text-sm text-right">
+              <div className="flex justify-end gap-1">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
-                  title="View Profile"
+                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
                   onClick={() => setViewingEmployee(emp)}
                 >
                   <Eye className="h-3.5 w-3.5" />
                 </Button>
                 <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+                    title="Edit Employee"
+                    onClick={() => { setEditingEmployee(emp); setViewingEmployee(null);  }}
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                  </Button>
+                  <Button
                   size="sm"
                   variant="outline"
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
-                  title="Delete Profile"
+                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+                  onClick={() => navigate(`/employee-action/assign-task?employee_id=${emp.employee_id}`)}
+                >
+                  <ClipboardList className="h-3.5 w-3.5" />
+                </Button>
+                 
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+                  title="View Documents"
+                  onClick={() => navigate(`/employee-document/${emp.employee_id}`)}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                </Button>
+
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
                   onClick={() => handleDelete(emp.employee_id)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
+               
               </div>
             </TableCell>
           </TableRow>
@@ -354,64 +393,59 @@ const Employees = () => {
     </Table>
   </div>
 
-  {/* Rows per Page Dropdown */}
-  <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-2">
-  {/* Rows per page on the left */}
-  <div className="flex items-center gap-2">
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">Row per page:{rowsPerPage}
-          <ChevronDown className="ml-2 h-4 w-4" /> 
-        </Button>
-      </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        align="start"
-        className="bg-white"
-        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-      >
-        {[5, 10, 15, 20, 25, 50, 100].map((num) => (
-          <DropdownMenuItem
-            key={num}
-            onClick={() => {
-              setRowsPerPage(num);
-              setCurrentPage(1);
-            }}
-          >
-            {num}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-   </div>
 
-  {/* Pagination */}
-   <div className="flex items-center gap-2 ml-auto">
-    <Button
-      size="sm"
-      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-      disabled={currentPage === 1}
-      title="Previous Page"
-      className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1"
-    >
-      Previous
-    </Button>
-    <span className="px-2 py-1 rounded text-gray-700 bg-gray-200">
-      Page {currentPage} of {Math.ceil(sortedEmployees.length / rowsPerPage)}
-    </span>
-    <Button
-      size="sm"
-      onClick={() => setCurrentPage((p) => Math.min(p + 1, Math.ceil(sortedEmployees.length / rowsPerPage)))}
-      disabled={currentPage === Math.ceil(sortedEmployees.length / rowsPerPage)}
-      className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1"
-      title="Next Page"
-    >
-      Next
-    </Button>
-  </div>
-   </div>
-</CardContent>
+            {/* Rows per Page & Pagination */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-2">
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
+                      Entries:{rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="bg-white"
+                    style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+                  >
+                    {[5, 10, 15, 20, 25, 50, 100].map((num) => (
+                      <DropdownMenuItem
+                        key={num}
+                        onClick={() => { setRowsPerPage(num); setCurrentPage(1); }}
+                      >
+                        {num}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
+              <div className="flex items-center gap-2 ml-auto">
+                <Button
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  title="Previous Page"
+                  className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1"
+                >
+                  Previous
+                </Button>
+                <span className="px-2 py-1 rounded text-gray-700 bg-gray-200">
+                  Page {currentPage} of {Math.ceil(sortedEmployees.length / rowsPerPage)}
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, Math.ceil(sortedEmployees.length / rowsPerPage)))}
+                  disabled={currentPage === Math.ceil(sortedEmployees.length / rowsPerPage)}
+                  className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1"
+                  title="Next Page"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </main>
 
@@ -448,10 +482,16 @@ const Employees = () => {
               <div className="space-y-2 flex-1 text-sm">
                 <p><span className="font-semibold">Name:</span> {viewingEmployee.first_name} {viewingEmployee.last_name}</p>
                 <p><span className="font-semibold">Email:</span> {viewingEmployee.email}</p>
+                <p><span className="font-semibold">Phone:</span> {viewingEmployee.phone || "-"}</p>
+                <p><span className="font-semibold">Employee Code:</span> {viewingEmployee.employee_code || "-"}</p>
+                <p><span className="font-semibold">Employment Type:</span> {viewingEmployee.employment_type || "-"}</p>
+                <p><span className="font-semibold">Status:</span> {viewingEmployee.status || "-"}</p>
                 <p><span className="font-semibold">Department:</span> {getDepartmentName(viewingEmployee.department_id)}</p>
                 <p><span className="font-semibold">Designation:</span> {getDesignationTitle(viewingEmployee.designation_id)}</p>
                 <p><span className="font-semibold">Hire Date:</span> {new Date(viewingEmployee.hire_date).toLocaleDateString("en-GB")}</p>
-                <p><span className="font-semibold">Salary:</span> {viewingEmployee.salary ? `₹${viewingEmployee.salary}` : "Not set"}</p>
+                <p><span className="font-semibold">Date of Birth:</span> {viewingEmployee.date_of_birth ? new Date(viewingEmployee.date_of_birth).toLocaleDateString("en-GB") : "-"}</p>
+                <p><span className="font-semibold">Salary:</span> {viewingEmployee.salary ? `₹${viewingEmployee.salary.toLocaleString("en-IN")}` : "-"}</p>
+                <p><span className="font-semibold">Address:</span> {viewingEmployee.address || "-"}</p>
               </div>
               <div className="shrink-0">
                 <div className="w-24 h-24 rounded-full overflow-hidden border border-blue-900">
