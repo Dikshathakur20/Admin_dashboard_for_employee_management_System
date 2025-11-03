@@ -1,5 +1,5 @@
 // src/pages/Departments.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useLogin } from "@/contexts/LoginContext";
 import { Button } from "@/components/ui/button";
@@ -58,56 +58,30 @@ const Departments = () => {
   const [departmentDesignations, setDepartmentDesignations] = useState<Designation[]>([]);
   const [sortOption, setSortOption] = useState<"id-asc" | "id-desc" | "name-asc" | "name-desc">("id-desc");
 
-  // Infinite scroll
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const loaderRef = useRef<HTMLDivElement | null>(null);
-  const pageSize = 10;
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Fetch departments
+  // Fetch departments once
   useEffect(() => {
-    fetchDepartments(page);
+    fetchDepartments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, []);
 
-  // IntersectionObserver for infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { threshold: 1 }
-    );
-
-    if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
-  }, [hasMore, loading]);
-
-  const fetchDepartments = async (pageNum = 1) => {
+  const fetchDepartments = async () => {
     setLoading(true);
     try {
-      const from = (pageNum - 1) * pageSize;
-      const to = pageNum * pageSize - 1;
-
-      const { data: deptData, error: deptError } = await supabase
-        .from("tbldepartments")
-        .select("*")
-        .range(from, to);
-
+      const { data: deptData, error: deptError } = await supabase.from("tbldepartments").select("*");
       if (deptError) throw deptError;
 
-      if (!deptData || deptData.length === 0) {
-        setHasMore(false);
+      if (!deptData) {
+        setDepartments([]);
         return;
       }
 
-      const deptIds = deptData.map((d: any) => d.department_id) || [];
+      const deptIds = deptData.map((d: any) => d.department_id);
 
       const { data: empData, error: empError } = await supabase
         .from("tblemployees")
@@ -129,7 +103,7 @@ const Departments = () => {
         total_designations: desData?.filter((d: any) => d.department_id === dept.department_id).length || 0,
       }));
 
-      setDepartments((prev) => [...prev, ...enriched]);
+      setDepartments(enriched);
     } catch (error) {
       console.error(error);
       toast({
@@ -162,11 +136,7 @@ const Departments = () => {
 
       if (!confirm("Are you sure you want to delete this department?")) return;
 
-      const { error } = await supabase
-        .from("tbldepartments")
-        .delete()
-        .eq("department_id", id);
-
+      const { error } = await supabase.from("tbldepartments").delete().eq("department_id", id);
       if (error) throw error;
 
       toast({
@@ -174,10 +144,8 @@ const Departments = () => {
         description: "Department removed successfully",
       });
 
-      // Reset and refetch
-      setDepartments([]);
-      setPage(1);
-      setHasMore(true);
+      // Refresh
+      fetchDepartments();
     } catch (err) {
       console.error(err);
       toast({
@@ -195,7 +163,6 @@ const Departments = () => {
         .select("*")
         .eq("department_id", id)
         .order("designation_title");
-
       if (error) throw error;
       setDepartmentDesignations(data || []);
     } catch {
@@ -216,6 +183,9 @@ const Departments = () => {
     return 0;
   });
 
+  const totalPages = Math.ceil(sorted.length / rowsPerPage);
+  const displayedDepartments = sorted.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <main className="container mx-auto px-4 py-2 flex-1 flex flex-col">
@@ -234,7 +204,11 @@ const Departments = () => {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button onClick={() => setShowNewDialog(true)} className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Add department">
+                  <Button
+                    onClick={() => setShowNewDialog(true)}
+                    className="bg-[#001F7A] text-white hover:bg-[#0029b0]"
+                    title="Add department"
+                  >
                     <Plus className="h-4 w-4 mr-2" /> Add
                   </Button>
                   <DropdownMenu>
@@ -258,12 +232,13 @@ const Departments = () => {
               </div>
             </div>
           </CardHeader>
-
           <CardContent className="px-0 flex-1 flex flex-col overflow-hidden">
-            {/* Table */}
-            <div className="border rounded-lg overflow-auto flex-1">
+           <div className="border rounded-lg overflow-auto">
               <Table className="min-w-full">
-                <TableHeader>
+                <TableHeader
+                  className="w-full bg-blue-50 p-4 rounded-xl"
+                  style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+                >
                   <TableRow>
                     <TableHead className="font-bold">Department</TableHead>
                     <TableHead className="font-bold text-center">Total Designations</TableHead>
@@ -272,47 +247,61 @@ const Departments = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sorted.map((d) => (
-                    <TableRow key={d.department_id}>
-                      <TableCell>{d.department_name}</TableCell>
-                      <TableCell className="text-center">
+                  {displayedDepartments.map((d) => (
+                    <TableRow key={d.department_id} className="hover:bg-gray-100 cursor-pointer select-none h-10">
+                      <TableCell className="py-1 text-sm">{d.department_name}</TableCell>
+                      <TableCell className="text-center py-1 text-sm">
                         {d.total_designations! > 0 ? (
-                          <Link to={`/designations?department=${d.department_id}`} className="text-gray-900 hover:text-blue-900 hover:underline">
+                          <Link
+                            to={`/designations?department=${d.department_id}`}
+                            className="text-gray-900 hover:text-blue-900 hover:underline"
+                          >
                             {d.total_designations}
                           </Link>
                         ) : (
                           <span>{d.total_designations}</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-1 text-sm">
                         {d.total_employees! > 0 ? (
-                          <Link to={`/employees?department=${d.department_id}`} className="text-gray-900 hover:text-blue-900 hover:underline">
+                          <Link
+                            to={`/employees?department=${d.department_id}`}
+                            className="text-gray-900 hover:text-blue-900 hover:underline"
+                          >
                             {d.total_employees}
                           </Link>
                         ) : (
                           <span>{d.total_employees}</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-end space-x-3">
-                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700" title="View"
+                      <TableCell className="text-end py-1">
+                        <div className="flex justify-end space-x-1">
+                          <Button
+                            size="sm"
+                            className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
+                            title="View"
                             onClick={async () => {
                               await fetchDepartmentDesignations(d.department_id);
                               setViewingDepartment(d);
-                            }}>
-                            <Eye className="h-4 w-4" />
+                            }}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700" title="Delete"
-                            onClick={() => handleDelete(d.department_id)}>
-                            <Trash2 className="h-4 w-4" />
+                          <Button
+                            size="sm"
+                            className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
+                            title="Delete"
+                            onClick={() => handleDelete(d.department_id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!loading && sorted.length === 0 && (
+                  {sorted.length === 0 && !loading && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-3 text-muted-foreground">
+                      <TableCell colSpan={4} className="text-center py-3 text-muted-foreground text-sm">
                         {searchTerm ? "No departments match your search." : "No departments found."}
                       </TableCell>
                     </TableRow>
@@ -321,9 +310,59 @@ const Departments = () => {
               </Table>
             </div>
 
-            {/* Footer loader */}
-            <div ref={loaderRef} className="text-center py-2 text-sm text-gray-600 mt-2">
-              {loading ? "Loading more departments..." : hasMore ? "Scroll down to load more" : "No more departments"}
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-2">
+              <div className="flex items-center gap-2">
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                     <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">Row per page:{rowsPerPage}
+                              <ChevronDown className="ml-2 h-4 w-4" /> 
+                            </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="bg-white"
+                    style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+                  >
+                    {[5, 10, 15, 20, 25, 50, 100].map((num) => (
+                      <DropdownMenuItem
+                        key={num}
+                        onClick={() => {
+                          setRowsPerPage(num);
+                          setCurrentPage(1);
+                        }}
+                      >
+                        {num}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <Button
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  title="Previous Page"
+                  className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1"
+                >
+                  Previous
+                </Button>
+                <span className="px-2 py-1 rounded text-gray-700 bg-gray-200 text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1"
+                  title="Next Page"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -334,20 +373,12 @@ const Departments = () => {
         department={editingDepartment}
         open={!!editingDepartment}
         onOpenChange={(open) => !open && setEditingDepartment(null)}
-        onSuccess={() => {
-          setDepartments([]);
-          setPage(1);
-          setHasMore(true);
-        }}
+        onSuccess={fetchDepartments}
       />
       <NewDepartmentDialog
         open={showNewDialog}
         onOpenChange={setShowNewDialog}
-        onSuccess={() => {
-          setDepartments([]);
-          setPage(1);
-          setHasMore(true);
-        }}
+        onSuccess={fetchDepartments}
       />
 
       {/* Details Dialog */}
@@ -374,11 +405,15 @@ const Departments = () => {
                 <p>No designations found.</p>
               )}
               <div className="absolute top-4 right-4">
-                <Button size="sm" className="bg-blue-700 text-white hover:bg-blue-600" title="Edit Department"
+                <Button
+                  size="sm"
+                  className="bg-blue-700 text-white hover:bg-blue-600"
+                  title="Edit Department"
                   onClick={() => {
                     setEditingDepartment(viewingDepartment);
                     setViewingDepartment(null);
-                  }}>
+                  }}
+                >
                   <Edit className="h-4 w-4" /> Edit
                 </Button>
               </div>

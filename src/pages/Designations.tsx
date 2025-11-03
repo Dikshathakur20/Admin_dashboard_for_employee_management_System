@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useLogin } from '@/contexts/LoginContext';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 
 interface Designation {
@@ -37,16 +37,12 @@ const Designations = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [selectionLoading, setSelectionLoading] = useState(false);
   const [editingDesignation, setEditingDesignation] = useState<Designation | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [sortOption, setSortOption] = useState<'id-asc' | 'id-desc' | 'name-asc' | 'name-desc'>('id-desc');
 
-  // Infinite scroll
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const pageSize = 10;
-  const loaderRef = useRef<HTMLDivElement | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -55,19 +51,15 @@ const Designations = () => {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Fetch designations
-  const fetchDesignations = async (pageNum = 1) => {
+  useEffect(() => {
+    fetchDesignations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortOption]);
+
+  const fetchDesignations = async () => {
     setLoading(true);
     try {
-      const from = (pageNum - 1) * pageSize;
-      const to = pageNum * pageSize - 1;
-
-      const { data: desData, error: desError } = await supabase
-        .from('tbldesignations')
-        .select('*')
-        .range(from, to)
-        .order('designation_id', { ascending: sortOption.includes('asc') });
-
+      const { data: desData, error: desError } = await supabase.from('tbldesignations').select('*');
       if (desError) throw desError;
 
       const deptIds = desData.map(d => d.department_id).filter(Boolean) as number[];
@@ -79,8 +71,7 @@ const Designations = () => {
 
       const { data: empData } = await supabase
         .from('tblemployees')
-        .select('employee_id, designation_id')
-        .in('designation_id', desData.map(d => d.designation_id));
+        .select('employee_id, designation_id');
 
       const enriched = desData.map(d => ({
         ...d,
@@ -88,42 +79,14 @@ const Designations = () => {
       }));
 
       setDepartments(deptData || []);
-      setDesignations(prev => pageNum === 1 ? enriched : [...prev, ...enriched]);
-      if (enriched.length < pageSize) setHasMore(false);
+      setDesignations(enriched);
     } catch (err) {
       console.error(err);
-      toast({
-        title: 'Error',
-        description: 'Unable to fetch designations',
-        variant: 'destructive',
-      });
-      setHasMore(false);
+      toast({ title: 'Error', description: 'Unable to fetch designations', variant: 'destructive' });
     } finally {
       setLoading(false);
-      setSelectionLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchDesignations(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
-
-  // Infinite scroll observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          setPage(prev => prev + 1);
-        }
-      },
-      { threshold: 1 }
-    );
-    if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
-  }, [hasMore, loading]);
 
   const handleDelete = async (id: number) => {
     try {
@@ -143,25 +106,14 @@ const Designations = () => {
 
       if (!confirm('Are you sure you want to delete this designation?')) return;
 
-      const { error } = await supabase
-        .from('tbldesignations')
-        .delete()
-        .eq('designation_id', id);
-
+      const { error } = await supabase.from('tbldesignations').delete().eq('designation_id', id);
       if (error) throw error;
 
       toast({ title: 'Deleted', description: 'Designation removed successfully.' });
-
-      setDesignations([]);
-      setPage(1);
-      setHasMore(true);
+      fetchDesignations();
     } catch (err) {
       console.error(err);
-      toast({
-        title: 'Error',
-        description: 'Something went wrong while deleting designation.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Something went wrong while deleting designation.', variant: 'destructive' });
     }
   };
 
@@ -177,14 +129,17 @@ const Designations = () => {
     return 0;
   });
 
+  const totalPages = Math.ceil(sorted.length / rowsPerPage);
+  const displayedDesignations = sorted.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <main className="container mx-auto px-4 py-2 flex-1 flex flex-col">
         <Card className="w-full border-0 shadow-none bg-transparent flex-1 flex flex-col">
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <CardTitle className="text-2xl font-bold">
-                {departmentId ? `Designations : ${departments.find(d => d.department_id === departmentId)?.department_name}` : 'Designations'}
+                {departmentId ? `Designations: ${departments.find(d => d.department_id === departmentId)?.department_name}` : 'Designations'}
               </CardTitle>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
                 <div className="relative w-full sm:w-64">
@@ -194,9 +149,7 @@ const Designations = () => {
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
-                      setSelectionLoading(true);
-                      setPage(1);
-                      setHasMore(true);
+                      setCurrentPage(1);
                     }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
@@ -211,7 +164,11 @@ const Designations = () => {
                         Sort <ChevronDown className="ml-2 h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white" style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-white"
+                      style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}
+                    >
                       <DropdownMenuItem onClick={() => setSortOption('name-asc')}>Name A - Z</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSortOption('name-desc')}>Name Z - A</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSortOption('id-asc')}>Old → New</DropdownMenuItem>
@@ -223,15 +180,10 @@ const Designations = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="px-0 flex-1 flex flex-col overflow-hidden relative">
-            {selectionLoading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50">
-                Loading...
-              </div>
-            )}
-            <div className="border rounded-lg overflow-auto flex-1">
+          <CardContent className="px-0 flex-1 flex flex-col overflow-hidden">
+            <div className="border rounded-lg overflow-auto">
               <Table className="min-w-full">
-                <TableHeader>
+                <TableHeader className="w-full bg-blue-50 p-4 rounded-xl" style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
                   <TableRow>
                     <TableHead className="font-bold">Designation</TableHead>
                     <TableHead className="font-bold">Department</TableHead>
@@ -240,32 +192,30 @@ const Designations = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sorted.map(d => (
-                    <TableRow key={d.designation_id}>
-                      <TableCell>{d.designation_title}</TableCell>
-                      <TableCell>{departments.find(dep => dep.department_id === d.department_id)?.department_name || 'Not Assigned'}</TableCell>
-                      <TableCell className="text-center">
+                  {displayedDesignations.map(d => (
+                    <TableRow key={d.designation_id} className="hover:bg-gray-100 cursor-pointer select-none h-10">
+                      <TableCell className="py-1 text-sm">{d.designation_title}</TableCell>
+                      <TableCell className="py-1 text-sm">{departments.find(dep => dep.department_id === d.department_id)?.department_name || 'Not Assigned'}</TableCell>
+                      <TableCell className="text-center py-1 text-sm">
                         {d.total_employees! > 0 ? (
-                          <Link to={`/employees?designation=${d.designation_id}`} className="text-gray-900 hover:text-blue-900 hover:underline">
-                            {d.total_employees}
-                          </Link>
-                        ) : <span>0</span>}
+                          <Link to={`/employees?designation=${d.designation_id}`} className="text-gray-900 hover:text-blue-900 hover:underline">{d.total_employees}</Link>
+                        ) : <span>{d.total_employees}</span>}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-end space-x-3">
-                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700" onClick={() => setEditingDesignation(d)}>
-                            <Edit className="h-4 w-4" />
+                      <TableCell className="text-end py-1">
+                        <div className="flex justify-end space-x-1">
+                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0" onClick={() => setEditingDesignation(d)}>
+                            <Edit className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700" onClick={() => handleDelete(d.designation_id)}>
-                            <Trash2 className="h-4 w-4" />
+                          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0" onClick={() => handleDelete(d.designation_id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!loading && sorted.length === 0 && (
+                  {sorted.length === 0 && !loading && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-3 text-muted-foreground">
+                      <TableCell colSpan={4} className="text-center py-3 text-muted-foreground text-sm">
                         {searchTerm ? 'No designations match your search.' : 'No designations found.'}
                       </TableCell>
                     </TableRow>
@@ -274,9 +224,28 @@ const Designations = () => {
               </Table>
             </div>
 
-            {/* Footer loader */}
-            <div ref={loaderRef} className="sticky bottom-0 bg-background py-2 text-center text-sm text-gray-600">
-              {loading ? 'Loading more designations...' : hasMore ? 'Scroll down to load more' : 'No more designations'}
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
+                    Row per page: {rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-white" style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+                  {[5, 10, 15, 20, 25, 50, 100].map(num => (
+                    <DropdownMenuItem key={num} onClick={() => { setRowsPerPage(num); setCurrentPage(1); }}>
+                      {num}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <Button size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1">Previous</Button>
+                <span className="px-2 py-1 rounded text-gray-700 bg-gray-200 text-sm">Page {currentPage} of {Math.ceil(sorted.length / rowsPerPage)}</span>
+                <Button size="sm" onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(sorted.length / rowsPerPage)))} disabled={currentPage === Math.ceil(sorted.length / rowsPerPage)} className="bg-[#001F7A] text-white hover:bg-[#0029b0] rounded px-3 py-1">Next</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -286,21 +255,13 @@ const Designations = () => {
         designation={editingDesignation}
         open={!!editingDesignation}
         onOpenChange={(open) => !open && setEditingDesignation(null)}
-        onSuccess={() => {
-          setDesignations([]);
-          setPage(1);
-          setHasMore(true);
-        }}
+        onSuccess={fetchDesignations}
         departments={departments}
       />
       <NewDesignationDialog
         open={showNewDialog}
         onOpenChange={setShowNewDialog}
-        onSuccess={() => {
-          setDesignations([]);
-          setPage(1);
-          setHasMore(true);
-        }}
+        onSuccess={fetchDesignations}
         departmets={departments}
       />
     </div>
