@@ -1,3 +1,4 @@
+import logo from '/public/logo.png'; 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,10 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+
 
 const EmployeeLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
@@ -214,6 +218,19 @@ const EmployeeLogin = () => {
   // 🧱 UI
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+
+       <button
+      onClick={() => navigate(-1)} // navigates back to previous page
+      className="absolute top-6 left-6 flex items-center gap-2 group"
+       style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+    >
+      <img
+        src="/logo.png"
+       
+       alt="Company Logo" className="h-12 w-auto"
+      />
+      
+    </button>
       <h1 className="text-blue-700 text-3xl font-bold mb-8">Employee Portal</h1>
 
       <Card
@@ -266,6 +283,7 @@ const EmployeeLogin = () => {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   required
                 />
+                
                 <p className="text-xs text-gray-600 mt-1">
                   Hint: Last 3 of code + # + last 4 of phone + @ + birth year.
                 </p>
@@ -305,21 +323,16 @@ const EmployeeLogin = () => {
               {mode === "login" && (
                 <>
                 <div>
-                  <Button
-                    variant="outline"
-                    onClick={() => setMode("register")}
-                    className="w-64 bg-[#001F7A] text-white hover:bg-[#002f9a] transition"
-                  >
-                    Register Account
-                  </Button>
+
                   </div>
+                  {/*
                   <Button
                     variant="outline"
                     onClick={() => setMode("forgot")}
                     className="w-64 bg-[#001F7A] text-white hover:bg-[#002f9a] transition"
                   >
                     Forgot Password?
-                  </Button>
+                  </Button>*/}
                 </>
               )}
             </div>
