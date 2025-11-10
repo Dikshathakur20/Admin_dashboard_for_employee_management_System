@@ -5,6 +5,7 @@ import { useLogin } from "@/contexts/LoginContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Edit, Trash2, Eye, ChevronDown,ClipboardList,FileText } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -225,6 +226,69 @@ const Employees = () => {
       </div>
     );
   };
+const handleRegister = async (emp: Employee) => {
+  try {
+    if (!emp.employee_code || !emp.phone || !emp.date_of_birth) {
+      toast({
+        title: "Missing Data",
+        description: "Cannot generate password: employee_code, phone, or date_of_birth missing.",
+      });
+      return;
+    }
+
+    // Generate password
+    const last3Code = emp.employee_code.slice(-3);
+    const last4Phone = emp.phone.slice(-4);
+    const birthYear = new Date(emp.date_of_birth).getFullYear();
+    const password = `${last3Code}#${last4Phone}@${birthYear}`;
+
+    // Check if employee already exists in auth table
+    const { data: existing, error: checkError } = await supabase
+      .from("tblemployeeauth")
+      .select("employee_id")
+      .eq("employee_id", emp.employee_id)
+      .single();
+
+    if (checkError && checkError.code !== "PGRST116") throw checkError; // PGRST116 = no row found
+
+    if (existing) {
+      toast({
+        title: "Already Registered",
+        description: `Employee code ${emp.employee_code} is already registered.`,
+      });
+      return;
+    }
+
+    // Insert into tblemployeeauth
+    const { error } = await supabase.from("tblemployeeauth").insert([
+      {
+        employee_id: emp.employee_id,
+        email: emp.email,
+        password: password,
+        status: "active",
+        employee_code: emp.employee_code,
+        phone: emp.phone,
+        dob: emp.date_of_birth,
+      },
+    ]);
+
+    if (error) throw error;
+
+    toast({
+      title: "Registered Successfully",
+      description: `Employee code ${emp.employee_code} registered with generated password.`,
+    });
+  } catch (err: any) {
+    console.error("Registration Error:", err);
+    toast({
+      title: "Error",
+      description: "Could not register employee.",
+    });
+  }
+};
+
+
+
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
@@ -295,8 +359,8 @@ const Employees = () => {
         <span className="text-gray-600 text-sm">Loading employees...</span>
       </div>
     )}
-
-    <Table>
+<div className="overflow-x-auto">
+    <Table className="table-auto min-w-full">
       <TableHeader
         className="w-full bg-blue-50 p-6 rounded-xl"
         style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
@@ -342,6 +406,7 @@ const Employees = () => {
                 <Button
                   size="sm"
                   variant="outline"
+                  title="View"
                   className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
                   onClick={() => setViewingEmployee(emp)}
                 >
@@ -351,7 +416,7 @@ const Employees = () => {
                     size="sm"
                     variant="outline"
                     className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                    title="Edit Employee"
+                    title="Edit"
                     onClick={() => { setEditingEmployee(emp); setViewingEmployee(null);  }}
                   >
                     <Edit className="h-4 w-4 mr-1" />
@@ -359,6 +424,7 @@ const Employees = () => {
                   <Button
                   size="sm"
                   variant="outline"
+                  title="Assign Task"
                   className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
                   onClick={() => navigate(`/employee-action/assign-task?employee_id=${emp.employee_id}`)}
                 >
@@ -369,16 +435,26 @@ const Employees = () => {
                   size="sm"
                   variant="outline"
                   className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                  title="View Documents"
+                  title="Documents"
                   onClick={() => navigate(`/employee-document/${emp.employee_id}`)}
                 >
                   <FileText className="h-3.5 w-3.5" />
                 </Button>
-
-
                 <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+                    title="Register"
+                    onClick={() => handleRegister(emp)}
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                  </Button>
+
+
+                 <Button
                   size="sm"
                   variant="outline"
+                  title="Delete"
                   className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
                   onClick={() => handleDelete(emp.employee_id)}
                 >
@@ -391,6 +467,7 @@ const Employees = () => {
         ))}
       </TableBody>
     </Table>
+  </div>
   </div>
 
 
