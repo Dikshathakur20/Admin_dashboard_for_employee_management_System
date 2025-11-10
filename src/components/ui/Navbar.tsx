@@ -118,7 +118,7 @@ const Navbar: React.FC = () => {
                   <span>Manage Designations</span>
                 </Link>
 
-                {/* Reset Desk */}
+                {/* Reset Desk
                 <Link
                   to="/requests"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
@@ -130,7 +130,7 @@ const Navbar: React.FC = () => {
                 >
                   <Key className="h-4 w-4" />
                   <span>Reset Desk</span>
-                </Link>
+                </Link> */}
 
                 {/* Leave Desk */}
                 <Link
@@ -157,7 +157,7 @@ const Navbar: React.FC = () => {
                     }`}
                 >
                   <ClipboardList className="h-4 w-4" />
-                  <span>TaskBoard</span>
+                  <span>Task Board</span>
                 </Link>
 
                 {/* ✅ Notifications */}
