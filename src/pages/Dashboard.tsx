@@ -121,12 +121,7 @@ useEffect(() => {
       subtitle: "Available positions",
       route: "/designations",
     },
-      {
-    title: "Reset Desk",
-    count: requestCount,
-    subtitle: "Pending reset requests",
-    route: "/requests",
-  },
+      
     {
       title: "Leave Desk",
       count: leaveCount,
@@ -176,5 +171,10 @@ useEffect(() => {
     </div>
   );
 };
-
+{/*{
+    title: "Reset Desk",
+    count: requestCount,
+    subtitle: "Pending reset requests",
+    route: "/requests",
+  },*/}
 export default Dashboard;
