@@ -1,3 +1,4 @@
+import logo from '/public/logo.png'; // or '@/assets/logo.png' if you store it in src/assets
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLogin } from '@/contexts/LoginContext';
@@ -18,6 +19,10 @@ const Login = () => {
   const [showSignup, setShowSignup] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
+  // ✅ new states for admin code verification
+  const [showCodeStep, setShowCodeStep] = useState(false);
+  const [adminCode, setAdminCode] = useState('');
+
   const { login, logout, user } = useLogin();
   const { toast } = useToast();
   const inactivityTimer = useRef<number | null>(null);
@@ -25,13 +30,10 @@ const Login = () => {
 
   // ✅ navigate only once when user is logged in
   useEffect(() => {
-  // only redirect if the user exists AND we’re not already on the dashboard
-  if (user && window.location.pathname !== '/dashboard') {
-    navigate('/dashboard', { replace: true });
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [user]);
-
+    if (user && window.location.pathname !== '/dashboard') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   // ✅ Signup (New Admin)
   const handleSignup = async (e: React.FormEvent) => {
@@ -79,7 +81,6 @@ const Login = () => {
       localStorage.setItem('admin_id', data.id);
       localStorage.setItem('admin_role', data.role || 'admin');
 
-      // ✅ login from context
       await login(data.email, password);
     } catch (err: any) {
       toast({ title: 'Login Error', description: err.message, variant: 'destructive' });
@@ -131,46 +132,55 @@ const Login = () => {
     }
   };
 
-  // ✅ Inactivity Timer
-  
+  // ✅ Auto Logout after 5 mins of Inactivity
+  useEffect(() => {
+    if (!user) return;
 
- // ✅ Auto Logout after 5 mins of Inactivity
-useEffect(() => {
-  if (!user) return; // Only enable timer when logged in
+    const resetTimer = () => {
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = window.setTimeout(() => {
+        toast({
+          title: 'Session Expired',
+          description: 'You were logged out due to inactivity.',
+          variant: 'destructive',
+        });
+        logout();
+        navigate('/login', { replace: true });
+      }, 5 * 60 * 1000);
+    };
 
-  const resetTimer = () => {
-    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    inactivityTimer.current = window.setTimeout(() => {
-      toast({
-        title: 'Session Expired',
-        description: 'You were logged out due to inactivity.',
-        variant: 'destructive',
-      });
-      logout();
-      navigate('/login', { replace: true });
-    }, 5 * 60 * 1000); // 5 minutes
-  };
+    const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+    events.forEach((e) => window.addEventListener(e, resetTimer));
 
-  const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
-  events.forEach((e) => window.addEventListener(e, resetTimer));
+    resetTimer();
 
-  resetTimer(); // start counting right away
+    return () => {
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+    };
+  }, [user, logout, navigate, toast]);
 
-  return () => {
-    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    events.forEach((e) => window.removeEventListener(e, resetTimer));
-  };
-}, [user]);
-
-
-
-  // ✅ UI
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+       <button
+      onClick={() => navigate(-1)} // navigates back to previous page
+      className="absolute top-6 left-6 flex items-center gap-2 group"
+       style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+    >
+      <img
+        src="/logo.png"
+       
+       alt="Company Logo" className="h-12 w-auto"
+      />
+      
+    </button>
+
       <h1 className="text-blue-700 text-3xl font-bold mb-8">Admin Portal</h1>
 
-      <Card className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
-        style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}>
+      <Card
+        className="w-full max-w-md shadow-2xl rounded-3xl border border-white/30 backdrop-blur-md"
+        style={{ background: 'linear-gradient(-45deg, #ffffff, #c9d0fb)' }}
+      >
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800">
             {showReset ? 'Reset Password' : showSignup ? 'Sign Up' : 'Login'}
@@ -187,6 +197,7 @@ useEffect(() => {
         <CardContent className="space-y-5 mt-4">
           {/* ✅ Conditional Forms */}
           {showReset ? (
+            // Forgot Password Form
             <form onSubmit={handleResetPassword}>
               <Label>Email</Label>
               <Input
@@ -214,6 +225,7 @@ useEffect(() => {
               </div>
             </form>
           ) : showSignup ? (
+            // Signup Form
             <form onSubmit={handleSignup}>
               <Label>Email</Label>
               <Input
@@ -223,7 +235,6 @@ useEffect(() => {
                 required
               />
               <Label>Password</Label>
-
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
@@ -261,6 +272,7 @@ useEffect(() => {
               </div>
             </form>
           ) : (
+            // Login Form
             <form onSubmit={handleSubmit}>
               <Label>Email</Label>
               <Input
@@ -289,15 +301,16 @@ useEffect(() => {
 
               <div className="flex items-center justify-center mt-6">
                 <Button type="submit" disabled={loading} className="w-64 bg-[#001F7A] text-white hover:bg-[#002f9a] transition">
-                  {loading ? <Loader2 className="w-64 bg-[#001F7A] text-white hover:bg-[#002f9a] transition"/> : 'Sign In'}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
                 </Button>
               </div>
               <div className="mt-3 text-center flex flex-col gap-2">
+                {/* ✅ Modified Sign Up link to open code verification */}
                 <a
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setShowSignup(true);
+                    setShowCodeStep(true);
                   }}
                   className="text-sm text-gray-600 hover:underline"
                 >
@@ -318,6 +331,56 @@ useEffect(() => {
           )}
         </CardContent>
       </Card>
+
+      {/* ✅ Admin Code Verification Modal */}
+      {showCodeStep && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-80">
+            <h2 className="text-lg font-semibold text-center text-gray-800 mb-3">
+              Admin Code Verification
+            </h2>
+            <Input
+              type="password"
+              placeholder="Enter Admin Code"
+              value={adminCode}
+              onChange={(e) => setAdminCode(e.target.value)}
+              className="mb-4"
+            />
+            <div className="flex justify-between">
+              <Button
+                className="bg-gray-400 text-white hover:bg-gray-500"
+                onClick={() => {
+                  setShowCodeStep(false);
+                  setAdminCode('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-[#001F7A] text-white hover:bg-[#002f9a]"
+                onClick={() => {
+                  if (adminCode === 'admin@123') {
+                    toast({
+                      title: 'Access Granted',
+                      description: 'You may now sign up as an admin.',
+                    });
+                    setShowCodeStep(false);
+                    setShowSignup(true);
+                  } else {
+                    toast({
+                      title: 'Access Denied',
+                      description: 'Invalid admin code.',
+                      variant: 'destructive',
+                    });
+                  }
+                }}
+              >
+                Verify
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
