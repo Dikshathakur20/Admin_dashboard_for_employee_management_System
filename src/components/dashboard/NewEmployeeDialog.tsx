@@ -55,8 +55,34 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
     });
 
   useEffect(() => {
-    if (open) fetchData();
-  }, [open]);
+  if (open) fetchData();
+}, [open]);
+
+// ✅ Updated Employee Code Logic
+const generateEmployeeCode = async () => {
+  const prefix = "EMP";
+
+  // Get the latest employee ID from Supabase
+  const { data, error } = await supabase
+    .from("tblemployees")
+    .select("employee_id")
+    .order("employee_id", { ascending: false })
+    .limit(1)
+    .single();
+
+  let nextId = 1;
+  if (data && data.employee_id) {
+    nextId = data.employee_id + 1;
+  }
+
+  // If ID is 2 digits, pad with leading zero; else take last 3 digits
+  const formattedId =
+    nextId < 100
+      ? nextId.toString().padStart(3, "0") // e.g., 9 → "009", 45 → "045"
+      : nextId.toString().slice(-3); // e.g., 1234 → "234"
+
+  return `${prefix}${formattedId}`;
+};
 
   const fetchData = async () => {
     try {
@@ -138,7 +164,9 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
       let fileData: string | null = null;
       if (profilePicture) fileData = await toBase64(profilePicture);
 
+      const employeeCode = await generateEmployeeCode();
       const employeeData: any = {
+        employee_code: employeeCode,
         first_name: firstName,
         last_name: lastName,
         email: email.toLowerCase(),
