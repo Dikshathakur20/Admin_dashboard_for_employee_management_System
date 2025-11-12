@@ -28,13 +28,14 @@ import Employees from "@/pages/Employees";
 import Departments from "@/pages/Departments";
 import Designations from "@/pages/Designations";
 import NewPassword from "@/pages/NewPassword";
-import Role from "@/pages/Role";
+
 import Requests from "@/pages/Request";
 import ApproveLeave from "@/pages/ApproveLeave";
 import AssignTask from "@/pages/EmployeeActions/AssignTask";
 import TasksStatus from "@/pages/TasksStatus"; 
 import EmployeeDocument from "@/pages/EmployeeDocument";
 import Notification from  "@/pages/Notification";
+import TrackAttendance from "./pages/EmployeeActions/TrackAttendance";
 
 // ✅ Employee Pages
 import EmployeeLogin from "@/pages/Employee-Login";
@@ -44,6 +45,7 @@ import MyProfile from "@/pages/employee/MyProfile";
 import ApplyLeave  from "@/pages/employee/ApplyLeave";
 import TaskStatus from "./pages/employee/TaskStatus";
 import UploadDocument from "./pages/employee/UploadDocument";
+import MonthlyReport from "./pages/employee/MonthlyReport";
 // ----------------------------------------------------
 // 🔒 ADMIN PROTECTED ROUTE
 // ----------------------------------------------------
@@ -134,8 +136,8 @@ const AppRoutes = () => (
   <Routes>
     {/* Public Routes */}
     <Route path="/" element={<Index />} />
-    <Route path="/role" element={<Role />} />
-    <Route path="/login" element={<Login />} />
+    
+    <Route path="/admin-login" element={<Login />} />
     <Route path="/new-password" element={<NewPassword />} />
 
     {/* Admin Routes */}
@@ -220,6 +222,14 @@ const AppRoutes = () => (
     </ProtectedRoute>
   }
 />
+<Route
+  path="/employee-actions/track-attendance/:id"
+  element={
+    <ProtectedRoute>
+      <TrackAttendance />
+    </ProtectedRoute>
+  }
+/>
 
     {/* Employee Routes */}
     <Route path="/employee/login" element={<EmployeeLogin />} />
@@ -269,6 +279,16 @@ const AppRoutes = () => (
     <EmployeeProtectedRoute>
       <EmployeeInactivityHandler>
         <UploadDocument />
+      </EmployeeInactivityHandler>
+    </EmployeeProtectedRoute>
+  }
+/>
+<Route
+  path="/employee/monthly-report"
+  element={
+    <EmployeeProtectedRoute>
+      <EmployeeInactivityHandler>
+        <MonthlyReport />
       </EmployeeInactivityHandler>
     </EmployeeProtectedRoute>
   }
