@@ -395,35 +395,90 @@ const EmployeeDashboard = () => {
           {/* 🔷 Right Column */}
           <div className="space-y-6">
             {/* Notifications */}
-            <Card className="border shadow-md"
-            style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-            >
-              <CardHeader>
-                <CardTitle className="text-[#001F7A] flex items-center gap-2">
-                  <Bell className="h-5 w-5" /> Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {notifications.length > 0 ? (
-                  <ul className="space-y-2 text-sm">
-                    {notifications.map((note) => (
-                      <li key={note.id} className="border-b pb-2">
-                        <strong>{note.title}</strong>
-                        <p className="text-gray-600">{note.message}</p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(note.created_at).toLocaleString("en-IN")}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500">No notifications yet.</p>
-                )}
-              </CardContent>
-            </Card>
+           {/* Notifications */}
+<Card
+  className="border shadow-md"
+  style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+>
+  <CardHeader>
+    <CardTitle className="text-[#001F7A] flex items-center gap-2">
+      <Bell className="h-5 w-5" /> Notifications
+    </CardTitle>
+  </CardHeader>
+
+  <CardContent className="space-y-4">
+    {/* ✅ Today's Notifications */}
+    <div>
+      <h3 className="font-semibold text-blue-900 mb-2">Today's Notifications</h3>
+      {(() => {
+        const todayIST = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+        const todays = notifications.filter((n) => {
+          const createdAtIST = new Date(
+            new Date(n.created_at).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+          )
+            .toISOString()
+            .slice(0, 10); // yyyy-mm-dd
+          return createdAtIST === todayIST;
+        });
+
+        if (todays.length === 0) {
+          return <p className="text-gray-500 text-sm">No notification yet.</p>;
+        }
+
+        return (
+          <ul className="space-y-2 text-sm">
+            {todays.map((note) => (
+              <li key={note.id} className="border-b pb-2">
+                <strong>{note.title}</strong>
+                <p className="text-gray-600">{note.message}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(note.created_at).toLocaleString("en-IN")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        );
+      })()}
+    </div>
+
+    {/* ✅ Old Notification (most recent older one) */}
+    <div>
+      <h3 className="font-semibold text-blue-900 mb-2">Old Notification</h3>
+      {(() => {
+        const todayIST = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+        const old = notifications
+          .filter((n) => {
+            const createdAtIST = new Date(
+              new Date(n.created_at).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+            )
+              .toISOString()
+              .slice(0, 10);
+            return createdAtIST !== todayIST;
+          })
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+        if (!old) {
+          return <p className="text-gray-500 text-sm">No older notifications.</p>;
+        }
+
+        return (
+          <div className="border-b pb-2 text-sm">
+            <strong>{old.title}</strong>
+            <p className="text-gray-600">{old.message}</p>
+            <p className="text-xs text-gray-400">
+              {new Date(old.created_at).toLocaleString("en-IN")}
+            </p>
+          </div>
+        );
+      })()}
+    </div>
+  </CardContent>
+</Card>
 
             {/* Today's Overview */}
-            <Card className="border shadow-md"
+            <Card
+            onClick={() => navigate("/employee/monthly-report")}  
+            className="border shadow-md"
             style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
               <CardHeader>
                 <CardTitle className="text-[#001F7A] flex items-center gap-2">
