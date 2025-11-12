@@ -31,7 +31,8 @@ const Navbar: React.FC = () => {
     "/requests",
     "/approve-leave",
     "/tasks-status",
-    
+     "/employee-action/assign-task",
+     "/employee-document/:id",
   ];
 
   if (!managementRoutes.includes(location.pathname)) return null;

@@ -143,7 +143,7 @@ useEffect(() => {
       <h1 className="text-2xl font-bold mb-6 text-[#001F7A]">Dashboard</h1>
          <Button
           onClick={() => navigate("/notification")}
-          className="bg-blue-900 hover:bg-blue-800 text-white shadow-none"
+          className="bg-blue-900 hover:bg-blue-800 text-white shadow-none mb-6"
         >
           Notifications
         </Button>
