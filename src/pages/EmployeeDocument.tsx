@@ -1,6 +1,6 @@
 // src/pages/admin/EmployeeDocument.tsx
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FileDown, Upload, Trash2 } from "lucide-react";
+import { FileDown, Upload, Trash2, ArrowLeft } from "lucide-react";
 
 interface Document {
   id: number;
@@ -16,7 +16,6 @@ interface Document {
   category: string;
   file_name: string;
   file_url: string;
-  
   uploaded_by: string;
   created_at: string;
 }
@@ -25,6 +24,7 @@ const EmployeeDocument = () => {
   const { id } = useParams(); // /admin/employee-documents/:id
   const employeeId = Number(id);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [category, setCategory] = useState("");
@@ -39,11 +39,10 @@ const EmployeeDocument = () => {
   const fetchDocuments = async () => {
     try {
       const { data, error } = await supabase
-  .from("tbldocuments")
-  .select("*")
-  .eq("employee_id", employeeId);
+        .from("tbldocuments")
+        .select("*")
+        .eq("employee_id", employeeId);
 
-        
       if (error) throw error;
       setDocuments(data || []);
     } catch (err) {
@@ -85,7 +84,7 @@ const EmployeeDocument = () => {
           file_url: fileBase64,
           uploaded_by: "Admin",
           department: "General",
-         designation: "Admin Upload",
+          designation: "Admin Upload",
         },
       ]);
 
@@ -110,48 +109,44 @@ const EmployeeDocument = () => {
     }
   };
 
- const handleDownload = (doc: Document) => {
-  // Prefer public URL if available
-  const url = doc.file_url_public || doc.file_url;
-  if (!url) {
-    toast({
-      title: "Error",
-      description: "No file URL found.",
-      variant: "destructive",
-    });
-    return;
-  }
+  const handleDownload = (doc: Document) => {
+    const url = doc.file_url;
+    if (!url) {
+      toast({
+        title: "Error",
+        description: "No file URL found.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  // For Base64 → create a Blob so it downloads properly
-  if (url.startsWith("data:")) {
-    const byteString = atob(url.split(",")[1]);
-    const mimeString = url.split(",")[0].split(":")[1].split(";")[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+    if (url.startsWith("data:")) {
+      const byteString = atob(url.split(",")[1]);
+      const mimeString = url.split(",")[0].split(":")[1].split(";")[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
 
-    const blob = new Blob([ab], { type: mimeString });
-    const blobUrl = URL.createObjectURL(blob);
+      const blob = new Blob([ab], { type: mimeString });
+      const blobUrl = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = doc.file_name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
-  } else {
-    // Normal storage URL
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = doc.file_name;
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-};
-
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = doc.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } else {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.file_name;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this document?")) return;
@@ -174,38 +169,49 @@ const EmployeeDocument = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <main className="flex-grow px-6 py-8">
-        <Card className="w-full max-w-5xl mx-auto rounded-xl shadow-lg border border-gray-200">
+      <main className="flex-grow px-6 py-8 mt-20">
+        <Card className="w-full max-w-5xl mx-auto rounded-xl shadow-lg border border-gray-200"
+          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+        >
           <CardHeader className="flex justify-between items-center">
-            <CardTitle className="text-2xl font-bold text-[#001F7A]">
-              Employee Documents
-            </CardTitle>
-            <div className="text-sm text-gray-600">Employee ID: {employeeId}</div>
+            <div>
+              <CardTitle className="text-2xl font-bold text-[#001F7A]">
+                Employee Documents
+              </CardTitle>
+              
+            </div>
+
+            {/* ✅ Back to Dashboard Button */}
+            <Button
+              onClick={() => navigate("/dashboard")}
+              className="bg-[#001F7A] text-white hover:bg-[#0029b0] flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
           </CardHeader>
 
           <CardContent>
             {/* Upload Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                <div>
-              <Select onValueChange={(val) => setCategory(val)} value={category || undefined}>
-                <SelectTrigger className="w-full border-blue-900 text-blue-900 font-medium 
-          bg-transparent 
-          focus:outline-none focus:ring-0 focus:ring-offset-0 
-          shadow-none hover:shadow-none active:shadow-none">
-                        <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#001F7A] text-white border-none shadow-lg">
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="skills">Skill Set</SelectItem>
-                        <SelectItem value="personal">Personal</SelectItem>
-                </SelectContent>
+              <div>
+                <Select onValueChange={(val) => setCategory(val)} value={category || undefined}>
+                  <SelectTrigger className="w-full border-blue-900 text-white-900 font-medium bg-blue-900 focus:outline-none focus:ring-0 shadow-none">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#001F7A] text-white border-none shadow-lg">
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="skills">Skill Set</SelectItem>
+                    <SelectItem value="personal">Personal</SelectItem>
+                  </SelectContent>
                 </Select>
-                </div>
+              </div>
 
               <div>
                 <Input
                   type="file"
                   accept="application/pdf"
+                  
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
               </div>
