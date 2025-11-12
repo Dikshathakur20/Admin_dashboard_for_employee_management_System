@@ -33,7 +33,7 @@ const Index = () => {
 
           {/* ✅ Changed Button */}
           <div className="flex items-center justify-center mt-6">
-            <Link to="/role">
+            <Link to="/employee/login">
               <Button
                 className="bg-[#001F7A] text-white px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-[#0029b0] transition text-sm"
                 title="Click to select your role"

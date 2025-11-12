@@ -402,67 +402,90 @@ const handleRegister = async (emp: Employee) => {
               {emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "-"}
             </TableCell>
             <TableCell className="px-2 py-1 text-sm text-right">
-              <div className="flex justify-end gap-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  title="View"
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                  onClick={() => setViewingEmployee(emp)}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                    title="Edit"
-                    onClick={() => { setEditingEmployee(emp); setViewingEmployee(null);  }}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                  </Button>
-                  <Button
-                  size="sm"
-                  variant="outline"
-                  title="Assign Task"
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                  onClick={() => navigate(`/employee-action/assign-task?employee_id=${emp.employee_id}`)}
-                >
-                  <ClipboardList className="h-3.5 w-3.5" />
-                </Button>
-                 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                  title="Documents"
-                  onClick={() => navigate(`/employee-document/${emp.employee_id}`)}
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                    title="Register"
-                    onClick={() => handleRegister(emp)}
-                  >
-                    <UserPlus className="h-3.5 w-3.5" />
-                  </Button>
+  <div className="flex justify-end gap-1">
+    {/* View */}
+    <Button
+      size="sm"
+      variant="outline"
+      title="View"
+      className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+      onClick={() => setViewingEmployee(emp)}
+    >
+      <Eye className="h-3.5 w-3.5" />
+    </Button>
 
+    {/* Edit */}
+    <Button
+      size="sm"
+      variant="outline"
+      title="Edit"
+      className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+      onClick={() => { setEditingEmployee(emp); setViewingEmployee(null); }}
+    >
+      <Edit className="h-4 w-4" />
+    </Button>
 
-                 <Button
-                  size="sm"
-                  variant="outline"
-                  title="Delete"
-                  className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
-                  onClick={() => handleDelete(emp.employee_id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-               
-              </div>
-            </TableCell>
+    {/* Delete */}
+    <Button
+      size="sm"
+      variant="outline"
+      title="Delete"
+      className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+      onClick={() => handleDelete(emp.employee_id)}
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+    </Button>
+
+    {/* More (Dropdown) */}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          title="More Actions"
+          className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0 flex items-center justify-center"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="bg-white shadow-md rounded-md p-1"
+        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+      >
+        <DropdownMenuItem
+          onClick={() => handleRegister(emp)}
+          className="cursor-pointer flex items-center gap-2"
+        >
+          <UserPlus className="h-4 w-4 text-blue-800" /> Register User
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => navigate(`/employee-action/assign-task?employee_id=${emp.employee_id}`)}
+          className="cursor-pointer flex items-center gap-2"
+        >
+          <ClipboardList className="h-4 w-4 text-blue-800" /> Assign Task
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => navigate(`/employee-document/${emp.employee_id}`)}
+          className="cursor-pointer flex items-center gap-2"
+        >
+          <FileText className="h-4 w-4 text-blue-800" /> Documents
+        </DropdownMenuItem>
+        {/* ✅ New Track Attendance Option */}
+    <DropdownMenuItem
+      onClick={() => navigate(`/employee-actions/track-attendance/${emp.employee_id}`)}
+
+      className="cursor-pointer flex items-center gap-2"
+    >
+      <ClipboardList className="h-4 w-4 text-blue-800" /> Track Attendance
+    </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
+</TableCell>
+
           </TableRow>
         ))}
       </TableBody>
