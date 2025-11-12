@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Use this instead of next/router
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +10,31 @@ export default function Notifications() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [target, setTarget] = useState("All");
+  const [departments, setDepartments] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); // ✅ useNavigate hook for routing
 
+  // ✅ Fetch departments from Supabase
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const { data, error } = await supabase.from("tbldepartments").select("department_name");
+
+      if (error) {
+        console.error("Error fetching departments:", error.message);
+        toast({
+          title: "Error loading departments",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setDepartments(data.map((d: any) => d.department_name));
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
+  // ✅ Handle Send Notification
   const handleSend = async () => {
     if (!title) {
       toast({
@@ -53,11 +77,24 @@ export default function Notifications() {
     }
   };
 
+  // ✅ Back to Dashboard
+  const handleBack = () => {
+    navigate("/dashboard"); // ✅ React Router navigation
+  };
+
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-md border border-gray-200">
-      <h2 className="text-xl font-semibold text-blue-900 mb-4">
-        Create Notification
-      </h2>
+  <div className="flex flex-col min-h-[calc(100vh-64px)] bg-gray-50 mt-7"> 
+
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-blue-900">Create Notification</h2>
+        <Button
+          onClick={handleBack}
+          variant="outline"
+          className=" bg-blue-900 border-blue-900 text-white-900 hover:bg-blue-900 hover:text-white"
+        >
+          ← Back to Dashboard
+        </Button>
+      </div>
 
       <div className="space-y-4">
         <Input
@@ -77,12 +114,14 @@ export default function Notifications() {
         <select
           value={target}
           onChange={(e) => setTarget(e.target.value)}
-          className="border border-blue-900 rounded-lg px-3 py-2 text-blue-900 focus:outline-none focus:ring-0"
+          className="border border-blue-900 rounded-lg px-3 py-2 text-blue-900 focus:outline-none focus:ring-0 w-full"
         >
           <option value="All">All Employees</option>
-          <option value="HR">HR Department</option>
-          <option value="IT">IT Department</option>
-          <option value="Finance">Finance Department</option>
+          {departments.map((dept, idx) => (
+            <option key={idx} value={dept}>
+              {dept} Department
+            </option>
+          ))}
         </select>
 
         <Button
