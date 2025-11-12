@@ -131,77 +131,90 @@ const generateEmployeeCode = async () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (emailExists) {
-      toast({ title: "Email Already Exists", description: emailExists });
-      return;
-    }
-    if (!departmentId || !designationId) {
-      toast({ title: "Missing Selection", description: "Please select both Department and Designation" });
-      return;
-    }
+  if (emailExists) {
+    toast({ title: "Email Already Exists", description: emailExists });
+    return;
+  }
 
-    const salaryValue = salary ? parseFloat(salary) : 0;
-    if (salaryValue > 10000000) {
-      toast({ title: "Salary Limit Exceeded", description: "Salary cannot exceed ₹10,000,000" });
-      return;
-    }
+  // 🆕 New check: prevent adding employee if email already exists in tbladmins
+  const { data: adminExists } = await supabase
+    .from("tbladmins")
+    .select("id")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
 
-    if (phone && !/^\d{7,15}$/.test(phone)) {
-      toast({ title: "Invalid Phone", description: "Phone must be 7-15 digits" });
-      return;
-    }
+  if (adminExists) {
+    toast({ title: "Conflict Detected", description: "An admin account exists with this email. Please use different email" });
+    return;
+  }
 
-    if (address && address.length > 250) {
-      toast({ title: "Address Too Long", description: "Address cannot exceed 250 characters" });
-      return;
-    }
+  if (!departmentId || !designationId) {
+    toast({ title: "Missing Selection", description: "Please select both Department and Designation" });
+    return;
+  }
 
-    setLoading(true);
+  const salaryValue = salary ? parseFloat(salary) : 0;
+  if (salaryValue > 10000000) {
+    toast({ title: "Salary Limit Exceeded", description: "Salary cannot exceed ₹10,000,000" });
+    return;
+  }
 
-    try {
-      let fileData: string | null = null;
-      if (profilePicture) fileData = await toBase64(profilePicture);
+  if (phone && !/^\d{7,15}$/.test(phone)) {
+    toast({ title: "Invalid Phone", description: "Phone must be 7-15 digits" });
+    return;
+  }
 
-      const employeeCode = await generateEmployeeCode();
-      const employeeData: any = {
-        employee_code: employeeCode,
-        first_name: firstName,
-        last_name: lastName,
-        email: email.toLowerCase(),
-        hire_date: hireDate,
-        salary: salary ? parseFloat(salary) : null,
-        department_id: departmentId ? parseInt(departmentId) : null,
-        designation_id: designationId ? parseInt(designationId) : null,
-        phone: phone || null,
-        employment_type: employmentType || null,
-        status: status || null,
-        date_of_birth: dateOfBirth || null,
-        address: address || null,
-      };
-      if (fileData) employeeData.file_data = fileData;
+  if (address && address.length > 250) {
+    toast({ title: "Address Too Long", description: "Address cannot exceed 250 characters" });
+    return;
+  }
 
-      const { data, error } = await supabase
-        .from("tblemployees")
-        .insert(employeeData)
-        .select()
-        .single();
+  setLoading(true);
 
-      if (error) throw error;
+  try {
+    let fileData: string | null = null;
+    if (profilePicture) fileData = await toBase64(profilePicture);
 
-      toast({ title: "Success", description: `Employee added successfully.` });
-      if (onEmployeeAdded && data) onEmployeeAdded(data);
+    const employeeCode = await generateEmployeeCode();
+    const employeeData: any = {
+      employee_code: employeeCode,
+      first_name: firstName,
+      last_name: lastName,
+      email: email.toLowerCase(),
+      hire_date: hireDate,
+      salary: salary ? parseFloat(salary) : null,
+      department_id: departmentId ? parseInt(departmentId) : null,
+      designation_id: designationId ? parseInt(designationId) : null,
+      phone: phone || null,
+      employment_type: employmentType || null,
+      status: status || null,
+      date_of_birth: dateOfBirth || null,
+      address: address || null,
+    };
+    if (fileData) employeeData.file_data = fileData;
 
-      resetForm();
-      onOpenChange(false);
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Addition Issue", description: "Unable to add employee" });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { data, error } = await supabase
+      .from("tblemployees")
+      .insert(employeeData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    toast({ title: "Success", description: `Employee added successfully.` });
+    if (onEmployeeAdded && data) onEmployeeAdded(data);
+
+    resetForm();
+    onOpenChange(false);
+  } catch (error) {
+    console.error(error);
+    toast({ title: "Addition Issue", description: "Unable to add employee" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const filteredDesignations = departmentId
     ? designations.filter(d => d.department_id === parseInt(departmentId))
