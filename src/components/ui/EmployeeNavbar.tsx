@@ -7,6 +7,7 @@ import {
   Upload,
   ClipboardCheck,
   FileText,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -129,12 +130,12 @@ const EmployeeNavbar: React.FC = () => {
                   to="/employee/monthly-report"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
                   ${
-                    location.pathname === "/employee/task-status"
+                    location.pathname === "/employee/monthly-report"
                       ? "bg-[#001F7A] text-white"
                       : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
                   }`}
                 >
-                  <ClipboardCheck className="h-4 w-4" />
+                  <Calendar className="h-4 w-4" />
                   <span>Monthly Report</span>
                 </Link>
               </div>
