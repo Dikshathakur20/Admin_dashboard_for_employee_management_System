@@ -30,27 +30,27 @@ const fetchTasks = async () => {
     }
 
     if (!employeeId) {
-      toast.error("Could not find employee details in local storage. Please log in again.");
+      toast.error("Could not find employee details. Please log in again.");
       return;
     }
 
-    // 🔹 Fetch tasks for this employee only
+    // 🔹 Fetch tasks only for this employee
     const { data, error } = await supabase
-  .from("tblemployeetasks")
-  .select(`
-    id,
-    task_title,
-    task_description,
-    due_date,
-    status,
-    created_at,
-    tblemployees:employee_id (first_name, last_name)
-  `)
-  .order("created_at", { ascending: false });
+      .from("tblemployeetasks")
+      .select(`
+        id,
+        task_title,
+        task_description,
+        due_date,
+        status,
+        created_at,
+        tblemployees:employee_id (first_name, last_name)
+      `)
+      .eq("employee_id", employeeId) // ✅ filter tasks for current employee
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    // 🔹 Add overdue flag logic
     const today = new Date();
     const updatedTasks = data?.map((task) => {
       const due = new Date(task.due_date);
@@ -68,6 +68,7 @@ const fetchTasks = async () => {
     setLoading(false);
   }
 };
+
 
 
   useEffect(() => {
