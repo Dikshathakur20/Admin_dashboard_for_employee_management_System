@@ -183,11 +183,11 @@ const EmployeeDocument = () => {
 
             {/* ✅ Back to Dashboard Button */}
             <Button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/employees")}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0] flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+              Back
             </Button>
           </CardHeader>
 
