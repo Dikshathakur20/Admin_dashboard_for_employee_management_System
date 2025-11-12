@@ -21,6 +21,15 @@ const Footer: React.FC = () => {
       navigate("/employee/dashboard");
       return;
     }
+    const currentPath = location.pathname;
+    const restrictedPaths = ["/", "/admin-login", "/employee/login"];
+    if (restrictedPaths.includes(currentPath)) {
+      navigate("/");
+      return;
+    }
+
+    // ✅ Otherwise, allow navigation to guest pages
+ 
 
     // ✅ If not logged in — go to actual privacy or terms page
     navigate(guestPath);
