@@ -163,7 +163,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
        <button
-      onClick={() => navigate(-1)} // navigates back to previous page
+      onClick={() => navigate("/")} // navigates back to previous page
       className="absolute top-6 left-6 flex items-center gap-2 group"
        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
     >
@@ -306,6 +306,7 @@ const Login = () => {
               </div>
               <div className="mt-3 text-center flex flex-col gap-2">
                 {/* ✅ Modified Sign Up link to open code verification */}
+                {/*}
                 <a
                   href="#"
                   onClick={(e) => {
@@ -315,7 +316,7 @@ const Login = () => {
                   className="text-sm text-gray-600 hover:underline"
                 >
                   Don’t have an account? Sign Up
-                </a>
+                </a>*/}
                 <a
                   href="#"
                   onClick={(e) => {
