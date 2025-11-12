@@ -290,13 +290,15 @@ const generateEmployeeCode = async () => {
              <div>
               <Label htmlFor="dateOfBirth" className="text-sm">Date of Birth</Label>
               <Input
-                id="dateOfBirth"
-                type="date"
-                value={dateOfBirth}
-                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={e => setDateOfBirth(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
-              />
+  id="dateOfBirth"
+  type="date"
+  value={dateOfBirth}
+  className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
+  onChange={e => setDateOfBirth(e.target.value)}
+  max="2007-12-31"
+  min="1950-01-01"
+/>
+
             </div>
           </div>
 
