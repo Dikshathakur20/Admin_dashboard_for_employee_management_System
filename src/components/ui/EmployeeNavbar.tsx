@@ -26,6 +26,7 @@ const EmployeeNavbar: React.FC = () => {
     "/employee/apply-leave",
     "/employee/task-status",
     "/employee/upload-document",
+    "/employee/monthly-report",
   ];
 
   // Hide Navbar if route not in employee routes
@@ -123,6 +124,18 @@ const EmployeeNavbar: React.FC = () => {
                 >
                   <ClipboardCheck className="h-4 w-4" />
                   <span>Task Status</span>
+                </Link>
+                 <Link
+                  to="/employee/monthly-report"
+                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+                  ${
+                    location.pathname === "/employee/task-status"
+                      ? "bg-[#001F7A] text-white"
+                      : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                  }`}
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                  <span>Monthly Report</span>
                 </Link>
               </div>
             </div>
