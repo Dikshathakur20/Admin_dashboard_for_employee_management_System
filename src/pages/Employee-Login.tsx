@@ -44,74 +44,103 @@ const EmployeeLogin = () => {
 };
 
   // ✅ LOGIN
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { data: empAuth, error } = await supabase
-        .from("tblemployees")
-        .select("*")
-        .eq("email", form.email)
-        .single();
+  // ✅ LOGIN
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const emailToCheck = form.email.trim().toLowerCase();
 
-      if (error || !empAuth) throw new Error("Account not found.");
-      if (empAuth.status !== "Active") throw new Error("Account is inactive.");
-
-      const expected = generatePassword(empAuth);
-      if (form.password !== expected) throw new Error("Invalid password format.");
-
-      localStorage.setItem("employee", JSON.stringify(empAuth));
-      toast({ title: "Login Successful", description: "Welcome back!" });
-      navigate("/employee/Dashboard");
-    } catch (err: any) {
-      toast({ title: "Login Failed", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ REGISTER
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { data: emp, error: empError } = await supabase
-        .from("tblemployees")
-        .select("*")
-        .eq("email", form.email)
-        .single();
-
-      if (empError || !emp) throw new Error("Email not found in employee records.");
-
-      const generatedPassword = generatePassword(emp);
-
-      const { error: insertError } = await supabase.from("tblemployeeauth").insert([
-        {
-          employee_id: emp.employee_id,
-          email: form.email,
-          password: generatedPassword,
-          status: "Active",
-          role: "employee",
-          employee_code: emp.employee_code,
-          phone: emp.phone,
-          dob: emp.date_of_birth,
-        },
+    // fetch admin and employee in parallel
+    const [{ data: adminData, error: adminError }, { data: empAuth, error: empError }] =
+      await Promise.all([
+        supabase.from("tbladmins").select("id").eq("email", emailToCheck).maybeSingle(),
+        supabase.from("tblemployees").select("*").eq("email", emailToCheck).maybeSingle(),
       ]);
 
-      if (insertError) throw insertError;
-
-      toast({
-        title: "Registration Successful",
-        description: `Your account has been created. Use password: ${generatedPassword}`,
-      });
-
-      setMode("login");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
+    if (adminError) throw adminError;
+    if (empError) {
+      // if empError is present, continue to throw "Account not found." below
+      // but we still want to check if adminData exists — however requirement is to error only when both exist.
     }
-  };
+
+    // Only throw conflict when email exists in BOTH tables
+    if (adminData && empAuth) {
+      throw new Error("An admin account exists with this email.");
+    }
+
+    // Proceed with normal employee login flow
+    if (!empAuth) throw new Error("Account not found.");
+    if (empAuth.status !== "Active") throw new Error("Account is inactive.");
+
+    const expected = generatePassword(empAuth);
+    if (form.password !== expected) throw new Error("Invalid password format.");
+
+    localStorage.setItem("employee", JSON.stringify(empAuth));
+    toast({ title: "Login Successful", description: "Welcome back!" });
+    navigate("/employee/Dashboard");
+  } catch (err: any) {
+    toast({ title: "Login Failed", description: err.message, variant: "destructive" });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+  // ✅ REGISTER
+  // ✅ REGISTER
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    // 🆕 Check if email exists in tbladmins also
+    const { data: adminExists } = await supabase
+      .from("tbladmins")
+      .select("admin_id")
+      .eq("email", form.email)
+      .maybeSingle();
+
+    if (adminExists) throw new Error("An admin account exists with this email.");
+
+    const { data: emp, error: empError } = await supabase
+      .from("tblemployees")
+      .select("*")
+      .eq("email", form.email)
+      .single();
+
+    if (empError || !emp) throw new Error("Email not found in employee records.");
+
+    const generatedPassword = generatePassword(emp);
+
+    const { error: insertError } = await supabase.from("tblemployeeauth").insert([
+      {
+        employee_id: emp.employee_id,
+        email: form.email,
+        password: generatedPassword,
+        status: "Active",
+        role: "employee",
+        employee_code: emp.employee_code,
+        phone: emp.phone,
+        dob: emp.date_of_birth,
+      },
+    ]);
+
+    if (insertError) throw insertError;
+
+    toast({
+      title: "Registration Successful",
+      description: `Your account has been created. Use password: ${generatedPassword}`,
+    });
+
+    setMode("login");
+  } catch (err: any) {
+    toast({ title: "Error", description: err.message, variant: "destructive" });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // ✅ FORGOT PASSWORD (send reset request)
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -201,7 +230,7 @@ const EmployeeLogin = () => {
         variant: "destructive",
       });
       localStorage.removeItem("employee");
-      navigate("/role");
+      navigate("/employee/login");
     }, 5 * 60 * 1000);
   };
 
@@ -220,7 +249,7 @@ const EmployeeLogin = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
 
        <button
-      onClick={() => navigate(-1)} // navigates back to previous page
+      onClick={() => navigate("/")} // navigates back to previous page
       className="absolute top-6 left-6 flex items-center gap-2 group"
        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
     >
@@ -275,20 +304,28 @@ const EmployeeLogin = () => {
             </div>
 
             {mode === "login" && (
-              <div>
-                <Label>Password</Label>
-                <Input
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                />
-                
-                <p className="text-xs text-gray-600 mt-1">
-                  Hint: Last 3 of code + # + last 4 of phone + @ + birth year.
-                </p>
-              </div>
-            )}
+  <div className="relative">
+    <Label>Password</Label>
+    <div className="relative">
+      <Input
+        type={showPassword ? "text" : "password"}
+        value={form.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        required
+        className="pr-10"
+      />
+      <span
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
+      >
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      </span>
+    </div>
+    <p className="text-xs text-gray-600 mt-1">
+      Hint: Last 3 digits of Employee code + # + last 4 digits of phone number + @ + birth year.
+    </p>
+  </div>
+)}
 
             <div className="flex items-center justify-center mt-6">
               <Button
