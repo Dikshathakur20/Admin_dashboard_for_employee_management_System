@@ -592,6 +592,12 @@ const handleRegister = async (emp: Employee) => {
                 <p><span className="font-semibold">Date of Birth:</span> {viewingEmployee.date_of_birth ? new Date(viewingEmployee.date_of_birth).toLocaleDateString("en-GB") : "-"}</p>
                 <p><span className="font-semibold">Salary:</span> {viewingEmployee.salary ? `₹${viewingEmployee.salary.toLocaleString("en-IN")}` : "-"}</p>
                 <p><span className="font-semibold">Address:</span> {viewingEmployee.address || "-"}</p>
+                <div className="mt-4 border-t pt-2">
+    <p className="font-semibold text-[#001F7A]">Emergency Contact</p>
+    <p><span className="font-semibold">Name:</span> {viewingEmployee.emergency_contact_name || "-"}</p>
+    <p><span className="font-semibold">Relation:</span> {viewingEmployee.emergency_contact_relation || "-"}</p>
+    <p><span className="font-semibold">Phone:</span> {viewingEmployee.emergency_contact_phone || "-"}</p>
+  </div>
               </div>
               <div className="shrink-0">
                 <div className="w-24 h-24 rounded-full overflow-hidden border border-blue-900">
