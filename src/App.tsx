@@ -67,33 +67,46 @@ const EmployeeProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // ----------------------------------------------------
 // 💤 ADMIN INACTIVITY HANDLER
 // ----------------------------------------------------
+// 💤 ADMIN INACTIVITY HANDLER (Auto Logout After 5 Min)
 const AdminInactivityHandler = ({ children }: { children: React.ReactNode }) => {
-  const { logout } = useLogin();
+  const { user, logout } = useLogin();
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
+    logout(); // clear context
+    localStorage.removeItem("admin"); // just in case
+    navigate("/admin-login", { replace: true });
   };
 
   const resetTimer = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(handleLogout, 5 * 60 * 1000); // 5 min
+    timerRef.current = setTimeout(handleLogout, 5 * 60 * 1000); // ⏰ 5 minutes
   };
 
   useEffect(() => {
+    // Attach user inactivity events
     const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
     events.forEach((e) => window.addEventListener(e, resetTimer));
+
+    // Start timer on mount
     resetTimer();
+
+    // Check every mount if admin session still valid
+    if (!user && !localStorage.getItem("admin_token")) {
+      navigate("/admin-login", { replace: true });
+    }
+
+    // Cleanup on unmount
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       events.forEach((e) => window.removeEventListener(e, resetTimer));
     };
-  }, []);
+  }, [user]);
 
   return <>{children}</>;
 };
+
 
 // ----------------------------------------------------
 // 💤 EMPLOYEE INACTIVITY HANDLER
