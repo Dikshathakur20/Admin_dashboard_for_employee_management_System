@@ -10,7 +10,7 @@ import {
   SelectContent,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Trash2, FileText } from "lucide-react"; // ✅ Icons
+import { Eye, Trash2, FileText } from "lucide-react";
 
 const UploadDocument = () => {
   const [employeeId, setEmployeeId] = useState<number | null>(null);
@@ -32,7 +32,6 @@ const UploadDocument = () => {
         if (parsed.employee_id) setEmployeeId(parsed.employee_id);
         if (parsed.department_id) setDepartment(parsed.department_id);
         if (parsed.designation_id) setDesignation(parsed.designation_id);
-        console.log("Employee loaded:", parsed);
       } catch (err) {
         console.error("Error parsing employee:", err);
       }
@@ -47,7 +46,7 @@ const UploadDocument = () => {
         .from("tbldocuments")
         .select("*")
         .eq("employee_id", employeeId)
-        .order("id", { ascending: false });
+        .order("uploaded_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching documents:", error.message);
@@ -55,7 +54,6 @@ const UploadDocument = () => {
         setUploadedDocs(data || []);
       }
     };
-
     fetchDocs();
   }, [employeeId]);
 
@@ -64,13 +62,7 @@ const UploadDocument = () => {
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => {
-        let result = reader.result as string;
-        if (!result.startsWith("data:application/pdf")) {
-          result = `data:application/pdf;base64,${result.split(",")[1]}`;
-        }
-        resolve(result);
-      };
+      reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
     });
 
@@ -118,7 +110,7 @@ const UploadDocument = () => {
         .from("tbldocuments")
         .select("*")
         .eq("employee_id", employeeId)
-        .order("id", { ascending: false });
+        .order("uploaded_at", { ascending: false });
       setUploadedDocs(data || []);
     } catch (err: any) {
       toast({
@@ -131,26 +123,22 @@ const UploadDocument = () => {
     }
   };
 
-  // ✅ View document
+  // ✅ View document directly (open in new tab)
   const handleViewDocument = (fileUrl: string) => {
-    if (!fileUrl.startsWith("data:application/pdf")) {
-      toast({
-        title: "Invalid file",
-        description: "This file cannot be opened as a PDF.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newWindow = window.open();
-    if (newWindow) {
-      newWindow.document.write(
-        `<iframe src="${fileUrl}" width="100%" height="100%" style="border:none;"></iframe>`
-      );
+    if (fileUrl.startsWith("data:application/pdf")) {
+      fetch(fileUrl)
+        .then((res) => res.blob())
+        .then((blobData) => {
+          const blobUrl = URL.createObjectURL(blobData);
+          window.open(blobUrl, "_blank");
+        });
+    } else if (fileUrl.startsWith("https://")) {
+      window.open(fileUrl, "_blank");
     } else {
       toast({
-        title: "Popup blocked",
-        description: "Allow popups to view document.",
+        title: "Invalid file",
+        description: "Unable to preview this format.",
+        variant: "destructive",
       });
     }
   };
@@ -174,10 +162,58 @@ const UploadDocument = () => {
     }
   };
 
+  // ✅ Group documents by category
+  const personalDocs = uploadedDocs.filter((doc) => doc.category === "personal");
+  const educationDocs = uploadedDocs.filter((doc) => doc.category === "education");
+  const skillDocs = uploadedDocs.filter((doc) => doc.category === "skills");
+
+  const renderDocList = (docs: any[]) => (
+    <ul className="space-y-3"
+    style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+      {docs.length > 0 ? (
+        docs.map((doc) => (
+          <li
+            key={doc.id}
+            className="flex items-center justify-between bg-white p-3 rounded-lg border border-[#001F7A] shadow-sm"
+          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="text-[#001F7A]" size={20} />
+              <span className="text-sm text-[#001F7A] font-semibold">
+                {doc.file_name}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleViewDocument(doc.file_url)}
+                className="bg-blue-900 text-white hover:bg-blue-800 text-white"
+              >
+                <Eye size={18} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDeleteDocument(doc.id)}
+                className="bg-blue-900 text-white hover:bg-blue-800 text-white"
+              >
+              
+                <Trash2 size={18} />
+              </Button>
+            </div>
+          </li>
+        ))
+      ) : (
+        <p className="text-sm text-gray-600 text-center">No documents found.</p>
+      )}
+    </ul>
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <div className="flex-grow flex flex-col items-center justify-center px-4 py-10">
-        {/* Upload Card */}
+        {/* Upload Section */}
         <div
           className="w-full max-w-md p-8 rounded-2xl shadow-lg border border-gray-200 backdrop-blur-sm"
           style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
@@ -226,50 +262,38 @@ const UploadDocument = () => {
           </div>
         </div>
 
-        {/* Uploaded Documents */}
-        {uploadedDocs.length > 0 && (
-          <div className="w-full max-w-md mt-10 p-6 rounded-2xl shadow-md border border-gray-200 bg-white"  style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
-            <h3 className="text-xl font-semibold text-[#001F7A] mb-4 text-center">
-              Uploaded Documents
+        {/* Grouped Documents Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mt-10">
+          {/* Personal */}
+          <div className="p-6 rounded-2xl shadow-md border border-gray-200 bg-white"
+          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+            <h3 className="text-lg font-semibold text-[#001F7A] mb-4 text-center">
+              Personal Documents
             </h3>
-            <ul className="space-y-3">
-              {uploadedDocs.map((doc) => (
-                <li
-                  key={doc.id}
-                  className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-[#001F7A]  "
-                   style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText className="text-[#001F7A]" size={20} />
-                  </div>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleViewDocument(doc.file_url)}
-                      className="hover:bg-white-100 text-white-700"
-                    >
-                      <Eye size={18} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteDocument(doc.id)}
-                      className="hover:bg-white-100 text-white-600"
-                    >
-                      <Trash2 size={18} />
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {renderDocList(personalDocs)}
           </div>
-        )}
-      </div>
 
-      <footer className="text-center py-4 text-gray-600 text-sm border-t border-gray-200">
-        © {new Date().getFullYear()} Anthem InfoTech Pvt. Ltd. | Employee Portal
-      </footer>
+          {/* Educational */}
+          <div className="p-6 rounded-2xl shadow-md border border-gray-200 bg-white"
+          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+            <h3 className="text-lg font-semibold text-[#001F7A] mb-4 text-center"
+  
+            >
+              Educational Documents
+            </h3>
+            {renderDocList(educationDocs)}
+          </div>
+
+          {/* Skills */}
+          <div className="p-6 rounded-2xl shadow-md border border-gray-200 bg-white"
+          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+            <h3 className="text-lg font-semibold text-[#001F7A] mb-4 text-center">
+              Skill Documents
+            </h3>
+            {renderDocList(skillDocs)}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
