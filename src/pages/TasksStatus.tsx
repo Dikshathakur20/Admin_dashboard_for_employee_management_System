@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ClipboardList, CalendarDays, PlusCircle, X } from "lucide-react";
+import { Loader2, ClipboardList, CalendarDays, PlusCircle, X, Search } from "lucide-react";
 
 const TaskStatus = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -12,9 +12,10 @@ const TaskStatus = () => {
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [newDueDate, setNewDueDate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  // Fetch tasks
+  // ✅ Fetch tasks with department
   const fetchTasks = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -29,7 +30,11 @@ const TaskStatus = () => {
         tblemployees:employee_id (
           employee_id,
           first_name,
-          last_name
+          last_name,
+          department_id,
+          tbldepartments (
+            department_name
+          )
         )
       `)
       .order("created_at", { ascending: false });
@@ -46,6 +51,11 @@ const TaskStatus = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  // 🧭 Navigate to assign new task
+  const handleNewTask = () => {
+    navigate("/employee-action/assign-task");
+  };
 
   // 🗓️ Open modal for due date change
   const handleChangeDueDate = (taskId: string) => {
@@ -73,18 +83,38 @@ const TaskStatus = () => {
     }
   };
 
-  const handleNewTask = () => {
-    navigate("/employee-action/assign-task");
-  };
+  // 🔍 Search filter (by employee name or department)
+  const filteredTasks = tasks.filter((task) => {
+    const employeeName = `${task.tblemployees?.first_name || ""} ${task.tblemployees?.last_name || ""}`.toLowerCase();
+    const department = task.tblemployees?.tbldepartments?.department_name?.toLowerCase() || "";
+    return (
+      employeeName.includes(searchTerm.toLowerCase()) ||
+      department.includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6 relative">
-      <Card > {/* 🔵 Changed color here */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl font-semibold text-blue">
-            <ClipboardList className="h-5 w-5 text-blue-900" />
-            Task Status Board
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold text-blue">
+              <ClipboardList className="h-5 w-5 text-blue-900" />
+              Task Status Board
+            </CardTitle>
+
+            {/* 🔍 Search Bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by name or department"
+                className="pl-8 pr-3 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent>
@@ -92,14 +122,15 @@ const TaskStatus = () => {
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-6 w-6 animate-spin text-white" />
             </div>
-          ) : tasks.length === 0 ? (
-            <p className="text-center text-gray-200">No tasks found.</p>
+          ) : filteredTasks.length === 0 ? (
+            <p className="text-center text-gray-500">No tasks found.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full border border-gray-200 rounded-lg text-sm bg-white text-gray-800">
                 <thead className="bg-[#001F7A] text-white">
                   <tr>
                     <th className="py-2 px-3 text-left">Employee</th>
+                    <th className="py-2 px-3 text-left">Department</th>
                     <th className="py-2 px-3 text-left">Task Title</th>
                     <th className="py-2 px-3 text-left">Due Date</th>
                     <th className="py-2 px-3 text-left">Status</th>
@@ -107,11 +138,14 @@ const TaskStatus = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.map((task) => (
+                  {filteredTasks.map((task) => (
                     <tr key={task.id} className="border-b hover:bg-gray-50 transition">
                       <td className="py-2 px-3">
                         {task.tblemployees?.first_name ?? "Unknown"}{" "}
                         {task.tblemployees?.last_name ?? ""}
+                      </td>
+                      <td className="py-2 px-3">
+                        {task.tblemployees?.tbldepartments?.department_name || "—"}
                       </td>
                       <td className="py-2 px-3 font-medium">{task.task_title}</td>
                       <td className="py-2 px-3">
@@ -188,7 +222,6 @@ const TaskStatus = () => {
               <Button
                 className="bg-blue-900 hover:bg-blue-900 text-white"
                 onClick={handleSaveDate}
-
               >
                 Save
               </Button>
