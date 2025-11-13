@@ -389,7 +389,7 @@ const handleRegister = async (emp: Employee) => {
           <TableHead className="px-4 py-1 text-left text-sm font-semibold min-w-[140px]">Designation</TableHead>
           <TableHead className="px-2 py-1 text-left text-sm font-semibold">Hire Date</TableHead>
           <TableHead className="px-2 py-1 text-left text-sm font-semibold">Salary</TableHead>
-          <TableHead className="px-12 py-0 text-right text-sm font-semibold">Actions</TableHead>
+          <TableHead className="px-2 py-0 text-left text-sm font-semibold">Actions</TableHead>
           
         </TableRow>
       </TableHeader>
