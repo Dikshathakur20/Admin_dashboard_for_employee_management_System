@@ -85,7 +85,8 @@ export default function Notifications() {
   return (
     <form
       onSubmit={handleSend}
-      className="flex flex-col min-h-[calc(100vh-64px)] bg-gray-50 mt-7 p-4 space-y-4"
+      className="flex flex-col  max-w-[60vw] min-h-[calc(100vh-64px)] bg-gray-50  mx-auto mt-7 p-4 space-y-4"
+      style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
     >
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-blue-900">Create Notification</h2>
@@ -95,7 +96,7 @@ export default function Notifications() {
           variant="outline"
           className="bg-blue-900 border-blue-900 text-white hover:bg-blue-800"
         >
-          ← Back to Dashboard
+          ← Back 
         </Button>
       </div>
 
@@ -116,7 +117,7 @@ export default function Notifications() {
       <select
         value={target}
         onChange={(e) => setTarget(e.target.value)}
-        className="border border-blue-900 rounded-lg px-3 py-2 text-blue-900 focus:outline-none focus:ring-0 w-full"
+        className="border border-black-900 rounded-lg px-3 py-2 bg-blue-900 text-white focus:outline-none focus:ring-0 w-full"
       >
         <option value="All">All Employees</option>
         {departments.map((dept, idx) => (
