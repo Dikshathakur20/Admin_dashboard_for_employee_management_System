@@ -21,7 +21,7 @@ interface Document {
 }
 
 const EmployeeDocument = () => {
-  const { id } = useParams(); // /admin/employee-documents/:id
+  const { id } = useParams();
   const employeeId = Number(id);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -33,7 +33,6 @@ const EmployeeDocument = () => {
 
   useEffect(() => {
     if (employeeId) fetchDocuments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employeeId]);
 
   const fetchDocuments = async () => {
@@ -41,7 +40,8 @@ const EmployeeDocument = () => {
       const { data, error } = await supabase
         .from("tbldocuments")
         .select("*")
-        .eq("employee_id", employeeId);
+        .eq("employee_id", employeeId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setDocuments(data || []);
@@ -83,8 +83,6 @@ const EmployeeDocument = () => {
           file_name: file.name,
           file_url: fileBase64,
           uploaded_by: "Admin",
-          department: "General",
-          designation: "Admin Upload",
         },
       ]);
 
@@ -109,26 +107,40 @@ const EmployeeDocument = () => {
     }
   };
 
-  const handleDownload = (doc: Document) => {
-    const url = doc.file_url;
-    if (!url) {
+  // ✅ Fixed and unified download logic for both Base64 and Supabase public URLs
+  const handleDownload = async (doc: Document) => {
+    if (!doc.file_url) {
       toast({
         title: "Error",
-        description: "No file URL found.",
+        description: "File URL not found.",
         variant: "destructive",
       });
       return;
     }
 
-    if (url.startsWith("data:")) {
-      const byteString = atob(url.split(",")[1]);
-      const mimeString = url.split(",")[0].split(":")[1].split(";")[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+    try {
+      let blob: Blob;
 
-      const blob = new Blob([ab], { type: mimeString });
-      const blobUrl = URL.createObjectURL(blob);
+      // 🟩 Case 1: Supabase public URL
+      if (doc.file_url.startsWith("https://")) {
+        const response = await fetch(doc.file_url);
+        if (!response.ok) throw new Error("Failed to fetch file from Supabase Storage");
+        blob = await response.blob();
+      }
+      // 🟦 Case 2: Old Base64-encoded file
+      else if (doc.file_url.startsWith("data:")) {
+        const byteString = atob(doc.file_url.split(",")[1]);
+        const mimeType = doc.file_url.split(",")[0].match(/:(.*?);/)?.[1] || "application/octet-stream";
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        blob = new Blob([ab], { type: mimeType });
+      } else {
+        throw new Error("Unsupported file format or URL");
+      }
+
+      // ✅ Create a blob URL for downloading
+      const blobUrl = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
       a.href = blobUrl;
@@ -136,15 +148,20 @@ const EmployeeDocument = () => {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } else {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = doc.file_name;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+
+      // Cleanup
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast({
+        title: "Download started",
+        description: `File "${doc.file_name}" is downloading.`,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Download failed",
+        description: err.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -171,50 +188,40 @@ const EmployeeDocument = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <main className="flex-grow px-6 py-8 mt-20">
         <Card className="w-full max-w-5xl mx-auto rounded-xl shadow-lg border border-gray-200"
-          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
         >
           <CardHeader className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-2xl font-bold text-[#001F7A]">
-                Employee Documents
-              </CardTitle>
-              
-            </div>
+            <CardTitle className="text-2xl font-bold text-[#001F7A]">
+              Employee Documents
+            </CardTitle>
 
-            {/* ✅ Back to Dashboard Button */}
             <Button
               onClick={() => navigate("/employees")}
               className="bg-[#001F7A] text-white hover:bg-[#0029b0] flex items-center gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Back
+              <ArrowLeft className="h-4 w-4" /> Back
             </Button>
           </CardHeader>
 
           <CardContent>
             {/* Upload Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-              <div>
-                <Select onValueChange={(val) => setCategory(val)} value={category || undefined}>
-                  <SelectTrigger className="w-full border-blue-900 text-white-900 font-medium bg-blue-900 focus:outline-none focus:ring-0 shadow-none">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#001F7A] text-white border-none shadow-lg">
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="skills">Skill Set</SelectItem>
-                    <SelectItem value="personal">Personal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select onValueChange={setCategory} value={category || undefined}>
+                <SelectTrigger className="w-full border-blue-900 text-white-900 font-medium bg-blue-900 focus:outline-none focus:ring-0 shadow-none">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#001F7A] text-white border-none shadow-lg">
+                  <SelectItem value="education">Education</SelectItem>
+                  <SelectItem value="skills">Skill Set</SelectItem>
+                  <SelectItem value="personal">Personal</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <div>
-                <Input
-                  type="file"
-                  accept="application/pdf"
-                  
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                />
-              </div>
+              <Input
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
 
               <Button
                 onClick={handleUpload}
@@ -227,45 +234,56 @@ const EmployeeDocument = () => {
             </div>
 
             {/* Documents Table */}
-            <div className="border rounded-lg overflow-auto">
-              <Table className="min-w-full">
-                <TableHeader className="bg-blue-50">
-                  <TableRow>
+            <div className="border-black-900 rounded-lg overflow-auto">
+              <Table className="min-w-full border-black-900">
+                <TableHeader className="bg-blue-900">
+                  <TableRow className="border-black-900 text-white">
                     <TableHead className="font-bold">File Name</TableHead>
                     <TableHead className="font-bold">Category</TableHead>
-                    <TableHead className="font-bold text-center">Uploaded By</TableHead>
+                    <TableHead className="font-bold">Uploaded By</TableHead>
+                    <TableHead className="font-bold">Upload Date</TableHead>
                     <TableHead className="font-bold text-end">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {documents.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-gray-100">
-                      <TableCell>{doc.file_name}</TableCell>
-                      <TableCell>{doc.category}</TableCell>
-                      <TableCell className="text-center">{doc.uploaded_by}</TableCell>
-                      <TableCell className="text-end">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
-                            title="Download"
-                            onClick={() => handleDownload(doc)}
-                          >
-                            <FileDown className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-red-700 text-white hover:bg-red-600 h-7 w-7 p-0"
-                            title="Delete"
-                            onClick={() => handleDelete(doc.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {documents.length === 0 && (
+                  {documents.length > 0 ? (
+                    documents.map((doc) => (
+                      <TableRow key={doc.id} className="hover:bg-gray-100">
+                        <TableCell>{doc.file_name}</TableCell>
+                        <TableCell>{doc.category}</TableCell>
+                        <TableCell>{doc.uploaded_by}</TableCell>
+                        <TableCell>
+                          {new Date(doc.created_at).toLocaleString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </TableCell>
+                        <TableCell className="text-end">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0"
+                              title="Download"
+                              onClick={() => handleDownload(doc)}
+                            >
+                              <FileDown className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-red-700 text-white hover:bg-red-600 h-7 w-7 p-0"
+                              title="Delete"
+                              onClick={() => handleDelete(doc.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-3 text-muted-foreground">
                         No documents found.
