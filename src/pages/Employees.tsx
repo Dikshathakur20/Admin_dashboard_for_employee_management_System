@@ -91,32 +91,44 @@ const Employees = () => {
     fetchData();
   }, []);
 
+  
+
+    // ✅ Add registration flag
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [employeesResult, departmentsResult, designationsResult] = await Promise.all([
-        supabase.from("tblemployees").select("*").order("employee_id", { ascending: false }),
-        supabase.from("tbldepartments").select("*").order("department_name"),
-        supabase.from("tbldesignations").select("*").order("designation_title"),
-      ]);
+  setLoading(true);
+  try {
+    const [employeesResult, authResult, departmentsResult, designationsResult] = await Promise.all([
+      supabase.from("tblemployees").select("*").order("employee_id", { ascending: false }),
+      supabase.from("tblemployeeauth").select("employee_id"),
+      supabase.from("tbldepartments").select("*").order("department_name"),
+      supabase.from("tbldesignations").select("*").order("designation_title"),
+    ]);
 
-      if (employeesResult.error) throw employeesResult.error;
-      if (departmentsResult.error) throw departmentsResult.error;
-      if (designationsResult.error) throw designationsResult.error;
+    if (employeesResult.error) throw employeesResult.error;
+    if (authResult.error) throw authResult.error;
 
-      setEmployees(employeesResult.data || []);
-      setDepartments(departmentsResult.data || []);
-      setDesignations(designationsResult.data || []);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Data Loading Issue",
-        description: "Unable to fetch employee information",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const registeredIds = new Set(authResult.data.map((a: any) => a.employee_id));
+
+    const updatedEmployees = (employeesResult.data || []).map((emp: any) => ({
+      ...emp,
+      isRegistered: registeredIds.has(emp.employee_id),
+    }));
+
+    setEmployees(updatedEmployees);
+    setDepartments(departmentsResult.data || []);
+    setDesignations(designationsResult.data || []);
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Data Loading Issue",
+      description: "Unable to fetch employee information",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleDelete = async (employeeId: number) => {
     toast({
@@ -371,12 +383,14 @@ const handleRegister = async (emp: Employee) => {
           <TableHead className="px-2 py-1 text-left text-sm font-semibold">Email</TableHead>
           <TableHead className="px-2 py-1 text-left text-sm font-semibold">Phone</TableHead>
           <TableHead className="px-2 py-1 text-left text-sm font-semibold">Code</TableHead>
-          <TableHead className="px-2 py-1 text-left text-sm font-semibold">EmployeeType</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Type</TableHead>
+          <TableHead className="px-2 py-1 text-left text-sm font-semibold">Registered</TableHead>
           <TableHead className="px-4 py-1 text-left text-sm font-semibold min-w-[120px]">Department</TableHead>
           <TableHead className="px-4 py-1 text-left text-sm font-semibold min-w-[140px]">Designation</TableHead>
           <TableHead className="px-2 py-1 text-left text-sm font-semibold">Hire Date</TableHead>
           <TableHead className="px-2 py-1 text-left text-sm font-semibold">Salary</TableHead>
           <TableHead className="px-12 py-0 text-right text-sm font-semibold">Actions</TableHead>
+          
         </TableRow>
       </TableHeader>
 
@@ -389,6 +403,14 @@ const handleRegister = async (emp: Employee) => {
             <TableCell className="px-2 py-1 text-sm">{emp.phone || "-"}</TableCell>
             <TableCell className="px-2 py-1 text-sm">{emp.employee_code || "-"}</TableCell>
             <TableCell className="px-2 py-1 text-sm">{emp.employment_type || "-"}</TableCell>
+            <TableCell className="px-2 py-1 text-sm">
+  {emp.isRegistered ? (
+    <Badge className="bg-green-600 text-white">Yes</Badge>
+  ) : (
+    <Badge className="bg-red-600 text-white">No</Badge>
+  )}
+</TableCell>
+
             <TableCell className="px-2 py-1 text-sm">
             <Badge variant="secondary" className="px-2 py-0 text-xs font-medium leading-tight min-h-[22px]">{getDepartmentName(emp.department_id)}</Badge>
             </TableCell>
