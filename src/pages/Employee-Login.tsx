@@ -322,7 +322,7 @@ const handleRegister = async (e: React.FormEvent) => {
       </span>
     </div>
     <p className="text-xs text-gray-600 mt-1">
-      Hint: Last 3 digits of Employee code + # + last 4 digits of phone number + @ + birth year.
+      Hint: Last 3 digits of Employee code + # + last 4 digits of phone number + @ + birth year i.e 999#0000@1857
     </p>
   </div>
 )}
