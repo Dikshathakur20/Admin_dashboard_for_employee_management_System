@@ -243,7 +243,7 @@ const Departments = () => {
                     <TableHead className="font-bold">Department</TableHead>
                     <TableHead className="font-bold text-center">Total Designations</TableHead>
                     <TableHead className="font-bold text-center">Active Employees</TableHead>
-                    <TableHead className="font-bold text-end">Actions</TableHead>
+                    <TableHead className=" font-bold text-end">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -274,7 +274,7 @@ const Departments = () => {
                           <span>{d.total_employees}</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-end py-1">
+                      <TableCell className="text-end py-0">
                         <div className="flex justify-end space-x-1">
                           <Button
                             size="sm"
