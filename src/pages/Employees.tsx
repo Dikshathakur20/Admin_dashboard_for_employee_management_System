@@ -309,6 +309,21 @@ const handleRegister = async (emp: Employee) => {
           {/* Header: Add / Search / Sort */}
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              {/* ⭐ BACK BUTTON LOGIC */}
+    {(departmentFilter || designationFilter) && (
+      <Button
+        variant="outline"
+        className="w-fit bg-[#001F7A] text-white hover:bg-[#0029b0]"
+        onClick={() => {
+          if (departmentFilter) 
+            navigate("/departments");
+          else if (designationFilter) 
+            navigate("/designations");
+        }}
+      >
+        ← Back to {departmentFilter ? "Departments" : "Designations"}
+      </Button>
+    )}
               <CardTitle className="text-2xl font-bold">
                 {departmentFilter || designationFilter ? (
                   <>
@@ -322,15 +337,35 @@ const handleRegister = async (emp: Employee) => {
               </CardTitle>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-                  <Input
-                    placeholder="Search employee"
-                    value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                    className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
-                  />
-                </div>
+  <div className="relative w-full sm:w-64">
+    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+
+    <Input
+      placeholder="Search employee"
+      value={searchTerm}
+      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+      className="pl-10 pr-10 text-black bg-white border border-gray-300 shadow-sm"
+    />
+
+    {/* ❌ Clear Button (X icon) – visible only when typing */}
+    {searchTerm && (
+  <button
+    onClick={() => setSearchTerm("")}
+    className="
+      absolute right-3 top-1/2 -translate-y-1/2
+      text-gray-500 hover:text-black
+      text-xs p-1
+      bg-transparent hover:bg-transparent active:bg-transparent
+      focus:outline-none
+    "
+  >
+    ×
+  </button>
+)}
+
+  </div>
+
+
 
                 <div className="flex items-center gap-2">
                   <Button
@@ -371,7 +406,7 @@ const handleRegister = async (emp: Employee) => {
         <span className="text-gray-600 text-sm">Loading employees...</span>
       </div>
     )}
-<div className="overflow-x-auto">
+<div className="overflow-x-auto cursor:default">
     <Table className="table-auto min-w-full">
       <TableHeader
         className="w-full bg-blue-50 p-6 rounded-xl"
@@ -396,8 +431,8 @@ const handleRegister = async (emp: Employee) => {
 
       <TableBody>
         {visibleEmployees.map((emp) => (
-          <TableRow key={emp.employee_id} className="hover:bg-gray-100 cursor-pointer select-none h-10">
-            <TableCell className="px-2 py-1">{renderProfilePicture(emp, 32)}</TableCell>
+          <TableRow key={emp.employee_id} className="hover:bg-gray-100 cursor-default select-none h-10">
+            <TableCell className="px-2 py-1 cursor-pointer">{renderProfilePicture(emp, 32)}</TableCell>
             <TableCell className="px-2 py-1 text-sm">{emp.first_name} {emp.last_name}</TableCell>
             <TableCell className="px-2 py-1 text-sm">{emp.email}</TableCell>
             <TableCell className="px-2 py-1 text-sm">{emp.phone || "-"}</TableCell>
@@ -423,7 +458,7 @@ const handleRegister = async (emp: Employee) => {
             <TableCell className="px-2 py-1 text-sm">
               {emp.salary ? `₹${emp.salary.toLocaleString("en-IN")}` : "-"}
             </TableCell>
-            <TableCell className="px-2 py-1 text-sm text-right">
+            <TableCell className="px-2 py-1 text-sm text-right cursor-default">
   <div className="flex justify-end gap-1">
     {/* View */}
     <Button
@@ -523,7 +558,7 @@ const handleRegister = async (emp: Employee) => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
-                      Entries:{rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
+                      Records:{rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
