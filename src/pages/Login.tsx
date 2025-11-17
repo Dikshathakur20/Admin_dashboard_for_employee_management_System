@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+
 const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -34,6 +35,11 @@ const Login = () => {
       navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
+  const validateEmail = (email: string) => {
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|info|org|net|co|io)$/;
+  return regex.test(email);
+};
+
 
   // ✅ Signup (New Admin)
   const handleSignup = async (e: React.FormEvent) => {
@@ -64,30 +70,43 @@ const Login = () => {
   };
 
   // ✅ Login
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('tbladmins')
-        .select('*')
-        .eq('email', emailOrUsername)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      if (!data) throw new Error('Admin not found');
-      if (data.password !== password) throw new Error('Incorrect password');
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-      toast({ title: 'Login Success', description: `Welcome ${data.user_name || 'Admin'}` });
-      localStorage.setItem('admin_id', data.id);
-      localStorage.setItem('admin_role', data.role || 'admin');
+  // ✅ email validation
+  if (!validateEmail(emailOrUsername)) {
+    toast({
+      title: "Invalid Email",
+      description: "Please enter a valid email like example@gmail.com",
+      variant: "destructive",
+    });
+    return;
+  }
 
-      await login(data.email, password);
-    } catch (err: any) {
-      toast({ title: 'Login Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from('tbladmins')
+      .select('*')
+      .eq('email', emailOrUsername)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Admin not found');
+    if (data.password !== password) throw new Error('Incorrect password');
+
+    toast({ title: 'Login Success', description: `Welcome ${data.user_name || 'Admin'}` });
+    localStorage.setItem('admin_id', data.id);
+    localStorage.setItem('admin_role', data.role || 'admin');
+
+    await login(data.email, password);
+  } catch (err: any) {
+    toast({ title: 'Login Error', description: err.message, variant: 'destructive' });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // ✅ Forgot Password
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -200,12 +219,21 @@ const Login = () => {
             // Forgot Password Form
             <form onSubmit={handleResetPassword}>
               <Label>Email</Label>
-              <Input
-                type="email"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                required
-              />
+             <Input
+  type="email"
+  value={emailOrUsername}
+  onChange={(e) => {
+    const v = e.target.value;
+
+    // allow only valid email characters
+    if (/^[a-zA-Z0-9@._-]*$/.test(v)) {
+      setEmailOrUsername(v);
+    }
+  }}
+  required
+/>
+
+
               <div className="flex items-center justify-center mt-4">
                 <Button type="submit" disabled={loading} className="w-64 bg-[#001F7A] text-white hover:bg-[#002f9a] transition">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Email'}
