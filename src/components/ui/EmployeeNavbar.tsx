@@ -65,11 +65,10 @@ const EmployeeNavbar: React.FC = () => {
                 <Link
                   to="/employee/dashboard"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${
-                    location.pathname === "/employee/dashboard"
-                      ? "bg-[#001F7A] text-white"
-                      : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
-                  }`}
+                  ${location.pathname === "/employee/dashboard"
+                      ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
+                      : "text-[#001F7A]hover:bg-[#001F7A] hover:text-white hover:scale-105 "
+                    }`}
                 >
                   <Home className="h-4 w-4" />
                   <span>Home</span>
@@ -78,11 +77,10 @@ const EmployeeNavbar: React.FC = () => {
                 <Link
                   to="/employee/my-profile"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${
-                    location.pathname === "/employee/my-profile"
-                      ? "bg-[#001F7A] text-white"
-                      : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
-                  }`}
+                  ${location.pathname === "/employee/my-profile"
+                      ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
+                      : "text-[#001F7A]hover:bg-[#001F7A] hover:text-white hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <User className="h-4 w-4" />
                   <span>My Profile</span>
@@ -91,11 +89,10 @@ const EmployeeNavbar: React.FC = () => {
                 <Link
                   to="/employee/upload-document"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${
-                    location.pathname === "/employee/upload-document"
-                      ? "bg-[#001F7A] text-white"
-                      : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
-                  }`}
+                  ${location.pathname === "/employee/upload-document"
+                      ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
+                      : "text-[#001F7A]hover:bg-[#001F7A] hover:text-white hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <Upload className="h-4 w-4" />
                   <span>Documents</span>
@@ -104,36 +101,33 @@ const EmployeeNavbar: React.FC = () => {
                 <Link
                   to="/employee/apply-leave"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${
-                    location.pathname === "/employee/apply-leave"
-                      ? "bg-[#001F7A] text-white"
-                      : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
-                  }`}
+                  ${location.pathname === "/employee/apply-leave"
+                      ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover: scale-105 transition"
+                      : "text-[#001F7A]hover:bg-[#001F7A] hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <FileText className="h-4 w-4" />
-                  <span>Apply Leave</span>
+                  <span>My Leaves</span>
                 </Link>
 
                 <Link
                   to="/employee/task-status"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${
-                    location.pathname === "/employee/task-status"
-                      ? "bg-[#001F7A] text-white"
-                      : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
-                  }`}
+                  ${location.pathname === "/employee/task-status"
+                      ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
+                      : "text-[#001F7A]hover:bg-[#001F7A] hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <ClipboardCheck className="h-4 w-4" />
                   <span>Task Status</span>
                 </Link>
-                 <Link
+                <Link
                   to="/employee/monthly-report"
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                  ${
-                    location.pathname === "/employee/monthly-report"
-                      ? "bg-[#001F7A] text-white"
-                      : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
-                  }`}
+                  ${location.pathname === "/employee/monthly-report"
+                      ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
+                      : "text-[#001F7A]hover:bg-[#001F7A] hover:scale-105 hover:shadow-sm"
+                    }`}
                 >
                   <Calendar className="h-4 w-4" />
                   <span>Monthly Report</span>
