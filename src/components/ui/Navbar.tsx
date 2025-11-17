@@ -40,7 +40,7 @@ const Navbar: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await logout();
-      navigate("/login", { replace: true });
+      navigate("/admin-login", { replace: true });
       toast({ title: "Success", description: "Signed out successfully" });
     } catch {
       toast({ title: "Error", description: "Could not sign out properly" });
@@ -69,7 +69,7 @@ const Navbar: React.FC = () => {
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
                     ${
                       location.pathname === "/dashboard"
-                        ? "bg-[#001F7A] text-white"
+                        ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
                         : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
                     }`}
                 >
@@ -83,7 +83,7 @@ const Navbar: React.FC = () => {
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
                     ${
                       location.pathname === "/employees"
-                        ? "bg-[#001F7A] text-white"
+                        ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
                         : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
                     }`}
                 >
@@ -97,7 +97,7 @@ const Navbar: React.FC = () => {
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
                     ${
                       location.pathname === "/departments"
-                        ? "bg-[#001F7A] text-white"
+                        ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
                         : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
                     }`}
                 >
@@ -111,7 +111,7 @@ const Navbar: React.FC = () => {
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
                     ${
                       location.pathname === "/designations"
-                        ? "bg-[#001F7A] text-white"
+                        ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
                         : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
                     }`}
                 >
@@ -134,18 +134,19 @@ const Navbar: React.FC = () => {
                 </Link> */}
 
                 {/* Leave Desk */}
-                <Link
-                  to="/approve-leave"
-                  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
-                    ${
-                      location.pathname === "/approve-leave"
-                        ? "bg-[#001F7A] text-white"
-                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
-                    }`}
-                >
-                  <CalendarCheck className="h-4 w-4" />
-                  <span>Leave Desk</span>
-                </Link>
+                                {/* ✅ TaskBoard */}
+              <Link
+  to="/approve-leave"
+  className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
+    ${
+      location.pathname === "/approve-leave"
+        ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
+        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+    }`}
+>
+  <CalendarCheck className="h-4 w-4" />
+  <span>Leaves Approval</span>
+</Link>
 
                 {/* ✅ TaskBoard */}
                 <Link
@@ -153,8 +154,8 @@ const Navbar: React.FC = () => {
                   className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md transition 
                     ${
                       location.pathname === "/tasks-status"
-                        ? "bg-[#001F7A] text-white"
-                        : "hover:bg-[#e6e9ff] hover:scale-105 hover:shadow-sm"
+                        ? "bg-[#001F7A] text-white hover:bg-[#0029b0] hover:text-white hover:scale-105 transition"
+                        : "hover:bg-[#e6e9ff] hover:scale-105"
                     }`}
                 >
                   <ClipboardList className="h-4 w-4" />
