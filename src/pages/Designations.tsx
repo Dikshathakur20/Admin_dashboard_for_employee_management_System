@@ -138,6 +138,17 @@ const Designations = () => {
         <Card className="w-full border-0 shadow-none bg-transparent flex-1 flex flex-col">
           <CardHeader className="px-0 py-2">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+               {/* ⭐ Back button only when opened from Departments table */}
+    {departmentId && (
+      <Button
+        variant="outline"
+        className="w-fit bg-[#001F7A] text-white hover:bg-[#0029b0]"
+        onClick={() => window.history.back()}
+      >
+        ← Back to Departments
+      </Button>
+    )}
+
               <CardTitle className="text-2xl font-bold">
                 {departmentId ? `Designations: ${departments.find(d => d.department_id === departmentId)?.department_name}` : 'Designations'}
               </CardTitle>
@@ -153,6 +164,21 @@ const Designations = () => {
                     }}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
+                  {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="
+                      absolute right-3 top-1/2 -translate-y-1/2
+                      text-gray-500 hover:text-black
+                      text-xs p-1
+                      bg-transparent hover:bg-transparent active:bg-transparent
+                      focus:outline-none
+                    "
+                  >
+                    ×
+                  </button>
+                  )}
+
                 </div>
                 <div className="flex items-center gap-2">
                   <Button onClick={() => setShowNewDialog(true)} className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
@@ -193,7 +219,7 @@ const Designations = () => {
                 </TableHeader>
                 <TableBody>
                   {displayedDesignations.map(d => (
-                    <TableRow key={d.designation_id} className="hover:bg-gray-100 cursor-pointer select-none h-10">
+                    <TableRow key={d.designation_id} className="hover:bg-gray-100 cursor-default select-none h-10">
                       <TableCell className="py-1 text-sm">{d.designation_title}</TableCell>
                       <TableCell className="py-1 text-sm">{departments.find(dep => dep.department_id === d.department_id)?.department_name || 'Not Assigned'}</TableCell>
                       <TableCell className="text-center py-1 text-sm">
@@ -201,7 +227,7 @@ const Designations = () => {
                           <Link to={`/employees?designation=${d.designation_id}`} className="text-gray-900 hover:text-blue-900 hover:underline">{d.total_employees}</Link>
                         ) : <span>{d.total_employees}</span>}
                       </TableCell>
-                      <TableCell className="text-end py-1">
+                      <TableCell className="text-end py-1 cursor-pointer">
                         <div className="flex justify-end space-x-1">
                           <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-700 h-7 w-7 p-0" onClick={() => setEditingDesignation(d)}>
                             <Edit className="h-3.5 w-3.5" />
@@ -229,7 +255,7 @@ const Designations = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
-                    Entries : {rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
+                   Records : {rowsPerPage} <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="bg-white" style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
