@@ -123,9 +123,9 @@ useEffect(() => {
     },
       
     {
-      title: "Leave Desk",
+      title: "Leaves Approval",
       count: leaveCount,
-      subtitle: "Pending leave tickets",
+      subtitle: "Pending leaves requests",
       route: "/approve-leave",
     },
     {
