@@ -169,7 +169,7 @@ const UploadDocument = () => {
 
   const renderDocList = (docs: any[]) => (
     <ul className="space-y-3"
-    style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+   >
       {docs.length > 0 ? (
         docs.map((doc) => (
           <li
@@ -216,22 +216,24 @@ const UploadDocument = () => {
         {/* Upload Section */}
         <div
           className="w-full max-w-md p-8 rounded-2xl shadow-lg border border-gray-200 backdrop-blur-sm"
-          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+          
         >
-          <h2 className="text-2xl font-bold text-[#001F7A] mb-6 text-center">
+          <h2 className="text-2xl font-bold text-[#001F7A] mb-6 text-center"
+          style={{background: "Linear-gradient(-45 deg, #ffffff, #c9d0fb)"}}
+          >
             Upload Your Document
           </h2>
 
           <div className="space-y-5">
             <div>
-              <label className="text-[#001F7A] font-medium text-sm mb-1 block">
+              <label className="text-[#001F7A] font-medium text-sm mb-1 block ">
                 Select Document Category
               </label>
               <Select onValueChange={setCategory} value={category}>
-                <SelectTrigger className="w-full border-[#001F7A] text-[#001F7A]">
+                <SelectTrigger className="w-full border-[#001F7A] text-[#001F7A] bg-blue-50 text-black hover:bg-blue-50">
                   <SelectValue placeholder="Choose Document Type" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#001F7A] text-white">
+                <SelectContent className="bg-blue-50 text-black">
                   <SelectItem value="education">Education Qualification</SelectItem>
                   <SelectItem value="skills">Skill Set Document</SelectItem>
                   <SelectItem value="personal">Personal Document</SelectItem>
@@ -266,7 +268,7 @@ const UploadDocument = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mt-10">
           {/* Personal */}
           <div className="p-6 rounded-2xl shadow-md border border-gray-200 bg-white"
-          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+          >
             <h3 className="text-lg font-semibold text-[#001F7A] mb-4 text-center">
               Personal Documents
             </h3>
@@ -275,7 +277,7 @@ const UploadDocument = () => {
 
           {/* Educational */}
           <div className="p-6 rounded-2xl shadow-md border border-gray-200 bg-white"
-          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+          >
             <h3 className="text-lg font-semibold text-[#001F7A] mb-4 text-center"
   
             >
@@ -286,7 +288,7 @@ const UploadDocument = () => {
 
           {/* Skills */}
           <div className="p-6 rounded-2xl shadow-md border border-gray-200 bg-white"
-          style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
+          >
             <h3 className="text-lg font-semibold text-[#001F7A] mb-4 text-center">
               Skill Documents
             </h3>
