@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect ,useRef} from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,11 +38,14 @@ export const NewEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: NewEm
   const [status, setStatus] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
+   const hireDateRef = useRef<HTMLInputElement | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
   const [loading, setLoading] = useState(false);
   const [emailExists, setEmailExists] = useState<string>('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const dobRef = useRef<HTMLInputElement | null>(null);
+
   const { toast } = useToast();
 
   const capitalizeWords = (val: string) => val.replace(/\b\w/g, c => c.toUpperCase());
@@ -156,6 +159,14 @@ const generateEmployeeCode = async () => {
   }
 
   const salaryValue = salary ? parseFloat(salary) : 0;
+  if (salaryValue <= 0) {
+  toast({
+    title: "Invalid Salary",
+    description: "Salary cannot be 0 or empty. Please enter a valid amount.",
+  });
+  return;
+}
+
   if (salaryValue > 10000000) {
     toast({ title: "Salary Limit Exceeded", description: "Salary cannot exceed ₹10,000,000" });
     return;
@@ -189,7 +200,7 @@ const generateEmployeeCode = async () => {
       designation_id: designationId ? parseInt(designationId) : null,
       phone: phone || null,
       employment_type: employmentType || null,
-      status: status || null,
+      status: "Active",
       date_of_birth: dateOfBirth || null,
       address: address || null,
     };
@@ -274,32 +285,62 @@ const generateEmployeeCode = async () => {
 
           {/* Hire Date & Salary */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="hireDate" className="text-sm">Hire Date</Label>
-              <Input
-                id="hireDate"
-                type="date"
-                value={hireDate}
-                className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={e => setHireDate(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
-                min="2000-01-01"
-                required
-              />
-            </div>
-             <div>
-              <Label htmlFor="dateOfBirth" className="text-sm">Date of Birth</Label>
-              <Input
-  id="dateOfBirth"
-  type="date"
-  value={dateOfBirth}
-  className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-  onChange={e => setDateOfBirth(e.target.value)}
-  max="2007-12-31"
-  min="1950-01-01"
-/>
+           <div className="relative">
+  <Label htmlFor="hireDate">Hire Date</Label>
 
-            </div>
+  <div
+    onClick={() => {
+      hireDateRef.current?.showPicker?.(); // Chrome/Edge
+      hireDateRef.current?.focus();        // Firefox
+    }}
+    className="cursor-pointer"
+  >
+    <Input
+      id="hireDate"
+      ref={hireDateRef}
+      type="date"
+      value={hireDate}
+      className="border border-blue-500 focus:ring-2 focus:ring-blue-600 
+                 focus:border-blue-600 bg-blue-50 text-blue-900 
+                 placeholder-blue-400 rounded-md cursor-pointer"
+      onChange={(e) => setHireDate(e.target.value)}
+      max={new Date().toISOString().split('T')[0]}
+      min="2000-01-01"
+      required
+    />
+  </div>
+
+  {/* Enlarged Calendar Icon */}
+ 
+</div>
+
+             <div className="relative">
+  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+
+  <div
+    onClick={() => {
+      dobRef.current?.showPicker?.(); // Chrome/Edge
+      dobRef.current?.focus();        // Firefox fallback
+    }}
+    className="cursor-pointer"
+  >
+    <Input
+      id="dateOfBirth"
+      ref={dobRef}
+      type="date"
+      value={dateOfBirth}
+      className="border border-blue-500 focus:ring-2 focus:ring-blue-600 
+                 focus:border-blue-600 bg-blue-50 text-blue-900 
+                 placeholder-blue-400 rounded-md cursor-pointer"
+      onChange={(e) => setDateOfBirth(e.target.value)}
+      max={new Date().toISOString().split("T")[0]}
+    />
+  </div>
+
+  {/* Calendar Icon */}
+  
+</div>
+
           </div>
 
           {/* Phone & Date of Birth */}
@@ -313,7 +354,8 @@ const generateEmployeeCode = async () => {
                 placeholder="Enter phone number"
                 className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
                 onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                maxLength={15}
+                maxLength={10}
+                minLength={10}
               />
             </div>
             <div>
@@ -325,11 +367,29 @@ const generateEmployeeCode = async () => {
                 value={salary}
                 placeholder="Max ₹10,000,000"
                 className="h-9 border border-blue-500 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={e => {
-                  const value = parseFloat(e.target.value);
-                  if (!isNaN(value) && value <= 10000000) setSalary(e.target.value);
-                  else if (e.target.value === '') setSalary('');
-                }}
+                onChange={(e) => {
+  const raw = e.target.value; // keep raw string
+
+  // ❌ Prevent entering 0, 00, 01, 0.5, etc.
+  if (raw === "0" || /^0\d/.test(raw)) {
+    return;
+  }
+
+  // ✔ Allow clearing input
+  if (raw === "") {
+    setSalary("");
+    return;
+  }
+
+  // Now convert to number safely
+  const num = parseFloat(raw);
+
+  // ✔ Allow only valid numbers
+  if (!isNaN(num) && num <= 10000000) {
+    setSalary(raw);
+  }
+}}
+
                 required
               />
             </div>
@@ -364,20 +424,13 @@ const generateEmployeeCode = async () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="status" className="text-sm">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-9 w-full bg-blue-900 text-white hover:bg-blue-700">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-lg">
-                  {['Active',  'Resigned', 'Terminated'].map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div>
+                <Label className="text-sm">Status</Label>
+                <div className="h-9 flex items-center font-semibold text-green-700 border border-green-600 bg-green-100 rounded-md px-3">
+                  Active
+                </div>
+              </div>
             </div>
-          </div>
 
           
 
