@@ -52,7 +52,7 @@ import MonthlyReport from "./pages/employee/MonthlyReport";
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useLogin();
   if (loading) return null;
-  return user ? children : <Navigate to="/login" replace />;
+  return user ? children : <Navigate to="/admin-login" replace />;
 };
 
 // ----------------------------------------------------
@@ -74,7 +74,7 @@ const AdminInactivityHandler = ({ children }: { children: React.ReactNode }) => 
 
   const handleLogout = () => {
     logout();
-    navigate("/login", { replace: true });
+    navigate("/admin-login", { replace: true });
   };
 
   const resetTimer = () => {
