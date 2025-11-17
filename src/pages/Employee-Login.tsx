@@ -42,11 +42,23 @@ const EmployeeLogin = () => {
 
   return `${last3}#${last4}@${year}`;
 };
+const validateEmail = (email: string) => {
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|info|org|net|co|io)$/;
+  return regex.test(email);
+};
 
   // ✅ LOGIN
   // ✅ LOGIN
 const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
+   if (!validateEmail(form.email)) {
+    toast({
+      title: "Invalid Email",
+      description: "Please enter a valid email like example@gmail.com",
+      variant: "destructive",
+    });
+    return;
+  }
   setLoading(true);
   try {
     const emailToCheck = form.email.trim().toLowerCase();
@@ -295,12 +307,20 @@ const handleRegister = async (e: React.FormEvent) => {
           >
             <div>
               <Label>Email</Label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-              />
+               <Input
+  type="email"
+  value={form.email}
+  onChange={(e) => {
+    const v = e.target.value;
+
+    // allow only characters valid for emails
+    if (/^[a-zA-Z0-9@._-]*$/.test(v)) {
+      setForm({ ...form, email: v });
+    }
+  }}
+  required
+/>
+
             </div>
 
             {mode === "login" && (
