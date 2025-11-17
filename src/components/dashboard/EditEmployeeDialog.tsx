@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect ,useRef} from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,25 +69,37 @@ export const EditEmployeeDialog = ({
   const [status, setStatus] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
+  const hireDateRef = useRef<HTMLInputElement | null>(null);
+  const dobRef = useRef<HTMLInputElement | null>(null);
+
+
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (employee) {
-      setFirstName(employee.first_name);
-      setLastName(employee.last_name);
-      setEmail(employee.email);
-      setHireDate(employee.hire_date);
-      setSalary(employee.salary?.toString() || '');
-      setDepartmentId(employee.department_id?.toString() || '');
+ useEffect(() => {
+  if (employee) {
+    // Load department first
+    const deptId = employee.department_id?.toString() || '';
+    setDepartmentId(deptId);
+
+    // Set other fields normally
+    setFirstName(employee.first_name);
+    setLastName(employee.last_name);
+    setEmail(employee.email);
+    setHireDate(employee.hire_date);
+    setSalary(employee.salary?.toString() || '');
+    setPhone(employee.phone || '');
+    setEmploymentType(employee.employment_type || '');
+    setStatus(employee.status || '');
+    setDateOfBirth(employee.date_of_birth || '');
+    setAddress(employee.address || '');
+
+    // Delay designation setting until filteredDesignations is ready
+    setTimeout(() => {
       setDesignationId(employee.designation_id?.toString() || '');
-      setPhone(employee.phone || '');
-      setEmploymentType(employee.employment_type || '');
-      setStatus(employee.status || '');
-      setDateOfBirth(employee.date_of_birth || '');
-      setAddress(employee.address || '');
-    }
-  }, [employee]);
+    }, 0);
+  }
+}, [employee]);
 
   useEffect(() => {
     if (!open) setProfilePicture(null);
@@ -212,6 +224,7 @@ export const EditEmployeeDialog = ({
               id="email"
               type="email"
               value={email}
+              pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={(e) => setEmail(e.target.value.toLowerCase())}
               onPaste={(e) => e.preventDefault()}
@@ -220,31 +233,64 @@ export const EditEmployeeDialog = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="hireDate">Hire Date</Label>
-              <Input
-                id="hireDate"
-                type="date"
-                value={hireDate}
-                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={(e) => setHireDate(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
-                min="2000-01-01"
-                required
-              />
-            </div>
+            <div className="relative">
+  <Label htmlFor="hireDate">Hire Date</Label>
 
-            <div>
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
-              <Input
-                id="dateOfBirth"
-                type="date"
-                value={dateOfBirth}
-                className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
-              />
-            </div>
+  <div
+    onClick={() => {
+      hireDateRef.current?.showPicker?.(); // Chrome/Edge
+      hireDateRef.current?.focus();        // Firefox
+    }}
+    className="cursor-pointer"
+  >
+    <Input
+      id="hireDate"
+      ref={hireDateRef}
+      type="date"
+      value={hireDate}
+      className="border border-blue-500 focus:ring-2 focus:ring-blue-600 
+                 focus:border-blue-600 bg-blue-50 text-blue-900 
+                 placeholder-blue-400 rounded-md cursor-pointer"
+      onChange={(e) => setHireDate(e.target.value)}
+      max={new Date().toISOString().split('T')[0]}
+      min="2000-01-01"
+      required
+    />
+  </div>
+
+  {/* Enlarged Calendar Icon */}
+ 
+</div>
+
+            
+
+            <div className="relative">
+  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+
+  <div
+    onClick={() => {
+      dobRef.current?.showPicker?.(); // Chrome/Edge
+      dobRef.current?.focus();        // Firefox fallback
+    }}
+    className="cursor-pointer"
+  >
+    <Input
+      id="dateOfBirth"
+      ref={dobRef}
+      type="date"
+      value={dateOfBirth}
+      className="border border-blue-500 focus:ring-2 focus:ring-blue-600 
+                 focus:border-blue-600 bg-blue-50 text-blue-900 
+                 placeholder-blue-400 rounded-md cursor-pointer"
+      onChange={(e) => setDateOfBirth(e.target.value)}
+      max={new Date().toISOString().split("T")[0]}
+    />
+  </div>
+
+  {/* Calendar Icon */}
+ 
+</div>
+
           </div>
 
           <div>
@@ -253,7 +299,8 @@ export const EditEmployeeDialog = ({
               id="phone"
               type="text"
               value={phone}
-              maxLength={15}
+              maxLength={10}
+              
               className="border border-blue-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50 text-blue-900 placeholder-blue-400 rounded-md"
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Enter phone number"
