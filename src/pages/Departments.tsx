@@ -202,6 +202,21 @@ const Departments = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 text-black bg-white border border-gray-300 shadow-sm"
                   />
+                  {searchTerm && (
+  <button
+    onClick={() => setSearchTerm("")}
+    className="
+      absolute right-3 top-1/2 -translate-y-1/2
+      text-gray-500 hover:text-black
+      text-xs p-1
+      bg-transparent hover:bg-transparent active:bg-transparent
+      focus:outline-none
+    "
+  >
+    ×
+  </button>
+)}
+
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -248,9 +263,9 @@ const Departments = () => {
                 </TableHeader>
                 <TableBody>
                   {displayedDepartments.map((d) => (
-                    <TableRow key={d.department_id} className="hover:bg-gray-100 cursor-pointer select-none h-10">
+                    <TableRow key={d.department_id} className="hover:bg-gray-100 cursor-default select-none h-10">
                       <TableCell className="py-1 text-sm">{d.department_name}</TableCell>
-                      <TableCell className="text-center py-1 text-sm">
+                      <TableCell className="text-center py-1 text-sm cursor-default">
                         {d.total_designations! > 0 ? (
                           <Link
                             to={`/designations?department=${d.department_id}`}
@@ -262,7 +277,7 @@ const Departments = () => {
                           <span>{d.total_designations}</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center py-1 text-sm">
+                      <TableCell className="text-center py-1 text-sm cursor-default">
                         {d.total_employees! > 0 ? (
                           <Link
                             to={`/employees?department=${d.department_id}`}
@@ -274,7 +289,7 @@ const Departments = () => {
                           <span>{d.total_employees}</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-end py-0">
+                      <TableCell className="text-end py-0 cursor-pointer">
                         <div className="flex justify-end space-x-1">
                           <Button
                             size="sm"
@@ -324,7 +339,7 @@ const Departments = () => {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                     <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">Entries :{rowsPerPage}
+                     <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">Records :{rowsPerPage}
                               <ChevronDown className="ml-2 h-4 w-4" /> 
                             </Button>
                   </DropdownMenuTrigger>
