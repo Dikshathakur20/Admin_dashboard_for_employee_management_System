@@ -45,6 +45,26 @@ interface Notification {
   created_at: string;
 }
 
+const getISTDateTime = () => {
+  const now = new Date();
+  const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  return ist.toISOString().slice(0, 19).replace("T", " ");
+};
+
+// Converts any UTC/ISO string → readable IST time in hh:mm:ss AM/PM
+const formatIST = (dateStr?: string) => {
+  if (!dateStr) return "—";
+  const istDate = new Date(
+    new Date(dateStr).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+  );
+  return istDate.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+};
+
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -320,7 +340,7 @@ const EmployeeDashboard = () => {
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-[#001F7A]">
-                  <CalendarCheck className="h-5 w-5" /> My Leave
+                  <CalendarCheck className="h-5 w-5" /> My Leaves
                 </CardTitle>
               </CardHeader>
               <CardContent>
