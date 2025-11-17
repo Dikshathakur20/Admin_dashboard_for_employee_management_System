@@ -172,8 +172,8 @@ export const EmployeesTable = ({ newEmployee }: EmployeesTableProps) => {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg">
-        <Table>
+      <div className="border rounded-lg cursor-default">
+  <Table>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
