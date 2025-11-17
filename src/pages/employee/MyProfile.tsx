@@ -3,8 +3,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "react-toastify";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronDown } from "lucide-react";
 
 const MyProfile: React.FC = () => {
   const [employee, setEmployee] = useState<any>(null);
@@ -49,15 +51,14 @@ const MyProfile: React.FC = () => {
         setEmployee(data);
         setFormData(data);
       } catch (err: any) {
-        console.error("Error fetching employee data:", err.message || err);
         toast.error("Failed to load profile");
+        console.error("Error fetching employee data:", err);
       }
     };
 
     fetchEmployeeDetails();
   }, []);
 
-  // Convert image to Base64
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -70,12 +71,16 @@ const MyProfile: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "phone" || name === "emergency_contact_phone") {
+      if (!/^\d{0,10}$/.test(value)) return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
-  // Save changes
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -89,7 +94,7 @@ const MyProfile: React.FC = () => {
           phone: formData.phone,
           date_of_birth: formData.date_of_birth,
           address: formData.address,
-          file_data: formData.file_data, // ✅ saves Base64 image
+          file_data: formData.file_data,
           emergency_contact_name: formData.emergency_contact_name,
           emergency_contact_phone: formData.emergency_contact_phone,
           emergency_contact_relation: formData.emergency_contact_relation,
@@ -102,27 +107,29 @@ const MyProfile: React.FC = () => {
       setIsEditing(false);
       toast.success("Profile updated successfully!");
     } catch (err) {
-      console.error("Error updating profile:", err);
       toast.error("Failed to update profile.");
+      console.error("Error updating profile:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!employee)
+  if (!employee) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-600">
         Loading profile...
       </div>
     );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-3 flex justify-center">
-      <Card className="w-full max-w-2xl bg-white shadow-md border rounded-xl p-6"
-      style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-      >
-        {/* Header */}
-        <CardHeader className="flex flex-col items-center border-b pb-4 mb-4">
+    <div className="min-h-screen bg-gray-50 py-10 px-4 flex justify-center">
+      <Card className="w-full max-w-3xl shadow-sm border rounded-2xl overflow-hidden">
+        
+        {/* ----------- HEADER ----------- */}
+        <div className="bg-gradient-to-r from-blue-800 to-indigo-700 text-white px-6 py-8 flex flex-col items-center"
+           style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+        >
           <div className="relative">
             <img
               src={
@@ -130,195 +137,94 @@ const MyProfile: React.FC = () => {
                 "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
               }
               alt="Profile"
-              className="w-24 h-24 rounded-full border-2 border-[#001F7A] object-cover"
+              className="w-28 h-28 rounded-full border-4 border-white shadow-md object-cover"
             />
+
             {isEditing && (
-              <div className="absolute bottom-0 right-0">
-                <label className="cursor-pointer bg-[#001F7A] text-white text-xs px-2 py-1 rounded-md">
-                  Edit
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
-                </label>
-              </div>
+              <label className="absolute bottom-1 right-1 bg-white text-black text-xs px-2 py-1 rounded cursor-pointer">
+                Change
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+              </label>
             )}
           </div>
 
-          <CardTitle className="text-[#001F7A] text-lg font-bold mt-3">
-            {`${employee.first_name || ""} ${employee.last_name || ""}`}
-          </CardTitle>
-          <p className="text-sm text-gray-600">
-            {employee.tbldesignations?.designation_title || "Not Assigned"}{" "}
-            <span className="text-gray-400">|</span>{" "}
+          <h1 className="text-xl font-bold mt-4">
+            {employee.first_name} {employee.last_name}
+          </h1>
+
+          <p className="text-sm text-blue-100">
+            {employee.tbldesignations?.designation_title || "Not Assigned"} •{" "}
             {employee.tbldepartments?.department_name || "No Department"}
           </p>
 
           {!isEditing ? (
-            <Button
-              className="mt-3 bg-[#001F7A] hover:bg-blue-900 text-white text-xs px-4 py-2"
-              onClick={() => setIsEditing(true)}
-            >
+            <Button className="mt-4 bg-blue-900 text-white-700 hover:bg-blue-800 text-white" onClick={() => setIsEditing(true)}>
               Edit Profile
             </Button>
           ) : (
-            <div className="flex gap-2 mt-3">
-              <Button
-                className="bg-blue-900 hover:bg-blue-900 text-white text-xs px-4 py-2"
-                onClick={handleSave}
-                disabled={loading}
-              >
+            <div className="flex gap-3 mt-4">
+              <Button onClick={handleSave} disabled={loading} className="bg-blue-900 text-white-700 hover:bg-blue-700 text-white">
                 Save
               </Button>
-              <Button
-                className="bg-blue-900 hover:bg-blue-900 text-white text-xs px-4 py-2"
-                onClick={() => setIsEditing(false)}
-              >
+              <Button variant="secondary" 
+              className="bg-blue-900 text-white-700 hover: bg-blue-800 text-white"
+              onClick={() => setIsEditing(false)}>
                 Cancel
               </Button>
             </div>
           )}
-        </CardHeader>
+        </div>
 
-        {/* Form Section */}
-        <CardContent className="space-y-5">
-          <div>
-            <h2 className="text-md font-semibold text-[#001F7A] mb-2">
-              Personal Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm">First Name</Label>
-                {isEditing ? (
-                  <Input
-                    name="first_name"
-                    value={formData.first_name || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">{employee.first_name}</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm">Last Name</Label>
-                {isEditing ? (
-                  <Input
-                    name="last_name"
-                    value={formData.last_name || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">{employee.last_name}</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm">Email</Label>
-                {isEditing ? (
-                  <Input
-                    name="email"
-                    value={formData.email || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">{employee.email}</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm">Phone</Label>
-                {isEditing ? (
-                  <Input
-                    name="phone"
-                    value={formData.phone || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">{employee.phone}</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm">Date of Birth</Label>
-                {isEditing ? (
-                  <Input
-                    type="date"
-                    name="date_of_birth"
-                    value={formData.date_of_birth || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">
-                    {employee.date_of_birth || "N/A"}
-                  </p>
-                )}
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-sm">Address</Label>
-                {isEditing ? (
-                  <Input
-                    name="address"
-                    value={formData.address || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">
-                    {employee.address || "No address added"}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+        {/* ----------- CONTENT ----------- */}
+        <CardContent className="p-6 space-y-4">
 
-          {/* Emergency Contact */}
-          <div>
-            <h2 className="text-md font-semibold text-[#001F7A] mb-2">
-              Emergency Contact
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <Label className="text-sm">Name</Label>
-                {isEditing ? (
-                  <Input
-                    name="emergency_contact_name"
-                    value={formData.emergency_contact_name || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">
-                    {employee.emergency_contact_name || "N/A"}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm">Phone</Label>
-                {isEditing ? (
-                  <Input
-                    name="emergency_contact_phone"
-                    value={formData.emergency_contact_phone || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">
-                    {employee.emergency_contact_phone || "N/A"}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm">Relation</Label>
-                {isEditing ? (
-                  <Input
-                    name="emergency_contact_relation"
-                    value={formData.emergency_contact_relation || ""}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <p className="text-gray-700 text-sm">
-                    {employee.emergency_contact_relation || "N/A"}
-                  </p>
-                )}
-              </div>
+          {/* BASIC INFO */}
+          <Section title="Basic Information">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            
+            >
+              <InputBlock label="Email" name="email" value={formData.email} viewValue={employee.email} isEditing={isEditing} onChange={handleChange} />
+              <InputBlock label="Phone" name="phone" value={formData.phone} viewValue={employee.phone} isEditing={isEditing} onChange={handleChange} />
             </div>
-          </div>
+          </Section>
+
+          {/* COLLAPSIBLE PERSONAL DETAILS */}
+          <CollapsibleSection title="Personal Details">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputBlock label="Date of Birth" name="date_of_birth" type="date" value={formData.date_of_birth} viewValue={employee.date_of_birth} isEditing={isEditing} onChange={handleChange} />
+              <InputBlock full label="Address" name="address" value={formData.address} viewValue={employee.address} isEditing={isEditing} onChange={handleChange} />
+              {/* NEW → Department (VIEW ONLY) */}
+    <div>
+      <Label className="text-sm font-medium">Department</Label>
+      <p className="text-gray-600">
+        {employee.tbldepartments?.department_name || "—"}
+      </p>
+    </div>
+
+    {/* NEW → Designation (VIEW ONLY) */}
+    <div>
+      <Label className="text-sm font-medium">Designation</Label>
+      <p className="text-gray-600">
+        {employee.tbldesignations?.designation_title || "—"}
+      </p>
+    </div>
+            </div>
+          </CollapsibleSection>
+
+          {/* COLLAPSIBLE EMERGENCY CONTACT */}
+          <CollapsibleSection title="Emergency Contact">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <InputBlock label="Name" name="emergency_contact_name" value={formData.emergency_contact_name} viewValue={employee.emergency_contact_name} isEditing={isEditing} onChange={handleChange} />
+              <InputBlock label="Phone" name="emergency_contact_phone" value={formData.emergency_contact_phone} viewValue={employee.emergency_contact_phone} isEditing={isEditing} onChange={handleChange} />
+              <InputBlock label="Relation" name="emergency_contact_relation" value={formData.emergency_contact_relation} viewValue={employee.emergency_contact_relation} isEditing={isEditing} onChange={handleChange} />
+            </div>
+          </CollapsibleSection>
+
         </CardContent>
       </Card>
     </div>
@@ -326,3 +232,45 @@ const MyProfile: React.FC = () => {
 };
 
 export default MyProfile;
+
+/* -------------------- Collapsible Section -------------------- */
+const CollapsibleSection = ({ title, children }: any) => (
+  <Collapsible className="border rounded-lg p-4">
+    <CollapsibleTrigger className="flex justify-between items-center w-full text-left font-semibold text-white-800"
+    
+    >
+      {title}
+      <ChevronDown className="h-4 w-4" />
+    </CollapsibleTrigger>
+    <CollapsibleContent className="mt-3 text-sm">{children}</CollapsibleContent>
+  </Collapsible>
+);
+
+/* -------------------- Section Header -------------------- */
+const Section = ({ title, children }: any) => (
+  <div>
+    <h2 className="text-lg font-semibold text-gray-800 mb-2">{title}</h2>
+    {children}
+  </div>
+);
+
+/* -------------------- Reusable Input Block -------------------- */
+const InputBlock = ({
+  label,
+  name,
+  value,
+  viewValue,
+  isEditing,
+  onChange,
+  type = "text",
+  full = false,
+}: any) => (
+  <div className={full ? "md:col-span-2" : ""}>
+    <Label className="text-sm font-medium">{label}</Label>
+    {isEditing ? (
+      <Input name={name} type={type} value={value || ""} onChange={onChange} />
+    ) : (
+      <p className="text-gray-600">{viewValue || "—"}</p>
+    )}
+  </div>
+);
