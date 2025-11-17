@@ -146,9 +146,9 @@ const ApplyLeave: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-8">
       <Card
         className="max-w-3xl mx-auto border shadow-md"
-        style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+        
       >
-        <CardHeader>
+        <CardHeader style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
           <CardTitle className="text-[#001F7A] text-2xl font-bold">
             Apply for Leave
           </CardTitle>
@@ -163,12 +163,8 @@ const ApplyLeave: React.FC = () => {
                 name="leave_type"
                 value={formData.leave_type}
                 onChange={handleChange}
-                className="w-full border rounded-lg p-2"
-                style={{
-                  background: "linear-gradient(-45deg, #ffffff, #c9d0fb)",
-                  color: "#1e3a8a",
-                  fontWeight: "500",
-                }}
+                className="w-full border rounded-lg p- bg-blue-50 font-semibold text-[#001F7A}"
+                
               >
                 <option value="">Select Type</option>
                 <option value="Sick Leave">Sick Leave</option>
@@ -178,50 +174,51 @@ const ApplyLeave: React.FC = () => {
               </select>
             </div>
 
-            <div>
-              <Label>Start Date</Label>
-              <Input
-                type="date"
-                name="start_date"
-                value={formData.start_date}
-                onChange={handleChange}
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <Label>Start Date</Label>
+      <Input
+        type="date"
+        name="start_date"
+        value={formData.start_date}
+        onChange={handleChange}
+      />
+    </div>
 
-            <div>
-              <Label>End Date</Label>
-              <Input
-                type="date"
-                name="end_date"
-                value={formData.end_date}
-                onChange={handleChange}
-              />
-            </div>
+    <div>
+      <Label>End Date</Label>
+      <Input
+        type="date"
+        name="end_date"
+        value={formData.end_date}
+        onChange={handleChange}
+      />
+    </div>
+  </div>
 
-            <div>
-              <Label>No. of Leaves</Label>
-              <Input
-                type="number"
-                name="no_of_leaves"
-                value={formData.no_of_leaves}
-                onChange={handleChange}
-                readOnly
-              />
-            </div>
+  {/* No. of Leaves (NOW A LABEL ONLY) */}
+  <div>
+    <Label>No. of Leaves</Label>
+    <p className="border p-2 rounded-lg bg-white-100 font-semibold text-[#001F7A]">
+      {formData.no_of_leaves || "—"}
+    </p>
+  </div>
 
-            <div className="md:col-span-2">
-              <Label>Reason</Label>
-              <textarea
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-2"
-                rows={3}
-                placeholder="Explain the reason for your leave..."
-                 style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
-              />
-            </div>
-          </div>
+  {/* Reason */}
+  <div>
+    <Label>Reason</Label>
+    <textarea
+      name="reason"
+      value={formData.reason}
+      onChange={handleChange}
+      className="w-full border rounded-lg p-2"
+      rows={3}
+      placeholder="Explain the reason for your leave..."
+     
+    />
+  </div>
+</div>
+          
 
           <div className="flex justify-end">
             <Button
@@ -237,7 +234,7 @@ const ApplyLeave: React.FC = () => {
 
       {/* 📋 Leave History */}
       <Card className="max-w-4xl mx-auto mt-10 border shadow-md">
-        <CardHeader>
+        <CardHeader style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}>
           <CardTitle className="text-lg font-semibold text-[#001F7A]">
             Leave Request History
           </CardTitle>
@@ -249,8 +246,8 @@ const ApplyLeave: React.FC = () => {
           ) : (
             <table className="w-full border text-sm">
               <thead
-                className="bg-gray-100"
-                style={{ background: "linear-gradient(-45deg, #ffffff, #c9d0fb)" }}
+                className="bg-blue-50 text-[#001F7A]"
+                
               >
                 <tr>
                   <th className="border p-2">Type</th>
@@ -260,7 +257,8 @@ const ApplyLeave: React.FC = () => {
                   <th className="border p-2">Reason</th>
                   <th className="border p-2">Status</th>
                   <th className="border p-2">Applied On</th>
-                  <th className="border p-2">Action</th>
+                  <th className="border p-2">Rejected Reason</th>
+
                 </tr>
               </thead>
               <tbody>
@@ -285,20 +283,9 @@ const ApplyLeave: React.FC = () => {
                     <td className="border p-2">
                       {new Date(leave.created_at).toLocaleDateString()}
                     </td>
-                    <td className="border p-2 text-center">
-                      {leave.status === "Pending" ? (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(leave.id)}
-                          className="bg-[#001F7A] hover:bg-blue-900 text-white"
-                        >
-                          Delete
-                        </Button>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
+                    
+                    <td className="border p-2">{leave.rejection_reason || "—"}</td>
+
                   </tr>
                 ))}
               </tbody>
