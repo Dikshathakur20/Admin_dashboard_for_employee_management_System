@@ -11,6 +11,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import {Search} from "lucide-react"
 interface LeaveRequest {
   id: string;
   employee_id: string;
