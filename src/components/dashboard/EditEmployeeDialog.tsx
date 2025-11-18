@@ -252,7 +252,7 @@ export const EditEmployeeDialog = ({
                  focus:border-blue-600 bg-blue-50 text-blue-900 
                  placeholder-blue-400 rounded-md cursor-pointer"
       onChange={(e) => setHireDate(e.target.value)}
-      max={new Date().toISOString().split('T')[0]}
+      max="2007-12-31"
       min="2000-01-01"
       required
     />
