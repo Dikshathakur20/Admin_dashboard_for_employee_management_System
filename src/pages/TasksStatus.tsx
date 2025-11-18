@@ -107,7 +107,7 @@ const TaskStatus = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search by name or department"
+                placeholder="Search"
                 className="pl-8 pr-3 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
