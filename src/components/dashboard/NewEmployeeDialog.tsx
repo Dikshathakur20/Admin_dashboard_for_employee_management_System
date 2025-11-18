@@ -333,7 +333,7 @@ const generateEmployeeCode = async () => {
                  focus:border-blue-600 bg-blue-50 text-blue-900 
                  placeholder-blue-400 rounded-md cursor-pointer"
       onChange={(e) => setDateOfBirth(e.target.value)}
-      max={new Date().toISOString().split("T")[0]}
+       max="2007-12-31" 
     />
   </div>
 
