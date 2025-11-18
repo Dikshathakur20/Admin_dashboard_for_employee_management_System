@@ -229,8 +229,17 @@ const Departments = () => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
-                        Sort <ChevronDown className="ml-2 h-4 w-4" />
-                      </Button>
+  Sort: {sortOption === "id-desc"
+    ? "New → Old"
+    : sortOption === "id-asc"
+    ? "Old → New"
+    : sortOption === "name-asc"
+    ? "A → Z"
+    : "Z → A"
+  }
+  <ChevronDown className="ml-2 h-4 w-4" />
+</Button>
+
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
@@ -399,10 +408,14 @@ const Departments = () => {
         onSuccess={fetchDepartments}
       />
       <NewDepartmentDialog
-        open={showNewDialog}
-        onOpenChange={setShowNewDialog}
-        onSuccess={fetchDepartments}
-      />
+  open={showNewDialog}
+  onOpenChange={setShowNewDialog}
+  onSuccess={() => {
+    fetchDepartments();
+    setSortOption("id-desc"); // 🔥 Auto sort New → Old after adding
+  }}
+/>
+
 
       {/* Details Dialog */}
       <Dialog open={!!viewingDepartment} onOpenChange={(open) => !open && setViewingDepartment(null)}>
