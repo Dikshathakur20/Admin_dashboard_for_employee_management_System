@@ -186,9 +186,18 @@ const Designations = () => {
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]">
-                        Sort <ChevronDown className="ml-2 h-4 w-4" />
-                      </Button>
+                      <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
+  Sort: {sortOption === "id-desc"
+    ? "New → Old"
+    : sortOption === "id-asc"
+    ? "Old → New"
+    : sortOption === "name-asc"
+    ? "A → Z"
+    : "Z → A"
+  }
+  <ChevronDown className="ml-2 h-4 w-4" />
+</Button>
+
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
@@ -285,11 +294,15 @@ const Designations = () => {
         departments={departments}
       />
       <NewDesignationDialog
-        open={showNewDialog}
-        onOpenChange={setShowNewDialog}
-        onSuccess={fetchDesignations}
-        departmets={departments}
-      />
+  open={showNewDialog}
+  onOpenChange={setShowNewDialog}
+  onSuccess={() => {
+    fetchDesignations();
+    setSortOption("id-desc"); // 🔥 Auto sort New → Old
+  }}
+  departmets={departments}
+/>
+
     </div>
   );
 };
