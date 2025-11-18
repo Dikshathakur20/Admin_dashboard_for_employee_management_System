@@ -203,9 +203,9 @@ const ApproveLeave: React.FC = () => {
     placeholder="Search"
     value={searchTerm}
     onChange={(e) => setSearchTerm(e.target.value)}
-    className="border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-700 pr-10"
+    className="pl-8 pr-3 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
   />
-
+ <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
   {/* X BUTTON — only visible when typing */}
   {searchTerm && (
     <button
