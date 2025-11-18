@@ -204,7 +204,11 @@ const Employees = () => {
   const endIdx = startIdx + rowsPerPage;
   const visibleEmployees = sortedEmployees.slice(startIdx, endIdx);
 
-  const handleNewEmployee = (newEmp: Employee) => setEmployees((prev) => [newEmp, ...prev]);
+  const handleNewEmployee = (newEmp: Employee) => {
+  setSortOption("id-desc"); // 🔥 Reset sorting
+  setEmployees((prev) => [newEmp, ...prev]);
+};
+
 
   const renderProfilePicture = (emp?: Employee, size = 40) => {
     if (!emp) return <div className="rounded-full bg-gray-200 h-8 w-8 mx-auto"></div>;
@@ -254,14 +258,14 @@ const handleRegister = async (emp: Employee) => {
     const birthYear = new Date(emp.date_of_birth).getFullYear();
     const password = `${last3Code}#${last4Phone}@${birthYear}`;
 
-    // Check if employee already exists in auth table
+    // Check if employee exists
     const { data: existing, error: checkError } = await supabase
       .from("tblemployeeauth")
       .select("employee_id")
       .eq("employee_id", emp.employee_id)
       .single();
 
-    if (checkError && checkError.code !== "PGRST116") throw checkError; // PGRST116 = no row found
+    if (checkError && checkError.code !== "PGRST116") throw checkError;
 
     if (existing) {
       toast({
@@ -271,7 +275,7 @@ const handleRegister = async (emp: Employee) => {
       return;
     }
 
-    // Insert into tblemployeeauth
+    // Insert into auth table
     const { error } = await supabase.from("tblemployeeauth").insert([
       {
         employee_id: emp.employee_id,
@@ -290,6 +294,18 @@ const handleRegister = async (emp: Employee) => {
       title: "Registered Successfully",
       description: `Employee code ${emp.employee_code} registered with generated password.`,
     });
+
+    // ⭐⭐⭐ ADD HERE → update table instantly
+    // 🔥 Correct: update only that employee's registration status
+setEmployees((prev) =>
+  prev.map((e) =>
+    e.employee_id === emp.employee_id
+      ? { ...e, isRegistered: true }
+      : e
+  )
+);
+
+
   } catch (err: any) {
     console.error("Registration Error:", err);
     toast({
@@ -298,6 +314,7 @@ const handleRegister = async (emp: Employee) => {
     });
   }
 };
+
 
 
 
@@ -379,8 +396,15 @@ const handleRegister = async (emp: Employee) => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button className="bg-[#001F7A] text-white hover:bg-[#0029b0]" title="Sort">
-                        Sort <ChevronDown className="ml-2 h-4 w-4" />
-                      </Button>
+  Sort: {
+    sortOption === "name-asc" ? "A-Z" :
+    sortOption === "name-desc" ? "Z-A" :
+    sortOption === "id-asc" ? "Old → New" :
+    "New → Old"
+  }
+  <ChevronDown className="ml-2 h-4 w-4" />
+</Button>
+
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
